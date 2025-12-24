@@ -1,0 +1,1037 @@
+openapi: 3.0.3
+info:
+  title: PrescrIMed API
+  description: |
+    API REST completa para o sistema de gestão de prescrições médicas PrescrIMed.
+    
+    ## Arquitetura Multi-Tenant
+    - Cada empresa possui isolamento completo de dados
+    - Token JWT contém `empresaId` para filtrar automaticamente
+    - Primeiro usuário cadastrado se torna administrador
+    
+    ## Autenticação
+    Todas as rotas protegidas requerem token JWT no header:
+    ```
+    Authorization: Bearer {token}
+    ```
+    
+  version: 1.0.0
+  contact:
+    name: Cristiano Santos
+    email: cristiano.s.santos@ba.estudante.senai.br
+    url: https://github.com/cristiano-superacao/prescrimed
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000/api
+    description: Servidor de Desenvolvimento
+  - url: https://prescrimed-api.onrender.com/api
+    description: Servidor de Produção
+
+tags:
+  - name: Autenticação
+    description: Endpoints de registro, login e gerenciamento de tokens
+  - name: Empresas
+    description: Gestão de empresas/clínicas
+  - name: Usuários
+    description: CRUD de usuários e permissões
+  - name: Pacientes
+    description: Gestão de pacientes e prontuários
+  - name: Prescrições
+    description: Criação e gerenciamento de prescrições médicas
+  - name: Dashboard
+    description: Estatísticas e dados para dashboard
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtido no login ou registro
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Mensagem de erro
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              msg:
+                type: string
+              param:
+                type: string
+              location:
+                type: string
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 64abc123def456789
+        nome:
+          type: string
+          example: Dr. João Silva
+        email:
+          type: string
+          format: email
+          example: joao.silva@clinica.com
+        telefone:
+          type: string
+          example: (11) 98765-4321
+        role:
+          type: string
+          enum: [admin, usuario]
+          example: admin
+        permissoes:
+          type: array
+          items:
+            type: string
+          example: [dashboard, pacientes, prescricoes, usuarios]
+        empresaId:
+          type: string
+          example: 64xyz789abc012345
+        empresaNome:
+          type: string
+          example: Clínica Saúde Total
+        ativo:
+          type: boolean
+          example: true
+        criadoEm:
+          type: string
+          format: date-time
+        ultimoAcesso:
+          type: string
+          format: date-time
+
+    Empresa:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+          example: Clínica Saúde Total
+        cnpj:
+          type: string
+          example: 12.345.678/0001-90
+        telefone:
+          type: string
+          example: (11) 3456-7890
+        email:
+          type: string
+          example: contato@clinica.com
+        endereco:
+          type: object
+          properties:
+            rua:
+              type: string
+            numero:
+              type: string
+            complemento:
+              type: string
+            bairro:
+              type: string
+            cidade:
+              type: string
+            estado:
+              type: string
+            cep:
+              type: string
+        plano:
+          type: string
+          enum: [basico, premium, enterprise]
+          example: basico
+        ativa:
+          type: boolean
+          example: true
+
+    Paciente:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+          example: Maria Santos
+        cpf:
+          type: string
+          example: 123.456.789-00
+        dataNascimento:
+          type: string
+          format: date
+          example: 1985-05-15
+        sexo:
+          type: string
+          enum: [M, F, Outro]
+          example: F
+        telefone:
+          type: string
+          example: (11) 91234-5678
+        email:
+          type: string
+          example: maria.santos@email.com
+        endereco:
+          type: object
+        tipoSanguineo:
+          type: string
+          example: O+
+        peso:
+          type: number
+          example: 65.5
+        altura:
+          type: number
+          example: 1.65
+        alergias:
+          type: array
+          items:
+            type: string
+          example: [Dipirona, Penicilina]
+        condicoesMedicas:
+          type: array
+          items:
+            type: string
+          example: [Hipertensão, Diabetes]
+        medicamentosUso:
+          type: array
+          items:
+            type: string
+          example: [Losartana 50mg, Metformina 850mg]
+        convenio:
+          type: object
+          properties:
+            nome:
+              type: string
+            numeroCarteira:
+              type: string
+            validade:
+              type: string
+              format: date
+        contatoEmergencia:
+          type: object
+          properties:
+            nome:
+              type: string
+            telefone:
+              type: string
+            parentesco:
+              type: string
+        empresaId:
+          type: string
+        ativo:
+          type: boolean
+
+    Prescricao:
+      type: object
+      properties:
+        id:
+          type: string
+        pacienteId:
+          type: string
+        paciente:
+          type: object
+          properties:
+            nome:
+              type: string
+            cpf:
+              type: string
+        medicoId:
+          type: string
+        medico:
+          type: object
+          properties:
+            nome:
+              type: string
+            crm:
+              type: string
+        medicamentos:
+          type: array
+          items:
+            type: object
+            properties:
+              nome:
+                type: string
+                example: Amoxicilina
+              dosagem:
+                type: string
+                example: 500mg
+              quantidade:
+                type: number
+                example: 21
+              posologia:
+                type: string
+                example: Tomar 1 comprimido a cada 8 horas
+              viaAdministracao:
+                type: string
+                example: Oral
+              duracao:
+                type: string
+                example: 7 dias
+        tipo:
+          type: string
+          enum: [comum, controlado, amarelo, azul]
+          example: comum
+        status:
+          type: string
+          enum: [ativa, cancelada, arquivada]
+          example: ativa
+        observacoes:
+          type: string
+        dataEmissao:
+          type: string
+          format: date-time
+        empresaId:
+          type: string
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Autenticação
+      summary: Registrar nova empresa e administrador
+      description: Cria uma nova empresa e o primeiro usuário (administrador) simultaneamente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nomeEmpresa
+                - email
+                - senha
+                - nomeAdmin
+              properties:
+                nomeEmpresa:
+                  type: string
+                  example: Clínica Saúde Total
+                cnpj:
+                  type: string
+                  example: 12.345.678/0001-90
+                email:
+                  type: string
+                  format: email
+                  example: admin@clinica.com
+                senha:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: senha123
+                nomeAdmin:
+                  type: string
+                  example: Dr. João Silva
+                telefone:
+                  type: string
+                  example: (11) 98765-4321
+      responses:
+        '201':
+          description: Empresa e usuário criados com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+                  usuario:
+                    $ref: '#/components/schemas/Usuario'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email ou CNPJ já cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Autenticação
+      summary: Login de usuário
+      description: Autentica um usuário e retorna token JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - senha
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@clinica.com
+                senha:
+                  type: string
+                  format: password
+                  example: senha123
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  usuario:
+                    $ref: '#/components/schemas/Usuario'
+        '400':
+          description: Dados inválidos
+        '401':
+          description: Credenciais inválidas
+
+  /auth/refresh:
+    post:
+      tags:
+        - Autenticação
+      summary: Renovar token JWT
+      description: Gera um novo token usando o refresh token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token renovado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Token inválido ou expirado
+
+  /auth/me:
+    get:
+      tags:
+        - Autenticação
+      summary: Obter dados do usuário logado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dados do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '401':
+          description: Não autenticado
+
+  /usuarios:
+    get:
+      tags:
+        - Usuários
+      summary: Listar usuários da empresa
+      description: Retorna todos os usuários da empresa do usuário logado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuários
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Usuario'
+        '401':
+          description: Não autenticado
+    
+    post:
+      tags:
+        - Usuários
+      summary: Criar novo usuário
+      description: Apenas administradores podem criar novos usuários
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nome
+                - email
+                - senha
+                - role
+              properties:
+                nome:
+                  type: string
+                  example: Dra. Ana Costa
+                email:
+                  type: string
+                  format: email
+                  example: ana.costa@clinica.com
+                senha:
+                  type: string
+                  format: password
+                  minLength: 6
+                telefone:
+                  type: string
+                  example: (11) 98765-4321
+                role:
+                  type: string
+                  enum: [admin, usuario]
+                  example: usuario
+                permissoes:
+                  type: array
+                  items:
+                    type: string
+                  example: [dashboard, pacientes, prescricoes]
+      responses:
+        '201':
+          description: Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          description: Dados inválidos
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão (não é admin)
+        '409':
+          description: Email já cadastrado
+
+  /usuarios/{id}:
+    get:
+      tags:
+        - Usuários
+      summary: Buscar usuário por ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dados do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '404':
+          description: Usuário não encontrado
+    
+    put:
+      tags:
+        - Usuários
+      summary: Atualizar usuário
+      description: Apenas administradores podem atualizar usuários
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nome:
+                  type: string
+                email:
+                  type: string
+                telefone:
+                  type: string
+                role:
+                  type: string
+                permissoes:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Usuário atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '403':
+          description: Sem permissão
+        '404':
+          description: Usuário não encontrado
+    
+    delete:
+      tags:
+        - Usuários
+      summary: Desativar usuário
+      description: Soft delete - apenas marca como inativo
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuário desativado
+        '403':
+          description: Sem permissão
+        '404':
+          description: Usuário não encontrado
+
+  /pacientes:
+    get:
+      tags:
+        - Pacientes
+      summary: Listar pacientes
+      description: Lista pacientes da empresa com busca opcional
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Buscar por nome ou CPF
+      responses:
+        '200':
+          description: Lista de pacientes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paciente'
+    
+    post:
+      tags:
+        - Pacientes
+      summary: Cadastrar paciente
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nome
+                - cpf
+                - dataNascimento
+              properties:
+                nome:
+                  type: string
+                cpf:
+                  type: string
+                dataNascimento:
+                  type: string
+                  format: date
+                sexo:
+                  type: string
+                telefone:
+                  type: string
+                email:
+                  type: string
+                endereco:
+                  type: object
+                tipoSanguineo:
+                  type: string
+                peso:
+                  type: number
+                altura:
+                  type: number
+                alergias:
+                  type: array
+                  items:
+                    type: string
+                condicoesMedicas:
+                  type: array
+                  items:
+                    type: string
+                medicamentosUso:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Paciente cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paciente'
+        '400':
+          description: Dados inválidos
+        '409':
+          description: CPF já cadastrado
+
+  /pacientes/{id}:
+    get:
+      tags:
+        - Pacientes
+      summary: Buscar paciente por ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dados do paciente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paciente'
+        '404':
+          description: Paciente não encontrado
+    
+    put:
+      tags:
+        - Pacientes
+      summary: Atualizar paciente
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Paciente'
+      responses:
+        '200':
+          description: Paciente atualizado
+        '404':
+          description: Paciente não encontrado
+    
+    delete:
+      tags:
+        - Pacientes
+      summary: Desativar paciente
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paciente desativado
+        '404':
+          description: Paciente não encontrado
+
+  /prescricoes:
+    get:
+      tags:
+        - Prescrições
+      summary: Listar prescrições
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ativa, cancelada, arquivada]
+        - name: tipo
+          in: query
+          schema:
+            type: string
+            enum: [comum, controlado, amarelo, azul]
+      responses:
+        '200':
+          description: Lista de prescrições
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Prescricao'
+    
+    post:
+      tags:
+        - Prescrições
+      summary: Criar prescrição
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - pacienteId
+                - medicamentos
+                - tipo
+              properties:
+                pacienteId:
+                  type: string
+                medicamentos:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      nome:
+                        type: string
+                      dosagem:
+                        type: string
+                      quantidade:
+                        type: number
+                      posologia:
+                        type: string
+                      viaAdministracao:
+                        type: string
+                      duracao:
+                        type: string
+                tipo:
+                  type: string
+                  enum: [comum, controlado, amarelo, azul]
+                observacoes:
+                  type: string
+      responses:
+        '201':
+          description: Prescrição criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prescricao'
+
+  /prescricoes/{id}:
+    get:
+      tags:
+        - Prescrições
+      summary: Buscar prescrição por ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dados da prescrição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prescricao'
+    
+    put:
+      tags:
+        - Prescrições
+      summary: Atualizar prescrição
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Prescricao'
+      responses:
+        '200':
+          description: Prescrição atualizada
+
+  /prescricoes/{id}/cancelar:
+    put:
+      tags:
+        - Prescrições
+      summary: Cancelar prescrição
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Prescrição cancelada
+
+  /prescricoes/{id}/arquivar:
+    put:
+      tags:
+        - Prescrições
+      summary: Arquivar prescrição
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Prescrição arquivada
+
+  /prescricoes/paciente/{id}:
+    get:
+      tags:
+        - Prescrições
+      summary: Listar prescrições de um paciente
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID do paciente
+      responses:
+        '200':
+          description: Prescrições do paciente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Prescricao'
+
+  /dashboard/stats:
+    get:
+      tags:
+        - Dashboard
+      summary: Estatísticas gerais
+      description: Retorna totais de pacientes, usuários e prescrições
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: periodo
+          in: query
+          schema:
+            type: string
+            enum: [hoje, semana, mes, ano]
+          description: Período para filtrar estatísticas
+      responses:
+        '200':
+          description: Estatísticas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalPacientes:
+                    type: number
+                    example: 150
+                  totalUsuarios:
+                    type: number
+                    example: 8
+                  totalPrescricoes:
+                    type: number
+                    example: 450
+                  prescricoesPeriodo:
+                    type: number
+                    example: 45
+
+  /dashboard/prescricoes-recentes:
+    get:
+      tags:
+        - Dashboard
+      summary: Prescrições recentes
+      description: Lista as 10 prescrições mais recentes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Prescrições recentes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Prescricao'
+
+  /dashboard/pacientes-recentes:
+    get:
+      tags:
+        - Dashboard
+      summary: Pacientes recentes
+      description: Lista os 10 pacientes cadastrados mais recentemente
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pacientes recentes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paciente'
+
+  /empresas/me:
+    get:
+      tags:
+        - Empresas
+      summary: Obter dados da própria empresa
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dados da empresa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empresa'
+    
+    put:
+      tags:
+        - Empresas
+      summary: Atualizar empresa
+      description: Apenas administradores podem atualizar
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Empresa'
+      responses:
+        '200':
+          description: Empresa atualizada
+        '403':
+          description: Sem permissão

@@ -1,0 +1,44 @@
+{
+  "name": "prescrimed-system",
+  "version": "1.0.0",
+  "description": "Sistema Prescrimed - Gestão de Prescrições Médicas Multi-tenant",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "server": "node server.js",
+    "start": "node server.js",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
+    "dev:all": "concurrently \"node start-mongo-memory.js\" \"npm run dev\" \"npm run client\"",
+    "test:local": "node start-mongo-memory.js",
+    "deploy": "node deploy.js"
+  },
+  "keywords": [
+    "prescrimed",
+    "medical",
+    "prescription",
+    "multi-tenant"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.20.1",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "mongodb-memory-server": "^10.3.0",
+    "nodemon": "^3.0.2"
+  }
+}
