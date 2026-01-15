@@ -81,14 +81,16 @@ export default function BackendStatusMonitor() {
           </div>
           
           <div className="flex items-center gap-4">
-            <a
-              href={(getApiRootUrl() || '') + '/health'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm underline hover:no-underline"
-            >
-              Testar Conexão
-            </a>
+            {getApiRootUrl() ? (
+              <a
+                href={getApiRootUrl() + '/health'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm underline hover:no-underline"
+              >
+                Testar Conexão
+              </a>
+            ) : null}
             <button
               onClick={() => setShowAlert(false)}
               className="text-white hover:bg-red-700 rounded p-1 transition-colors"
@@ -103,7 +105,7 @@ export default function BackendStatusMonitor() {
       <div className="bg-red-700 px-4 py-2">
         <div className="max-w-7xl mx-auto">
           <p className="text-sm text-white/90">
-            <strong>Como resolver:</strong> Verifique se a API está rodando no Railway e se a variável <code className="bg-red-800 px-2 py-1 rounded text-xs">VITE_API_URL</code> está configurada corretamente no frontend.
+            <strong>Como resolver:</strong> Verifique se a API está rodando no Railway e se as variáveis <code className="bg-red-800 px-2 py-1 rounded text-xs">VITE_BACKEND_ROOT</code> ou <code className="bg-red-800 px-2 py-1 rounded text-xs">VITE_API_URL</code> estão configuradas corretamente no frontend.
           </p>
         </div>
       </div>

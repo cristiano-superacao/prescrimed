@@ -84,8 +84,11 @@ api.interceptors.response.use(
 
     // Erro de rede - backend não está rodando
     if (!error.response) {
-      console.error('🔴 Backend offline:', error.message);
-      const errorMessage = 'Não foi possível conectar ao servidor. Verifique se o backend está rodando em http://localhost:3000';
+        console.error('🔴 Backend offline:', error.message);
+        // Usa a raiz do backend se disponível para dar instruções mais úteis
+        const root = getApiRootUrl();
+        const hostHint = root ? `${root}` : 'seu backend/configurações de ambiente';
+        const errorMessage = `Não foi possível conectar ao servidor. Verifique se o backend está acessível em ${hostHint} e se as variáveis de ambiente do frontend estão configuradas.`;
       
       // Tenta mostrar um toast se disponível
       if (window.showToast) {
