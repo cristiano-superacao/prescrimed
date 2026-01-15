@@ -30,12 +30,16 @@ async function ensureCollections(db) {
   const existing = await db.listCollections().toArray();
   const existingNames = new Set(existing.map(c => c.name));
 
-  // Corrigir possível coleção antiga incorreta do Mongoose ("prescricaos")
-  if (existingNames.has('prescricaos') && !existingNames.has('prescricoes')) {
-    console.log('↪️  Renomeando coleção antiga "prescricaos" -> "prescricoes"...');
-    await db.collection('prescricaos').rename('prescricoes');
-    existingNames.add('prescricoes');
-    existingNames.delete('prescricaos');
+  // Corrigir possíveis coleções antigas incorretas da entidade Prescricao
+  const legacyNames = ['prescricaos', 'prescrição', 'prescrições'];
+  for (const legacy of legacyNames) {
+    if (existingNames.has(legacy) && !existingNames.has('prescricoes')) {
+      console.log(`↪️  Renomeando coleção antiga "${legacy}" -> "prescricoes"...`);
+      await db.collection(legacy).rename('prescricoes');
+      existingNames.add('prescricoes');
+      existingNames.delete(legacy);
+      break;
+    }
   }
 
   for (const name of expected) {
