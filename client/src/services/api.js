@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuração da API baseada no ambiente
-const getApiUrl = () => {
+export const getApiUrl = () => {
   // Em produção (Netlify), tenta usar a variável de ambiente primeiro
   if (import.meta.env.PROD) {
     // Se VITE_API_URL estiver definida, usa ela (Railway URL)
@@ -13,6 +13,23 @@ const getApiUrl = () => {
   }
   // Em desenvolvimento, usa a variável de ambiente ou fallback
   return import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+};
+
+// Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
+export const getApiRootUrl = () => {
+  const base = getApiUrl();
+  if (base === '/api') {
+    // Em produção com proxy Netlify, /health está na origem do site do backend
+    // Para o frontend hospedado separadamente, /api proxia para o backend e /health deve ir direto
+    // Usaremos o domínio público do backend se fornecido por variável:
+    if (import.meta.env.VITE_BACKEND_ROOT) {
+      return import.meta.env.VITE_BACKEND_ROOT;
+    }
+    // Fallback: tentar mesma origem (não ideal para SPA em Netlify com proxy)
+    return '';
+  }
+  // Remove sufixo /api de URLs completas
+  return base.replace(/\/api$/, '');
 };
 
 const API_URL = getApiUrl();

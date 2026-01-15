@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, Wifi, WifiOff } from 'lucide-react';
-import api from '../services/api';
+import api, { getApiRootUrl } from '../services/api';
 
 export default function BackendStatusMonitor() {
   const [isOnline, setIsOnline] = useState(true);
@@ -10,7 +10,9 @@ export default function BackendStatusMonitor() {
   useEffect(() => {
     const checkBackendStatus = async () => {
       try {
-        const response = await fetch('http://localhost:3000/health', {
+        const healthUrlRoot = getApiRootUrl();
+        const healthUrl = `${healthUrlRoot}/health`;
+        const response = await fetch(healthUrl, {
           method: 'GET',
           mode: 'cors',
         });
@@ -56,7 +58,7 @@ export default function BackendStatusMonitor() {
           
           <div className="flex items-center gap-4">
             <a
-              href="http://localhost:3000/health"
+              href={(getApiRootUrl() || '') + '/health'}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm underline hover:no-underline"
@@ -77,14 +79,7 @@ export default function BackendStatusMonitor() {
       <div className="bg-red-700 px-4 py-2">
         <div className="max-w-7xl mx-auto">
           <p className="text-sm text-white/90">
-            <strong>Como resolver:</strong> Execute o arquivo{' '}
-            <code className="bg-red-800 px-2 py-1 rounded text-xs">
-              INICIAR_SISTEMA_COMPLETO.bat
-            </code>{' '}
-            ou{' '}
-            <code className="bg-red-800 px-2 py-1 rounded text-xs">
-              npm run server
-            </code>
+            <strong>Como resolver:</strong> Verifique se a API está rodando no Railway e se a variável <code className="bg-red-800 px-2 py-1 rounded text-xs">VITE_API_URL</code> está configurada corretamente no frontend.
           </p>
         </div>
       </div>
