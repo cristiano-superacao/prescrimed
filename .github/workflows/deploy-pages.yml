@@ -34,13 +34,15 @@ jobs:
           cd client
           npm ci
 
-      - name: Configure environment
+      - name: Configure environment (with Railway fallbacks)
+        env:
+          DEFAULT_API_URL: https://prescrimed-backend-production-c5e0.up.railway.app/api
+          DEFAULT_BACKEND_ROOT: https://prescrimed-backend-production-c5e0.up.railway.app
         run: |
-          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> client/.env
-          echo "VITE_BACKEND_ROOT=${{ secrets.VITE_BACKEND_ROOT }}" >> client/.env
-          # Override production defaults to avoid '/api' fallback on GitHub Pages
-          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> client/.env.production
-          echo "VITE_BACKEND_ROOT=${{ secrets.VITE_BACKEND_ROOT }}" >> client/.env.production
+          API_URL="${{ secrets.VITE_API_URL }}"; [ -z "$API_URL" ] && API_URL="$DEFAULT_API_URL"
+          BACKEND_ROOT="${{ secrets.VITE_BACKEND_ROOT }}"; [ -z "$BACKEND_ROOT" ] && BACKEND_ROOT="$DEFAULT_BACKEND_ROOT"
+          mkdir -p client
+          printf "VITE_API_URL=%s\nVITE_BACKEND_ROOT=%s\n" "$API_URL" "$BACKEND_ROOT" | tee client/.env client/.env.production
         shell: bash
 
       - name: Build client for Pages
