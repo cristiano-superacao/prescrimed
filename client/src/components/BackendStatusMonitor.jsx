@@ -11,6 +11,14 @@ export default function BackendStatusMonitor() {
     const checkBackendStatus = async () => {
       try {
         const healthUrlRoot = getApiRootUrl();
+        // Se não há raiz configurada (ex.: variável não definida no cliente em produção),
+        // não mostramos alerta para evitar falso positivo em ambientes hospedados.
+        if (!healthUrlRoot) {
+          setIsOnline(true);
+          setShowAlert(false);
+          setLastCheck(new Date());
+          return;
+        }
         const healthUrl = `${healthUrlRoot}/health`;
         const response = await fetch(healthUrl, {
           method: 'GET',
