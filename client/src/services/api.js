@@ -8,6 +8,11 @@ export const getApiUrl = () => {
     if (import.meta.env.VITE_API_URL) {
       return import.meta.env.VITE_API_URL;
     }
+    // Fallback: se BACKEND_ROOT estiver definido, monta /api a partir dele
+    if (import.meta.env.VITE_BACKEND_ROOT) {
+      const root = import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
+      return `${root}/api`;
+    }
     // Fallback para proxy local
     return '/api';
   }
