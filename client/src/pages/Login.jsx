@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Mail, Lock, Building2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import HeroBackground from '../components/HeroBackground';
 import toast from 'react-hot-toast';
 
 export default function Login() {
@@ -40,8 +41,7 @@ export default function Login() {
     <div className="min-h-screen flex bg-white">
       {/* Left Side - Hero/Branding (Hidden on mobile) */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 to-primary-800 relative overflow-hidden text-white p-12 flex-col justify-between items-center text-center">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] opacity-10 bg-cover bg-center mix-blend-overlay"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-primary-900/50 to-transparent"></div>
+        <HeroBackground />
         
         <div className="relative z-10 flex flex-col items-center">
           <div className="flex items-center gap-3 text-2xl font-bold mb-2">
