@@ -85,7 +85,8 @@ async function connectDB() {
 connectDB().catch(err => console.error('❌ Erro fatal na conexão:', err));
 
 // Rota de health check (antes dos middlewares para não bloquear verificação)
-app.get('/health', (req, res) => {
+// Ativa CORS aberto apenas nesta rota para permitir verificação a partir de frontends externos (Pages/Netlify)
+app.get('/health', cors(), (req, res) => {
   res.json({ status: 'ok', db: dbReady ? 'connected' : 'unavailable', timestamp: new Date().toISOString() });
 });
 
