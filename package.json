@@ -10,6 +10,7 @@
     "start": "node server.js",
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build",
+    "build:full": "npm install --production=false && cd client && npm install && npm run build && cd ..",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
     "dev:all": "concurrently \"node start-mongo-memory.js\" \"npm run dev\" \"npm run client\"",
     "test:local": "node start-mongo-memory.js",
