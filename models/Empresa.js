@@ -19,7 +19,7 @@ const empresaSchema = new mongoose.Schema({
   telefone: String,
   tipoSistema: {
     type: String,
-    enum: ['casa-repouso', 'petshop'],
+    enum: ['casa-repouso', 'petshop', 'fisioterapia'],
     default: 'casa-repouso'
   },
   endereco: {

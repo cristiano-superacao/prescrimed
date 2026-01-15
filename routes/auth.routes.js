@@ -55,6 +55,13 @@ router.post('/register', registerValidation, async (req, res) => {
       }
     }
 
+    // Mapear módulos ativos por tipo de sistema
+    const modulesByType = {
+      'casa-repouso': ['dashboard', 'prescricoes', 'pacientes', 'estoque', 'financeiro', 'agenda', 'cronograma'],
+      'petshop': ['dashboard', 'prescricoes', 'pacientes', 'estoque', 'financeiro', 'agenda'],
+      'fisioterapia': ['dashboard', 'prescricoes', 'pacientes', 'agenda', 'evolucao', 'cronograma']
+    };
+
     // Criar empresa
     const empresa = await Empresa.create({
       nome: nomeEmpresa,
@@ -62,6 +69,9 @@ router.post('/register', registerValidation, async (req, res) => {
       email,
       telefone: contato || telefone || null,
       tipoSistema: tipoSistema || 'casa-repouso',
+      configuracoes: {
+        modulosAtivos: modulesByType[tipoSistema || 'casa-repouso']
+      }
     });
 
     // Criar usuário administrador

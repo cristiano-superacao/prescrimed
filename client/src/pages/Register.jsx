@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { UserPlus, Building2, Briefcase, ShieldCheck, Home, PawPrint } from 'lucide-react';
+import { UserPlus, Building2, Briefcase, ShieldCheck, Home, PawPrint, HeartPulse } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import toast from 'react-hot-toast';
 
@@ -142,7 +142,7 @@ export default function Register() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, tipoSistema: 'casa-repouso' })}
@@ -167,6 +167,34 @@ export default function Register() {
                           : 'text-slate-900'
                       }`}>Casa de Repouso</h4>
                       <p className="text-xs text-slate-500 mt-1">Gestão de residentes e cuidados</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, tipoSistema: 'fisioterapia' })}
+                  className={`p-5 rounded-xl border-2 transition-all duration-200 ${
+                    formData.tipoSistema === 'fisioterapia'
+                      ? 'border-rose-500 bg-rose-50 shadow-md'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
+                      formData.tipoSistema === 'fisioterapia'
+                        ? 'bg-rose-600 text-white'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      <HeartPulse size={28} />
+                    </div>
+                    <div>
+                      <h4 className={`font-semibold ${
+                        formData.tipoSistema === 'fisioterapia'
+                          ? 'text-rose-700'
+                          : 'text-slate-900'
+                      }`}>Clínica de Fisioterapia</h4>
+                      <p className="text-xs text-slate-500 mt-1">Gestão de sessões e evoluções</p>
                     </div>
                   </div>
                 </button>
@@ -212,8 +240,9 @@ export default function Register() {
                   <p className="text-xs text-slate-500">
                     {formData.tipoSistema === 'casa-repouso' 
                       ? 'Informações da casa de repouso'
-                      : 'Informações do petshop/clínica veterinária'
-                    }
+                      : formData.tipoSistema === 'petshop'
+                        ? 'Informações do petshop/clínica veterinária'
+                        : 'Informações da clínica de fisioterapia'}
                   </p>
                 </div>
               </div>
@@ -227,7 +256,13 @@ export default function Register() {
                     value={formData.nomeEmpresa}
                     onChange={handleChange}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                    placeholder={formData.tipoSistema === 'casa-repouso' ? 'Ex.: Casa de Repouso Vida' : 'Ex.: Petshop Amigo Fiel'}
+                    placeholder={
+                      formData.tipoSistema === 'casa-repouso'
+                        ? 'Ex.: Casa de Repouso Vida'
+                        : formData.tipoSistema === 'petshop'
+                          ? 'Ex.: Petshop Amigo Fiel'
+                          : 'Ex.: Clínica Fisio Movimento'
+                    }
                     required
                   />
                 </div>
