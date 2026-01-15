@@ -1,8 +1,12 @@
 # Railway ignore file
 # Arquivos e pastas que não devem ser enviados para o Railway
 
-# Client (frontend - deploy separado no Netlify)
-client/
+# Client source (mas não dist que precisa ser deployado)
+client/src/
+client/public/
+client/node_modules/
+client/.env.development
+client/.env.local
 
 # Documentação
 docs/
