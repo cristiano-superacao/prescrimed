@@ -22,6 +22,7 @@ import { seedDatabase } from './utils/seed.js';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
+let dbReady = false;
 // JWT padrão em desenvolvimento para evitar 500 (faltando segredo)
 if (!process.env.JWT_SECRET && (process.env.NODE_ENV || 'development') === 'development') {
   process.env.JWT_SECRET = 'dev-secret-change-me';
@@ -40,6 +41,7 @@ async function connectDB() {
     if (mongoUriEnv) {
       await mongoose.connect(mongoUriEnv);
       console.log('✅ MongoDB conectado com sucesso');
+      dbReady = true;
     } else if ((process.env.NODE_ENV || 'development') !== 'production') {
       // Em desenvolvimento, usar MongoDB Memory Server
       console.log('📦 Iniciando MongoDB Memory Server...');
@@ -48,6 +50,7 @@ async function connectDB() {
       await mongoose.connect(mongoUri);
       console.log('✅ MongoDB Memory Server conectado com sucesso');
       console.log('⚠️  Dados serão perdidos ao reiniciar o servidor');
+      dbReady = true;
     } else {
       // Em produção sem URI definida, iniciar app sem DB para liberar healthcheck
       console.warn('⚠️  MONGODB_URI/MONGO_URL não definida em produção. Iniciando sem conexão ao banco.');
@@ -55,7 +58,9 @@ async function connectDB() {
     }
 
     // Executar seed após conexão
-    await seedDatabase();
+    if (dbReady) {
+      await seedDatabase();
+    }
   } catch (error) {
     console.error('❌ Erro ao conectar MongoDB:', error);
     // Em produção, não derrubar o processo para permitir healthcheck e logs
@@ -72,7 +77,7 @@ connectDB();
 
 // Rota de health check (antes dos middlewares para não bloquear verificação)
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', db: dbReady ? 'connected' : 'unavailable', timestamp: new Date().toISOString() });
 });
 
 // Middlewares de segurança e performance
