@@ -70,7 +70,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 });
 
 // Rota de health check (antes de qualquer middleware pesado)
-app.get('/health', (req, res) => {
+app.get('/health', cors(), (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
     uptime: process.uptime(),
