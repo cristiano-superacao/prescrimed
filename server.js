@@ -8,15 +8,7 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // Importar rotas
-import authRoutes from './routes/auth.routes.js';
-import empresaRoutes from './routes/empresa.routes.js';
-import usuarioRoutes from './routes/usuario.routes.js';
-import prescricaoRoutes from './routes/prescricao.routes.js';
-import pacienteRoutes from './routes/paciente.routes.js';
-import dashboardRoutes from './routes/dashboard.routes.js';
-import agendamentoRoutes from './routes/agendamento.routes.js';
-import estoqueRoutes from './routes/estoque.routes.js';
-import financeiroRoutes from './routes/financeiro.routes.js';
+import apiRouter from './routes/index.js';
 import { seedDatabase } from './utils/seed.js';
 
 dotenv.config();
@@ -129,15 +121,7 @@ app.options('/api/*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Rotas
-app.use('/api/auth', authRoutes);
-app.use('/api/empresas', empresaRoutes);
-app.use('/api/usuarios', usuarioRoutes);
-app.use('/api/prescricoes', prescricaoRoutes);
-app.use('/api/pacientes', pacienteRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/agendamentos', agendamentoRoutes);
-app.use('/api/estoque', estoqueRoutes);
-app.use('/api/financeiro', financeiroRoutes);
+app.use('/api', apiRouter);
 // Tratamento de erro 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
