@@ -38,6 +38,9 @@ jobs:
         run: |
           echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> client/.env
           echo "VITE_BACKEND_ROOT=${{ secrets.VITE_BACKEND_ROOT }}" >> client/.env
+          # Override production defaults to avoid '/api' fallback on GitHub Pages
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> client/.env.production
+          echo "VITE_BACKEND_ROOT=${{ secrets.VITE_BACKEND_ROOT }}" >> client/.env.production
         shell: bash
 
       - name: Build client for Pages
