@@ -1,0 +1,52 @@
+# .railwayignore
+# Arquivos que não devem ser enviados para o Railway
+
+# Dependências
+node_modules/
+client/node_modules/
+
+# Build do cliente (apenas backend no Railway)
+client/dist/
+client/build/
+
+# Arquivos de desenvolvimento
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+
+# Ambientes locais
+.env.local
+.env.development
+.env.test
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testes
+coverage/
+.nyc_output/
+
+# Scripts de desenvolvimento
+scripts/*.bat
+scripts/*.ps1
+*.bat
+*.ps1
+
+# Documentação (reduz tamanho do deploy)
+docs/
+*.md
+!README.md
+
+# Arquivos temporários
+temp/
+tmp/
+*.tmp
+
+# Git
+.git/
+.gitignore
