@@ -22,34 +22,58 @@ import { seedDatabase } from './utils/seed.js';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
+// JWT padrão em desenvolvimento para evitar 500 (faltando segredo)
+if (!process.env.JWT_SECRET && (process.env.NODE_ENV || 'development') === 'development') {
+  process.env.JWT_SECRET = 'dev-secret-change-me';
+}
 
 // Função para conectar ao MongoDB
 async function connectDB() {
   try {
-    // Tentar MongoDB local primeiro
-    if (process.env.MONGODB_URI && process.env.MONGODB_URI !== 'mongodb://localhost:27017/prescrimed') {
-      await mongoose.connect(process.env.MONGODB_URI);
+    // Permitir múltiplos nomes de variável de ambiente (Railway/Atlas)
+    const mongoUriEnv =
+      process.env.MONGODB_URI ||
+      process.env.MONGO_URL ||
+      process.env.MONGODB_URL ||
+      process.env.DATABASE_URL;
+
+    if (mongoUriEnv) {
+      await mongoose.connect(mongoUriEnv);
       console.log('✅ MongoDB conectado com sucesso');
-    } else {
-      // Usar MongoDB Memory Server se MongoDB local não estiver disponível
+    } else if ((process.env.NODE_ENV || 'development') !== 'production') {
+      // Em desenvolvimento, usar MongoDB Memory Server
       console.log('📦 Iniciando MongoDB Memory Server...');
       const mongoServer = await MongoMemoryServer.create();
       const mongoUri = mongoServer.getUri();
       await mongoose.connect(mongoUri);
       console.log('✅ MongoDB Memory Server conectado com sucesso');
       console.log('⚠️  Dados serão perdidos ao reiniciar o servidor');
+    } else {
+      // Em produção sem URI definida, iniciar app sem DB para liberar healthcheck
+      console.warn('⚠️  MONGODB_URI/MONGO_URL não definida em produção. Iniciando sem conexão ao banco.');
+      return;
     }
-    
+
     // Executar seed após conexão
     await seedDatabase();
   } catch (error) {
     console.error('❌ Erro ao conectar MongoDB:', error);
-    process.exit(1);
+    // Em produção, não derrubar o processo para permitir healthcheck e logs
+    if ((process.env.NODE_ENV || 'development') === 'production') {
+      console.warn('⚠️  Continuando sem conexão ao banco em produção. Verifique as variáveis de ambiente.');
+    } else {
+      process.exit(1);
+    }
   }
 }
 
 // Conectar ao MongoDB antes de iniciar o servidor
 connectDB();
+
+// Rota de health check (antes dos middlewares para não bloquear verificação)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Middlewares de segurança e performance
 app.use(helmet());
@@ -66,7 +90,7 @@ const allowedOrigins = [
   process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null
 ].filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     // Permite requisições sem origin (mobile apps, curl, etc)
     if (!origin) return callback(null, true);
@@ -80,7 +104,10 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+};
+// Aplicar CORS apenas nas rotas de API para não interferir no /health
+app.use('/api', cors(corsOptions));
+app.options('/api/*', cors(corsOptions));
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -94,10 +121,6 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/agendamentos', agendamentoRoutes);
 app.use('/api/estoque', estoqueRoutes);
 app.use('/api/financeiro', financeiroRoutes);
-// Rota de health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 // Tratamento de erro 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
