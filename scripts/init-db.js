@@ -50,6 +50,26 @@ async function ensureCollections(db) {
       console.log(`✔️  Coleção já existe: ${name}`);
     }
   }
+
+  // Renomear coleções singulares para plural canônico quando necessário
+  const legacyMap = {
+    empresa: 'empresas',
+    usuario: 'usuarios',
+    paciente: 'pacientes',
+    agendamento: 'agendamentos',
+    alimento: 'alimentos',
+    medicamento: 'medicamentos',
+    movimentacaoestoque: 'movimentacaoestoques',
+    transacao: 'transacaos'
+  };
+  for (const [legacy, target] of Object.entries(legacyMap)) {
+    if (existingNames.has(legacy) && !existingNames.has(target)) {
+      console.log(`↪️  Renomeando coleção antiga "${legacy}" -> "${target}"...`);
+      await db.collection(legacy).rename(target);
+      existingNames.add(target);
+      existingNames.delete(legacy);
+    }
+  }
 }
 
 async function syncAllIndexes() {

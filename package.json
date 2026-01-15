@@ -18,7 +18,8 @@
     "railway:logs": "railway logs",
     "seed:cloud": "node scripts/seed-cloud.js",
     "init:db": "node scripts/init-db.js",
-    "verify:empresas": "node scripts/verificar-empresas.js"
+    "verify:empresas": "node scripts/verificar-empresas.js",
+    "db:test": "node scripts/test-db-connection.js"
   },
   "keywords": [
     "prescrimed",

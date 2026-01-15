@@ -23,16 +23,26 @@ if (!process.env.JWT_SECRET && (process.env.NODE_ENV || 'development') === 'deve
 // Função para conectar ao MongoDB
 async function connectDB() {
   try {
-    // Permitir múltiplos nomes de variável de ambiente (Railway/Atlas)
-    const mongoUriEnv =
-      process.env.MONGODB_URI ||
-      process.env.MONGO_URL ||
-      process.env.MONGODB_URL ||
-      process.env.DATABASE_URL;
+    // Resolver URI do Mongo a partir de múltiplos nomes possíveis (inclui variantes em PT)
+    const possibleKeys = [
+      'MONGODB_URI',
+      'MONGO_URL',
+      'MONGODB_URL',
+      'DATABASE_URL',
+      'URL_MONGO',
+      'URL_PUBLICA_MONGO',
+      'MONGO_URI',
+      'URL_DO_BANCO_DE_DADOS'
+    ];
+    let mongoUriEnv = null;
+    let usedKey = null;
+    for (const key of possibleKeys) {
+      if (process.env[key]) { mongoUriEnv = process.env[key]; usedKey = key; break; }
+    }
 
     if (mongoUriEnv) {
       await mongoose.connect(mongoUriEnv);
-      console.log('✅ MongoDB conectado com sucesso');
+      console.log(`✅ MongoDB conectado com sucesso (via ${usedKey})`);
       dbReady = true;
     } else if ((process.env.NODE_ENV || 'development') !== 'production') {
       // Em desenvolvimento, usar MongoDB Memory Server
