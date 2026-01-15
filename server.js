@@ -13,6 +13,7 @@ import { seedDatabase } from './utils/seed.js';
 
 dotenv.config();
 const app = express();
+// Railway usa PORT dinamicamente; fallback 3000 local
 const PORT = process.env.PORT || 3000;
 let dbReady = false;
 // JWT padrão em desenvolvimento para evitar 500 (faltando segredo)
@@ -59,9 +60,9 @@ async function connectDB() {
       return;
     }
 
-    // Executar seed após conexão
+    // Executar seed em background após conexão (não bloqueia healthcheck)
     if (dbReady) {
-      await seedDatabase();
+      seedDatabase().catch(err => console.error('❌ Erro no seed:', err));
     }
   } catch (error) {
     console.error('❌ Erro ao conectar MongoDB:', error);
@@ -74,8 +75,8 @@ async function connectDB() {
   }
 }
 
-// Conectar ao MongoDB antes de iniciar o servidor
-connectDB();
+// Conectar ao MongoDB em background (não bloqueia início do servidor)
+connectDB().catch(err => console.error('❌ Erro fatal na conexão:', err));
 
 // Rota de health check (antes dos middlewares para não bloquear verificação)
 app.get('/health', (req, res) => {
@@ -145,12 +146,25 @@ app.use((err, req, res, next) => {
   });
 });
 // Iniciar servidor
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📚 Ambiente: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 API: http://localhost:${PORT}`);
   if (process.env.RAILWAY_PUBLIC_DOMAIN) {
     console.log(`🌐 Railway URL: https://${process.env.RAILWAY_PUBLIC_DOMAIN}`);
   }
+  console.log(`✅ Health endpoint disponível em: http://localhost:${PORT}/health`);
 });
+
+// Tratamento de erros do servidor
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`❌ Porta ${PORT} já está em uso`);
+    process.exit(1);
+  } else {
+    console.error('❌ Erro no servidor:', error);
+    process.exit(1);
+  }
+});
+
 export default app;
