@@ -61,6 +61,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://prescrimed.netlify.app',
   'https://precrimed.netlify.app',
+  'https://prescrimer.netlify.app',
   process.env.FRONTEND_URL,
   process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null
 ].filter(Boolean);
