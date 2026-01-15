@@ -6,10 +6,16 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Importar rotas
 import apiRouter from './routes/index.js';
 import { seedDatabase } from './utils/seed.js';
+
+// ES Modules __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
@@ -131,11 +137,22 @@ app.options('/api/*', cors(corsOptions));
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Rotas
+
+// Servir arquivos estáticos do frontend (build do Vite)
+const clientDistPath = path.join(__dirname, 'client', 'dist');
+app.use(express.static(clientDistPath));
+
+// Rotas da API
 app.use('/api', apiRouter);
-// Tratamento de erro 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Rota não encontrada' });
+
+// Fallback: todas as outras rotas retornam o index.html do frontend (SPA)
+app.get('*', (req, res) => {
+  // Se não for rota de API, servir o frontend
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  } else {
+    res.status(404).json({ error: 'Rota não encontrada' });
+  }
 });
 // Tratamento de erros global
 app.use((err, req, res, next) => {

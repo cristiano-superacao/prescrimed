@@ -12,7 +12,29 @@ export default function BackendStatusMonitor() {
       try {
         const healthUrlRoot = getApiRootUrl();
         
-        // Se não há raiz configurada, não mostramos alerta
+        // Se estamos no mesmo domínio (servidor único), usar caminho relativo
+        const isSameDomain = !healthUrlRoot || healthUrlRoot.includes(window.location.hostname);
+        
+        if (isSameDomain) {
+          // Frontend e backend no mesmo servidor, usar rota relativa
+          const healthUrl = '/health';
+          const response = await fetch(healthUrl, {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+          });
+          
+          if (response.ok) {
+            setIsOnline(true);
+            setShowAlert(false);
+          } else {
+            setIsOnline(false);
+            setShowAlert(true);
+          }
+          setLastCheck(new Date());
+          return;
+        }
+
+        // Se não há raiz configurada em setup separado, não mostramos alerta
         if (!healthUrlRoot) {
           console.warn('⚠️ BackendStatusMonitor: VITE_BACKEND_ROOT não configurado, desabilitando healthcheck');
           setIsOnline(true);
