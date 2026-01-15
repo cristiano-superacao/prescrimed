@@ -75,6 +75,9 @@ router.post('/register', registerValidation, async (req, res) => {
     });
 
     // Criar usuário administrador
+    const adminExtras = ['usuarios', 'configuracoes'];
+    const permissoesAdmin = [...(modulesByType[tipoSistema || 'casa-repouso'] || []), ...adminExtras];
+
     const usuario = await Usuario.create({
       empresaId: empresa.id,
       nome: nomeAdmin,
@@ -83,7 +86,7 @@ router.post('/register', registerValidation, async (req, res) => {
       cpf: cpf || null,
       telefone: contato || telefone || null,
       role: 'admin',
-      permissoes: ['dashboard', 'prescricoes', 'pacientes', 'usuarios', 'configuracoes'],
+      permissoes: permissoesAdmin,
     });
 
     // Atualizar empresa com ID do admin
@@ -167,8 +170,11 @@ router.post('/login', loginValidation, async (req, res) => {
       { expiresIn: process.env.SESSION_TIMEOUT || '8h' }
     );
 
-    // Remover senha do objeto
-    const { senha: _, ...usuarioSemSenha } = usuario;
+    // Construir permissões baseadas no tipo da empresa
+    const adminExtrasLogin = ['usuarios', 'configuracoes'];
+    const permissoesLogin = usuario.role === 'admin'
+      ? [...(empresa.configuracoes?.modulosAtivos || []), ...adminExtrasLogin]
+      : (usuario.permissoes || []);
 
     res.json({
       message: 'Login realizado com sucesso',
@@ -178,9 +184,11 @@ router.post('/login', loginValidation, async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         role: usuario.role,
-        permissoes: usuario.permissoes || [],
+        permissoes: permissoesLogin,
         empresaId: usuario.empresaId,
         empresaNome: empresa.nome,
+        tipoSistema: empresa.tipoSistema,
+        modulosAtivos: empresa.configuracoes?.modulosAtivos || [],
         telefone: usuario.telefone,
         especialidade: usuario.especialidade,
         crm: usuario.crm,
