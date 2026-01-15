@@ -1,11 +1,11 @@
 import express from 'express';
+console.log('🎬 Iniciando servidor Prescrimed...');
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -18,80 +18,71 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
-const app = express();
-// Railway usa PORT dinamicamente; fallback 3000 local
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 let dbReady = false;
-// JWT padrão em desenvolvimento para evitar 500 (faltando segredo)
-if (!process.env.JWT_SECRET && (process.env.NODE_ENV || 'development') === 'development') {
-  process.env.JWT_SECRET = 'dev-secret-change-me';
-}
 
-// Função para conectar ao MongoDB
+// Conectar ao MongoDB em background (não bloqueia início do servidor)
 async function connectDB() {
   try {
-    // Resolver URI do Mongo a partir de múltiplos nomes possíveis (inclui variantes em PT)
-    const possibleKeys = [
-      'MONGODB_URI',
-      'MONGO_URL',
-      'MONGODB_URL',
-      'DATABASE_URL',
-      'URL_MONGO',
-      'URL_PUBLICA_MONGO',
-      'MONGO_URI',
-      'URL_DO_BANCO_DE_DADOS'
-    ];
-    let mongoUriEnv = null;
-    let usedKey = null;
-    for (const key of possibleKeys) {
-      if (process.env[key]) { mongoUriEnv = process.env[key]; usedKey = key; break; }
-    }
+    const mongoUriEnv = process.env.MONGODB_URI || process.env.MONGO_URL || 
+                       process.env.MONGODB_URL || process.env.DATABASE_URL || 
+                       process.env.URL_MONGO || process.env.URL_PUBLICA_MONGO || 
+                       process.env.MONGO_URI || process.env.URL_DO_BANCO_DE_DADOS;
 
     if (mongoUriEnv) {
+      console.log('📡 Conectando ao MongoDB Cloud...');
       await mongoose.connect(mongoUriEnv);
-      console.log(`✅ MongoDB conectado com sucesso (via ${usedKey})`);
+      console.log('✅ MongoDB Cloud conectado');
       dbReady = true;
-    } else if ((process.env.NODE_ENV || 'development') !== 'production') {
-      // Em desenvolvimento, usar MongoDB Memory Server
-      console.log('📦 Iniciando MongoDB Memory Server...');
-      const mongoServer = await MongoMemoryServer.create();
-      const mongoUri = mongoServer.getUri();
-      await mongoose.connect(mongoUri);
-      console.log('✅ MongoDB Memory Server conectado com sucesso');
-      console.log('⚠️  Dados serão perdidos ao reiniciar o servidor');
-      dbReady = true;
+    } else if (process.env.NODE_ENV !== 'production') {
+      try {
+        console.log('📦 Iniciando MongoDB Memory Server...');
+        const { MongoMemoryServer } = await import('mongodb-memory-server');
+        const mongoServer = await MongoMemoryServer.create();
+        await mongoose.connect(mongoServer.getUri());
+        console.log('✅ MongoDB Memory Server conectado');
+        dbReady = true;
+      } catch (e) {
+        console.warn('⚠️  Falha ao carregar MongoMemoryServer:', e.message);
+      }
     } else {
-      // Em produção sem URI definida, iniciar app sem DB para liberar healthcheck
-      console.warn('⚠️  MONGODB_URI/MONGO_URL não definida em produção. Iniciando sem conexão ao banco.');
-      return;
+      console.warn('⚠️  MONGODB_URI não definida em produção. Iniciando sem banco.');
     }
 
-    // Executar seed em background após conexão (não bloqueia healthcheck)
     if (dbReady) {
-      seedDatabase().catch(err => console.error('❌ Erro no seed:', err));
+      console.log('🌱 Iniciando processamento de Seed...');
+      await seedDatabase();
+      console.log('✅ Processamento de Seed finalizado');
     }
   } catch (error) {
-    console.error('❌ Erro ao conectar MongoDB:', error);
-    // Em produção, não derrubar o processo para permitir healthcheck e logs
-    if ((process.env.NODE_ENV || 'development') === 'production') {
-      console.warn('⚠️  Continuando sem conexão ao banco em produção. Verifique as variáveis de ambiente.');
-    } else {
-      process.exit(1);
-    }
+    console.error('❌ Erro na rotina de banco/seed:', error.message);
   }
 }
 
-// Conectar ao MongoDB em background (não bloqueia início do servidor)
-connectDB().catch(err => console.error('❌ Erro fatal na conexão:', err));
+connectDB();
 
-// Rota de health check (antes dos middlewares para não bloquear verificação)
-// Ativa CORS aberto apenas nesta rota para permitir verificação a partir de frontends externos (Pages/Netlify)
-app.get('/health', cors(), (req, res) => {
-  res.json({ status: 'ok', db: dbReady ? 'connected' : 'unavailable', timestamp: new Date().toISOString() });
+const app = express();
+
+// Iniciar servidor IMEDIATAMENTE para passar no healthcheck do Railway
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Servidor Ativo na porta ${PORT}`);
+  console.log(`🩺 Health: http://0.0.0.0:${PORT}/health`);
+});
+
+// Rota de health check (antes de qualquer middleware pesado)
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    uptime: process.uptime(),
+    db: dbReady ? 'connected' : 'connecting/disconnected',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Middlewares de segurança e performance
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 app.use(compression());
 app.use(morgan('dev'));
 // CORS configurado para múltiplas origens
@@ -172,17 +163,6 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
-// Iniciar servidor
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`📚 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 API: http://localhost:${PORT}`);
-  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
-    console.log(`🌐 Railway URL: https://${process.env.RAILWAY_PUBLIC_DOMAIN}`);
-  }
-  console.log(`✅ Health endpoint disponível em: http://localhost:${PORT}/health`);
-});
-
 // Tratamento de erros do servidor
 server.on('error', (error) => {
   if (error.code === 'EADDRINUSE') {
