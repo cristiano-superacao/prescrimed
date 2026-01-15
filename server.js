@@ -134,35 +134,34 @@ const corsOptions = {
 // Aplicar CORS apenas nas rotas de API para não interferir no /health
 app.use('/api', cors(corsOptions));
 app.options('/api/*', cors(corsOptions));
+
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rotas da API (antes dos arquivos estáticos para prioridade)
+// Rotas da API
 app.use('/api', apiRouter);
 
 // Servir arquivos estáticos do frontend (build do Vite)
 const clientDistPath = path.join(__dirname, 'client', 'dist');
+console.log(`📁 Servindo arquivos estáticos de: ${clientDistPath}`);
 app.use(express.static(clientDistPath));
 
-// Fallback: todas as outras rotas não-API retornam o index.html do frontend (SPA)
-app.get('*', (req, res, next) => {
-  // Se for rota de API, passar para o próximo middleware (erro 404)
-  if (req.path.startsWith('/api')) {
-    return next();
+// SPA Fallback: todas as rotas não-API/não-health retornam index.html
+app.use((req, res, next) => {
+  // Se for rota de API, passar para tratamento de erro 404
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Rota de API não encontrada' });
   }
-  // Para todas as outras rotas, servir o frontend SPA
+  
+  // Para todas as outras rotas (SPA routing), servir index.html
   res.sendFile(path.join(clientDistPath, 'index.html'), (err) => {
     if (err) {
-      console.error('Erro ao servir index.html:', err);
-      res.status(404).json({ error: 'Frontend não encontrado. Execute: npm run build:full' });
+      console.error('❌ Erro ao servir index.html:', err);
+      console.error('❌ Caminho tentado:', path.join(clientDistPath, 'index.html'));
+      res.status(404).send('Frontend não encontrado. Execute: npm run build:full');
     }
   });
-});
-
-// Tratamento de erro 404 para APIs
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: 'Rota de API não encontrada' });
 });
 // Tratamento de erros global
 app.use((err, req, res, next) => {
