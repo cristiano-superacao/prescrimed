@@ -1,32 +1,28 @@
-# 🚀 Deploy no Railway - Prescrimed System
+# 🚀 Deploy no Railway — Prescrimed
 
 ## 📋 Visão Geral
 
-Este guia fornece instruções passo a passo para fazer o deploy do backend do Sistema Prescrimed no Railway, mantendo o layout responsivo e profissional.
+Guia passo a passo para publicar a API no Railway e configurar o frontend (GitHub Pages ou Netlify) mantendo layout responsivo e profissional.
 
-## 🎯 O que foi configurado
+## 🎯 O que já está pronto
 
 ### Backend (Railway)
-- ✅ Configuração Railway (`railway.json`)
-- ✅ Nixpacks config (`nixpacks.toml`)
-- ✅ Procfile para Railway
-- ✅ Health check endpoint
-- ✅ CORS configurado para Railway
-- ✅ Variáveis de ambiente preparadas
-- ✅ Binding em 0.0.0.0 para Railway
+- ✅ `railway.json` com build/start e healthcheck em `/health`
+- ✅ CORS aplicado apenas em `/api` com origens permitidas
+- ✅ `server.js` com fallback JWT em dev e health check independente do DB
+- ✅ Conexão Mongo por `MONGODB_URI` (Atlas ou Railway plugin)
 
-### Frontend (Netlify)
-- ✅ Layout responsivo mantido
-- ✅ Configuração de API dinâmica
-- ✅ Suporte a Railway URL
-- ✅ Fallback para proxy local
+### Frontend (Client)
+- ✅ Vite com base dinâmica para GitHub Pages (`VITE_BASE`)
+- ✅ Banner de status do backend apenas quando configurado (`VITE_BACKEND_ROOT`)
+- ✅ HeroBackground com `client/public/pattern.svg` e imagem opcional via `VITE_BG_IMAGE_URL`
 
 ## 📦 Pré-requisitos
 
-1. **Conta no Railway** - https://railway.app
-2. **Conta no Netlify** - https://netlify.com (para frontend)
-3. **MongoDB Atlas** (recomendado) - https://mongodb.com/cloud/atlas
-4. **Git instalado**
+1. Conta no Railway — https://railway.app
+2. Conta no GitHub (Pages) ou Netlify (opcional)
+3. MongoDB (Atlas ou plugin do Railway)
+4. Git instalado
 
 ## 🚀 Passo 1: Preparar MongoDB
 
@@ -47,8 +43,8 @@ Este guia fornece instruções passo a passo para fazer o deploy do backend do S
 
 ### Opção 2: MongoDB Railway Plugin
 
-1. No Railway, adicione o plugin MongoDB
-2. Railway criará automaticamente a variável `MONGO_URL`
+1. No Railway, adicione o plugin MongoDB ao projeto
+2. Use a referência interna do serviço (`${{MongoDB.URL_MONGO}}`) como `MONGODB_URI`
 
 ## 🚂 Passo 2: Deploy no Railway
 
@@ -61,26 +57,30 @@ Este guia fornece instruções passo a passo para fazer o deploy do backend do S
 5. Autorize o Railway a acessar seus repositórios
 6. Selecione o repositório `prescrimed-main`
 
-### 2.2. Configurar Variáveis de Ambiente
+### 2.2. Configurar Variáveis de Ambiente (API)
 
-No Railway Dashboard, vá em **Variables** e adicione:
+No serviço da API, em **Variables**, adicione:
 
 ```bash
-# MongoDB Atlas
+# MongoDB Atlas (exemplo)
 MONGODB_URI=mongodb+srv://prescrimed:SUA_SENHA@cluster.mongodb.net/prescrimed?retryWrites=true&w=majority
 
-# OU MongoDB Railway (se usar plugin)
-# MONGODB_URI=${{MONGO_URL}}
+# OU MongoDB Railway (plugin)
+MONGODB_URI=${{MongoDB.URL_MONGO}}
 
-# JWT Secret (gere um seguro)
-JWT_SECRET=sua_chave_secreta_muito_segura_aqui_mude_isso
+# JWT Secret (gere um segredo forte)
+JWT_SECRET=chave_segura_base64_32_chars
 
-# Node Environment
+# Ambiente
 NODE_ENV=production
 
-# Frontend URL (opcional - para CORS)
-FRONTEND_URL=https://seu-app.netlify.app
+# CORS (origem do frontend)
+FRONTEND_URL=https://seu-frontend.exemplo
 ```
+
+Observações:
+- `/health` responde `status: ok` mesmo sem DB; o campo `db` indica `connected` ou `unavailable`.
+- O CORS é aplicado apenas em `/api` e não interfere no healthcheck.
 
 ### 2.3. Gerar JWT Secret Seguro
 
@@ -98,10 +98,9 @@ Copie o resultado e use como `JWT_SECRET`.
 
 ### 2.4. Deploy Automático
 
-1. Railway detectará o `railway.json` automaticamente
-2. O build começará automaticamente
-3. Aguarde o deploy completar (2-5 minutos)
-4. Você verá a URL pública: `https://seu-app.up.railway.app`
+1. Railway detectará `railway.json` automaticamente
+2. O build iniciará e o serviço será publicado
+3. Ao finalizar, veja a URL pública (Domains)
 
 ### 2.5. Verificar Deploy
 
@@ -114,24 +113,28 @@ Copie o resultado e use como `JWT_SECRET`.
    }
    ```
 
-## 🌐 Passo 3: Configurar Frontend (Netlify)
+## 🌐 Passo 3: Configurar Frontend (GitHub Pages ou Netlify)
 
-### 3.1. Atualizar Variável de Ambiente
+### 3.1. GitHub Pages
 
-No Netlify Dashboard:
+No repositório GitHub, em `Settings → Secrets and variables → Actions`:
 
-1. Vá em **Site settings** > **Environment variables**
-2. Adicione/Edite:
-   ```
-   VITE_API_URL = https://seu-app.up.railway.app/api
-   ```
-3. Clique em **Save**
+```
+VITE_API_URL=https://seu-backend.up.railway.app/api
+VITE_BACKEND_ROOT=https://seu-backend.up.railway.app
+```
 
-### 3.2. Redeployar Frontend
+O workflow em `.github/workflows/deploy-pages.yml` usa esses segredos para buildar e publicar o `client/dist` no Pages.
 
-1. No Netlify, vá em **Deploys**
-2. Clique em **Trigger deploy** > **Clear cache and deploy site**
-3. Aguarde o novo deploy completar
+### 3.2. Netlify (opcional)
+
+Em Environment Variables do site:
+
+```
+VITE_API_URL=https://seu-backend.up.railway.app/api
+VITE_BACKEND_ROOT=https://seu-backend.up.railway.app
+# VITE_BG_IMAGE_URL=https://sua-imagem/hero.jpg   # opcional
+```
 
 ## ✅ Passo 4: Testar Sistema
 
@@ -139,12 +142,12 @@ No Netlify Dashboard:
 
 ```bash
 # Health check
-curl https://seu-app.up.railway.app/health
+curl https://seu-backend.up.railway.app/health
 
-# Teste de login
-curl -X POST https://seu-app.up.railway.app/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@sistema.com","senha":"Admin@123"}'
+# Teste de login (após seed)
+curl -X POST https://seu-backend.up.railway.app/api/auth/login \
+   -H "Content-Type: application/json" \
+   -d '{"email":"admin.casa@prescrimed.com","senha":"PrescriMed!2024"}'
 ```
 
 ### 4.2. Testar Frontend
@@ -351,37 +354,32 @@ Railway faz deploy automático quando:
 - Documentação: `/docs`
 
 ---
-
 ## ✅ Checklist Final
 
 Antes de considerar o deploy completo:
 
-- [ ] Backend no Railway está online
-- [ ] Health check responde corretamente
-- [ ] MongoDB conectado (Atlas ou Railway)
-- [ ] JWT_SECRET configurado e seguro
-- [ ] Frontend no Netlify atualizado
-- [ ] VITE_API_URL apontando para Railway
-- [ ] Login funcionando
-- [ ] Dashboard carregando dados
-- [ ] Criar paciente funciona
-- [ ] Criar prescrição funciona
-- [ ] Layout responsivo em mobile
-- [ ] CORS configurado corretamente
-- [ ] Logs sem erros críticos
+- [ ] Backend no Railway online e `/health` respondendo
+- [ ] `MONGODB_URI` configurado e `db: connected`
+- [ ] `JWT_SECRET` forte e único
+- [ ] Frontend (Pages/Netlify) com `VITE_API_URL` e `VITE_BACKEND_ROOT`
+- [ ] Executado `npm run seed:cloud` (3 empresas + 5 pacientes)
+- [ ] Login admins criado pelo seed funcionando
+- [ ] Layout responsivo validado (desktop/tablet/mobile)
+- [ ] CORS corretos e logs sem erros críticos
 
 ## 🎉 Pronto!
 
-Seu sistema Prescrimed está agora rodando no Railway com layout profissional e responsivo!
+Sistema Prescrimed publicado com layout profissional e responsivo.
 
-**URLs de Acesso:**
-- Frontend: `https://seu-app.netlify.app`
-- Backend: `https://seu-app.up.railway.app`
-- API: `https://seu-app.up.railway.app/api`
-- Health: `https://seu-app.up.railway.app/health`
+**URLs de Acesso (exemplos):**
+- Frontend (Pages): `https://cristiano-superacao.github.io/prescrimed`
+- Backend (Railway): `https://seu-backend.up.railway.app`
+- API: `https://seu-backend.up.railway.app/api`
+- Health: `https://seu-backend.up.railway.app/health`
 
-**Credenciais Padrão:**
-- Email: `admin@sistema.com`
-- Senha: `Admin@123`
+**Credenciais (seed):**
+- Casa: `admin.casa@prescrimed.com` / `PrescriMed!2024`
+- Petshop: `admin.pet@prescrimed.com` / `PrescriMed!2024`
+- Fisio: `admin.fisio@prescrimed.com` / `PrescriMed!2024`
 
-⚠️ **Importante:** Altere as credenciais padrão após primeiro acesso!
+⚠️ Importante: altere as senhas padrão após o primeiro acesso.
