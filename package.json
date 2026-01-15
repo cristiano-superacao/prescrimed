@@ -16,7 +16,8 @@
     "deploy": "node deploy.js",
     "railway:deploy": "railway up",
     "railway:logs": "railway logs",
-    "seed:cloud": "node scripts/seed-cloud.js"
+    "seed:cloud": "node scripts/seed-cloud.js",
+    "init:db": "node scripts/init-db.js"
   },
   "keywords": [
     "prescrimed",
