@@ -2,38 +2,54 @@ import axios from 'axios';
 
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
-  // Em produção (Netlify), tenta usar a variável de ambiente primeiro
-  if (import.meta.env.PROD) {
-    // Se VITE_API_URL estiver definida, usa ela (Railway URL)
-    if (import.meta.env.VITE_API_URL) {
-      return import.meta.env.VITE_API_URL;
-    }
-    // Fallback: se BACKEND_ROOT estiver definido, monta /api a partir dele
-    if (import.meta.env.VITE_BACKEND_ROOT) {
-      const root = import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
-      return `${root}/api`;
-    }
-    // Fallback para proxy local
+  // Detectar se está em ambiente hospedado (Railway/Netlify/Pages)
+  const isHostedProd = import.meta.env.PROD && (
+    window.location.hostname.includes('railway.app') ||
+    window.location.hostname.includes('netlify.app') ||
+    window.location.hostname.includes('github.io')
+  );
+
+  // Se VITE_API_URL estiver definida, usa ela (prioridade máxima)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  // Fallback: se BACKEND_ROOT estiver definido, monta /api a partir dele
+  if (import.meta.env.VITE_BACKEND_ROOT) {
+    const root = import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
+    return `${root}/api`;
+  }
+
+  // Em produção hospedada SEM variáveis configuradas, usar proxy relativo
+  if (isHostedProd) {
+    console.warn('⚠️ VITE_API_URL não configurada. Configure as variáveis de ambiente no Railway/Netlify.');
     return '/api';
   }
-  // Em desenvolvimento, usa a variável de ambiente ou fallback
-  return import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+  // Em desenvolvimento local
+  return 'http://localhost:3000/api';
 };
 
 // Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
 export const getApiRootUrl = () => {
+  // Prioridade 1: variável explícita
+  if (import.meta.env.VITE_BACKEND_ROOT) {
+    return import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
+  }
+
+  // Prioridade 2: derivar de VITE_API_URL
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/api$/, '');
+  }
+
+  // Fallback: tentar derivar do getApiUrl
   const base = getApiUrl();
   if (base === '/api') {
-    // Em produção com proxy Netlify, /health está na origem do site do backend
-    // Para o frontend hospedado separadamente, /api proxia para o backend e /health deve ir direto
-    // Usaremos o domínio público do backend se fornecido por variável:
-    if (import.meta.env.VITE_BACKEND_ROOT) {
-      return import.meta.env.VITE_BACKEND_ROOT;
-    }
-    // Fallback: tentar mesma origem (não ideal para SPA em Netlify com proxy)
+    // Proxy relativo - healthcheck não funcionará sem BACKEND_ROOT
+    console.warn('⚠️ VITE_BACKEND_ROOT não configurado. Banner de status offline não funcionará.');
     return '';
   }
-  // Remove sufixo /api de URLs completas
+  
   return base.replace(/\/api$/, '');
 };
 

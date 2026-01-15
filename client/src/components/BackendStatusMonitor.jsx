@@ -11,18 +11,33 @@ export default function BackendStatusMonitor() {
     const checkBackendStatus = async () => {
       try {
         const healthUrlRoot = getApiRootUrl();
-        // Se não há raiz configurada (ex.: variável não definida no cliente em produção),
-        // não mostramos alerta para evitar falso positivo em ambientes hospedados.
+        
+        // Se não há raiz configurada, não mostramos alerta
         if (!healthUrlRoot) {
+          console.warn('⚠️ BackendStatusMonitor: VITE_BACKEND_ROOT não configurado, desabilitando healthcheck');
           setIsOnline(true);
           setShowAlert(false);
           setLastCheck(new Date());
           return;
         }
+
+        // Evitar tentar localhost em produção hospedada
+        if (healthUrlRoot.includes('localhost') && 
+            (window.location.hostname.includes('railway.app') || 
+             window.location.hostname.includes('netlify.app') ||
+             window.location.hostname.includes('github.io'))) {
+          console.error('❌ BackendStatusMonitor: tentando acessar localhost em produção! Configure VITE_BACKEND_ROOT.');
+          setIsOnline(false);
+          setShowAlert(true);
+          setLastCheck(new Date());
+          return;
+        }
+
         const healthUrl = `${healthUrlRoot}/health`;
         const response = await fetch(healthUrl, {
           method: 'GET',
           mode: 'cors',
+          signal: AbortSignal.timeout(5000) // timeout de 5s
         });
         
         if (response.ok) {
@@ -33,6 +48,7 @@ export default function BackendStatusMonitor() {
           setShowAlert(true);
         }
       } catch (error) {
+        console.error('BackendStatusMonitor error:', error.message);
         setIsOnline(false);
         setShowAlert(true);
       }
@@ -42,8 +58,8 @@ export default function BackendStatusMonitor() {
     // Checa imediatamente
     checkBackendStatus();
 
-    // Checa a cada 10 segundos
-    const interval = setInterval(checkBackendStatus, 10000);
+    // Checa a cada 30 segundos (reduzido de 10s para economizar requisições)
+    const interval = setInterval(checkBackendStatus, 30000);
 
     return () => clearInterval(interval);
   }, []);
