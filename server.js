@@ -85,7 +85,7 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan('dev'));
 // CORS configurado para múltiplas origens
-const allowedOrigins = [
+const baseOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://prescrimed.netlify.app',
@@ -97,6 +97,15 @@ const allowedOrigins = [
   process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null
 ].filter(Boolean);
 
+// Origens adicionais via env (separadas por vírgula)
+const extraOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+// Deduplicar e fixar lista final
+const allowedOrigins = Array.from(new Set([...baseOrigins, ...extraOrigins]));
+
 const corsOptions = {
   origin: function (origin, callback) {
     // Permite requisições sem origin (mobile apps, curl, etc)
@@ -105,6 +114,7 @@ const corsOptions = {
     if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
+      console.warn(`CORS bloqueado para origem: ${origin}`);
       callback(new Error('Origem não permitida pelo CORS'));
     }
   },
