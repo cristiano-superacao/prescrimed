@@ -2,7 +2,7 @@ node_modules/
 .env
 .env.local
 .DS_Store
-dist/
+client/dist/
 build/
 *.log
 npm-debug.log*
@@ -19,3 +19,8 @@ firestore-debug.log
 .firebaserc
 # Local Netlify folder
 .netlify
+# Client env
+client/.env
+client/node_modules/
+logs
+coverage
