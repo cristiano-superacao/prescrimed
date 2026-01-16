@@ -149,13 +149,35 @@ app.use('/api', apiRouter);
 // Servir arquivos estáticos do frontend (build do Vite)
 const clientDistPath = path.join(__dirname, 'client', 'dist');
 console.log(`📁 Servindo arquivos estáticos de: ${clientDistPath}`);
-app.use(express.static(clientDistPath));
+
+// Verificar se o diretório existe antes de servir
+import fs from 'fs';
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  console.log('✅ Frontend estático disponível');
+} else {
+  console.log('⚠️ Diretório client/dist não encontrado - frontend não será servido (modo backend only)');
+}
 
 // SPA Fallback: todas as rotas não-API/não-health retornam index.html
 app.use((req, res, next) => {
   // Se for rota de API, passar para tratamento de erro 404
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Rota de API não encontrada' });
+  }
+  
+  // Se o frontend não existir, retornar mensagem informativa
+  if (!fs.existsSync(clientDistPath)) {
+    return res.status(200).json({ 
+      message: 'Backend Prescrimed API',
+      status: 'online',
+      mode: 'api-only',
+      endpoints: {
+        health: '/health',
+        api: '/api/*',
+        diagnostic: '/api/diagnostic/db-check'
+      }
+    });
   }
   
   // Para todas as outras rotas (SPA routing), servir index.html
