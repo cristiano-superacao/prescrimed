@@ -39,14 +39,22 @@ async function connectDB() {
       await sequelize.sync({ alter: true });
       console.log('✅ Tabelas sincronizadas (modo desenvolvimento)');
     } else {
-      await sequelize.sync();
-      console.log('✅ Modelos sincronizados');
+      await sequelize.sync({ force: false });
+      console.log('✅ Modelos sincronizados (produção)');
     }
     
     dbReady = true;
+    console.log('🎉 Sistema pronto para uso!');
   } catch (error) {
     console.error('❌ Erro ao conectar no banco de dados:', error.message);
+    console.error('Stack:', error.stack);
     dbReady = false;
+    
+    // Em produção, tentar reconectar após 5 segundos
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🔄 Tentando reconectar em 5 segundos...');
+      setTimeout(connectDB, 5000);
+    }
   }
 }
 

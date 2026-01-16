@@ -4,34 +4,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Configuração do PostgreSQL compatível com Railway
-const sequelize = new Sequelize(
-  process.env.DATABASE_URL || process.env.PGDATABASE || 'prescrimed',
-  process.env.PGUSER || 'postgres',
-  process.env.PGPASSWORD || 'postgres',
-  {
-    host: process.env.PGHOST || 'localhost',
-    port: process.env.PGPORT || 5432,
-    dialect: 'postgres',
-    dialectOptions: process.env.NODE_ENV === 'production' ? {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
-    } : {},
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    }
-  }
-);
+let sequelize;
 
-// Se DATABASE_URL estiver definida (Railway), usar ela diretamente
 if (process.env.DATABASE_URL) {
-  const dbUrl = new URL(process.env.DATABASE_URL);
-  const sequelizeFromUrl = new Sequelize(process.env.DATABASE_URL, {
+  // Railway ou Render fornece DATABASE_URL completa
+  console.log('📡 Usando DATABASE_URL do Railway/Render');
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     dialectOptions: {
       ssl: {
@@ -47,8 +25,26 @@ if (process.env.DATABASE_URL) {
       idle: 10000
     }
   });
-  
-  export default sequelizeFromUrl;
 } else {
-  export default sequelize;
+  // Configuração local com variáveis separadas
+  console.log('📦 Usando configuração local PostgreSQL');
+  sequelize = new Sequelize(
+    process.env.PGDATABASE || 'prescrimed',
+    process.env.PGUSER || 'postgres',
+    process.env.PGPASSWORD || 'postgres',
+    {
+      host: process.env.PGHOST || 'localhost',
+      port: parseInt(process.env.PGPORT || '5432', 10),
+      dialect: 'postgres',
+      logging: process.env.NODE_ENV === 'development' ? console.log : false,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+      }
+    }
+  );
 }
+
+export default sequelize;
