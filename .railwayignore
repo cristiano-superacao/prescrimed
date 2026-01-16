@@ -1,0 +1,25 @@
+node_modules/
+.git/
+.github/
+.env.local
+.env.*.local
+*.log
+.DS_Store
+database.sqlite
+database.sqlite-*
+
+# Docs e arquivos desnecessários no deploy
+docs/
+scripts/
+WEB/
+*.md
+!README.md
+!package.json
+!package-lock.json
+
+# Client source (apenas dist é necessário)
+client/src/
+client/public/
+client/node_modules/
+client/.env.development
+client/.env.local

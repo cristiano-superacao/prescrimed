@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "nodemon server.js",
     "server": "node server.js",
-    "start": "node scripts/check-dist.js && node server.js",
+    "start": "node server.js",
+    "railway:build": "npm install --production=false && cd client && npm install && npm run build",
+    "railway:start": "node server.js",
     "reset:local": "scripts\\reset-local-config.bat",
     "reset:local:ps": "powershell -ExecutionPolicy Bypass -File scripts/reset-local-config.ps1",
     "client": "cd client && npm run dev",
