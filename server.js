@@ -138,6 +138,17 @@ app.options('/api/*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Gate de API: em produção, retorna 503 enquanto o banco não estiver pronto
+app.use('/api', (req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && !dbReady) {
+    return res.status(503).json({ 
+      error: 'Serviço temporariamente indisponível',
+      db: 'connecting' 
+    });
+  }
+  next();
+});
+
 // Rotas da API
 app.use('/api', apiRouter);
 
