@@ -57,7 +57,7 @@ const app = express();
 // Iniciar servidor
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor Ativo na porta ${PORT}`);
-  console.log(`🩺 Health: http://0.0.0.0:${PORT}/health`);
+  console.log(`📍 Acesse: http://localhost:${PORT}`);
 });
 
 // Rota de health check (antes de qualquer middleware pesado)
