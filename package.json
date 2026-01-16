@@ -8,6 +8,8 @@
     "dev": "nodemon server.js",
     "server": "node server.js",
     "start": "node scripts/check-dist.js && node server.js",
+    "reset:local": "scripts\\reset-local-config.bat",
+    "reset:local:ps": "powershell -ExecutionPolicy Bypass -File scripts/reset-local-config.ps1",
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build",
     "build:full": "npm install --production=false && cd client && npm install && npm run build && cd ..",

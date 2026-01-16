@@ -10,6 +10,15 @@
 
 ## 🎯 Iniciando o Sistema
 
+### Reset rápido do ambiente local
+Se quiser apagar configurações locais e começar limpo:
+```powershell
+npm run reset:local
+# ou (PowerShell)
+npm run reset:local:ps
+```
+Isso copia `.env.example` para `.env` e limpa `client/dist`.
+
 ### Método 1: Script Automatizado (Recomendado)
 ```batch
 # Clique duas vezes no arquivo:
