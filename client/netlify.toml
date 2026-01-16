@@ -1,5 +1,0 @@
-## Deprecated: use root netlify.toml at repository root
-## This file is intentionally disabled to avoid duplication.
-## Netlify will use the configuration from the repository root.
-
-# No configuration here.

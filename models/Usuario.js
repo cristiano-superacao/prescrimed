@@ -27,6 +27,14 @@ const Usuario = sequelize.define('Usuario', {
     type: DataTypes.ENUM('superadmin', 'admin', 'nutricionista', 'atendente'),
     defaultValue: 'atendente'
   },
+  cpf: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  contato: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   empresaId: {
     type: DataTypes.UUID,
     allowNull: true

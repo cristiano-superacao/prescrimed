@@ -159,6 +159,15 @@ if (fs.existsSync(clientDistPath)) {
   console.log('⚠️ Diretório client/dist não encontrado - frontend não será servido (modo backend only)');
 }
 
+// Servir pasta WEB estática (landing institucional)
+const webStaticPath = path.join(__dirname, 'WEB');
+if (fs.existsSync(webStaticPath)) {
+  app.use('/web', express.static(webStaticPath));
+  console.log(`✅ Pasta WEB servida em /web de: ${webStaticPath}`);
+} else {
+  console.log('ℹ️ Pasta WEB não encontrada (opcional).');
+}
+
 // SPA Fallback: todas as rotas não-API/não-health retornam index.html
 app.use((req, res, next) => {
   // Se for rota de API, passar para tratamento de erro 404

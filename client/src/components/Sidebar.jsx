@@ -118,6 +118,19 @@ export default function Sidebar({ onClose }) {
               </li>
             );
           })}
+          {/* Link externo para Site (WEB) */}
+          <li>
+            <a
+              href="/web"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => onClose?.()}
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 text-primary-100 hover:bg-white/10"
+            >
+              <BookOpen size={20} />
+              <span>Site (WEB)</span>
+            </a>
+          </li>
         </ul>
       </nav>
 

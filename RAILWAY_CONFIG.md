@@ -1,95 +1,158 @@
-# 🚂 Configuração Railway - Prescrimed
+# Railway Configuration for Prescrimed
 
-## ✅ Variáveis de Ambiente Obrigatórias
+# 1. Backend Service (API + Static Frontend)
 
-Configure estas variáveis no painel do Railway (Settings > Variables):
-
-### 1. MongoDB (OBRIGATÓRIO)
-```
-MONGODB_URI=mongodb+srv://usuario:senha@cluster.mongodb.net/prescrimed?retryWrites=true&w=majority
-```
-⚠️ **Atenção:** Substitua `usuario`, `senha` e `cluster` pelos seus dados do MongoDB Atlas.
-
-### 2. JWT Secret (OBRIGATÓRIO)
-```
-JWT_SECRET=SuaChaveSecretaSuperSeguraAqui123456
-```
-💡 Use uma string longa e aleatória (mínimo 32 caracteres).
-
-### 3. Porta (Automático)
-```
-PORT=3000
-```
-✅ O Railway define isso automaticamente, mas você pode deixar explícito.
-
-### 4. Node Environment
+## Variables
 ```
 NODE_ENV=production
+PORT=3000
+JWT_SECRET=<generate-strong-secret-32-chars>
+JWT_REFRESH_SECRET=<generate-strong-secret-32-chars>
+SESSION_TIMEOUT=8h
+FRONTEND_URL=https://prescrimed.netlify.app
+ALLOWED_ORIGINS=https://prescrimed.netlify.app,https://prescrimed.up.railway.app
+FORCE_SYNC=true
 ```
 
-### 5. CORS - Frontend URL (Opcional)
+## Build Command
 ```
-FRONTEND_URL=https://seu-dominio.railway.app
+npm install --production=false && npm run build:full
 ```
-💡 Se você hospedar o frontend separadamente no GitHub Pages ou Netlify, coloque a URL aqui.
 
-## 📦 MongoDB Atlas - Setup Rápido
+## Start Command
+```
+npm start
+```
 
-1. Acesse: https://cloud.mongodb.com/
-2. Crie um cluster gratuito (M0)
-3. Database Access > Add New Database User:
-   - Username: `prescrimed_admin`
-   - Password: [gere uma senha forte]
-4. Network Access > Add IP Address:
-   - Adicione `0.0.0.0/0` (permite todas as IPs - recomendado para Railway)
-5. Databases > Connect > Connect your application:
-   - Copie a connection string
-   - Substitua `<password>` pela senha criada
-   - Adicione `/prescrimed` antes de `?retryWrites`
+## Root Directory
+```
+/
+```
 
-## 🔄 Deploy Automático
+## Healthcheck
+```
+/health
+```
 
-O Railway faz deploy automático quando você:
-- Fizer `git push` para o branch `master`
-- Alterar variáveis de ambiente no painel
+---
 
-## 🏥 Health Check
+# 2. PostgreSQL Database (Adicionar via Railway)
 
-O Railway verifica se a aplicação está saudável através de:
-- **Endpoint:** `/health`
-- **Timeout:** 360 segundos (6 minutos)
-- **Resposta esperada:** `{ status: 'ok', ... }`
+Railway automatically provides:
+- DATABASE_URL
+- PGHOST
+- PGPORT
+- PGUSER
+- PGPASSWORD
+- PGDATABASE
 
-## 🎯 Após Configurar
+---
 
-1. Faça push do código: `git push origin master`
-2. Configure as variáveis no Railway
-3. Aguarde o deploy (3-5 minutos)
-4. Acesse: `https://seu-projeto.up.railway.app/health`
-5. Se retornar `{ status: 'ok' }`, está funcionando! ✅
+# 3. Deploy Steps
 
-## 🌐 URLs do Sistema
+1. **Criar Projeto no Railway**
+   - New Project > Deploy from GitHub
+   - Selecionar repositório prescrimed
 
-- **Backend API:** `https://seu-projeto.up.railway.app/api`
-- **Frontend:** `https://seu-projeto.up.railway.app/`
-- **Health Check:** `https://seu-projeto.up.railway.app/health`
+2. **Adicionar PostgreSQL**
+   - New > Database > PostgreSQL
+   - Aguardar provisionamento
 
-## 🐛 Troubleshooting
+3. **Configurar Variáveis Backend**
+   - Settings > Variables
+   - Adicionar todas as variáveis acima
+   - DATABASE_URL é fornecida automaticamente
 
-### Erro: "Cannot find module '/app/routes/index.js'"
-✅ **Resolvido!** Commit vazio foi enviado para forçar novo build.
+4. **Primeiro Deploy**
+   - Defina FORCE_SYNC=true
+   - Deploy automático via git push
+   - Aguardar criação de tabelas
 
-### Erro: "Healthcheck failed"
-- Verifique se `MONGODB_URI` está configurada
-- Verifique se a connection string do MongoDB está correta
-- Aguarde até 6 minutos para o primeiro deploy (seeding do banco)
+5. **Pós-Deploy**
+   - Remover FORCE_SYNC=true (ou definir false)
+   - Validar /health endpoint
+   - Verificar logs
 
-### Erro: 500 no login/register
-- Verifique se `JWT_SECRET` está configurada
-- Verifique se `MONGODB_URI` está acessível
+---
 
-## 📚 Documentação Adicional
+# 4. Frontend Separado (Opcional - Netlify)
 
-- [Variáveis de Ambiente](./.env.example)
-- [Resumo do Sistema](./RESUMO_FINAL.md)
-- [Manual Completo](./docs/MANUAL_COMPLETO_SISTEMA.md)
+Se preferir servir frontend via Netlify:
+
+## netlify.toml (client/)
+```toml
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+## Environment Variables (Netlify)
+```
+VITE_API_URL=https://prescrimed-backend.up.railway.app/api
+```
+
+---
+
+# 5. URLs Finais
+
+- Backend API: https://prescrimed-backend.up.railway.app/api
+- Health Check: https://prescrimed-backend.up.railway.app/health
+- Frontend (se Railway): https://prescrimed-backend.up.railway.app
+- Frontend (se Netlify): https://prescrimed.netlify.app
+- Landing Page: https://prescrimed-backend.up.railway.app/web
+
+---
+
+# 6. Custom Domain (Opcional)
+
+Railway:
+- Settings > Networking > Custom Domain
+- Adicionar prescrimed.com
+- Configurar DNS CNAME
+
+---
+
+# 7. Monitoramento
+
+- Logs: Railway Dashboard > Deployments > Logs
+- Metrics: Railway Dashboard > Metrics
+- Database: Railway Dashboard > PostgreSQL > Data
+
+---
+
+# 8. Rollback
+
+```bash
+# Via Railway CLI
+railway rollback
+
+# Via Dashboard
+Deployments > Select Previous > Redeploy
+```
+
+---
+
+# 9. CI/CD
+
+Railway faz deploy automático em:
+- Push para branch main
+- Merge de pull requests
+- Tags git
+
+---
+
+# 10. Custos Estimados
+
+- Hobby Plan: $5/mês (500 horas execução)
+- Pro Plan: $20/mês (uso ilimitado)
+- PostgreSQL: Incluído no plano
+
+---
+
+**Desenvolvido com ❤️ para profissionais de saúde**

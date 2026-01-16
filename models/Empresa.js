@@ -11,6 +11,11 @@ const Empresa = sequelize.define('Empresa', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  tipoSistema: {
+    type: DataTypes.ENUM('casa-repouso', 'fisioterapia', 'petshop'),
+    allowNull: false,
+    defaultValue: 'casa-repouso'
+  },
   cnpj: {
     type: DataTypes.STRING,
     unique: true

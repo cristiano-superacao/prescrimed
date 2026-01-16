@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prescrimed — Plataforma de Prescrições Médicas</title>
+  <meta name="description" content="Gestão de prescrições médicas multi-tenant com segurança, performance e experiência moderna." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-wrap">
+      <a class="brand" href="#">
+        <img class="brand-logo" src="assets/logo.svg" alt="Prescrimed" />
+        <span class="brand-name">Prescrimed</span>
+      </a>
+      <button class="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="site-nav" aria-label="Menu principal">
+        <a href="#beneficios">Benefícios</a>
+        <a href="#recursos">Recursos</a>
+        <a href="#seguranca">Segurança</a>
+        <a href="#contato" class="btn btn-outline">Contato</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container grid-2">
+        <div class="hero-content">
+          <h1>Prescrições médicas, simples e seguras</h1>
+          <p>Otimize fluxos clínicos com uma plataforma moderna, multi-tenant e preparada para escalar. Experiência rápida, segura e agradável para equipes de saúde.</p>
+          <div class="hero-actions">
+            <a href="/" class="btn btn-primary">Acessar Sistema</a>
+            <a href="#recursos" class="btn btn-secondary">Ver Recursos</a>
+          </div>
+          <ul class="hero-highlights">
+            <li>Multi-tenant com isolamento por empresa</li>
+            <li>Autenticação JWT e controle de sessão</li>
+            <li>Performance com cache e compressão</li>
+          </ul>
+        </div>
+        <div class="hero-art">
+          <div class="card-preview">
+            <div class="card-header">
+              <div class="dot red"></div>
+              <div class="dot yellow"></div>
+              <div class="dot green"></div>
+            </div>
+            <div class="card-body">
+              <div class="stat">
+                <span class="stat-label">Prescrições hoje</span>
+                <span class="stat-value">128</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Tempo médio</span>
+                <span class="stat-value">3m42s</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Erros</span>
+                <span class="stat-value ok">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="beneficios" class="section">
+      <div class="container">
+        <h2>Benefícios que aceleram sua rotina</h2>
+        <div class="cards">
+          <article class="card">
+            <h3>Produtividade</h3>
+            <p>Fluxos simplificados e interface objetiva para reduzir o tempo de emissão de prescrições.</p>
+          </article>
+          <article class="card">
+            <h3>Escalabilidade</h3>
+            <p>Arquitetura pronta para crescer com sua demanda, mantendo custos otimizados.</p>
+          </article>
+          <article class="card">
+            <h3>Confiabilidade</h3>
+            <p>Monitoração e registros estruturados para garantir estabilidade e auditoria.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="recursos" class="section alt">
+      <div class="container">
+        <h2>Recursos essenciais para equipes de saúde</h2>
+        <div class="features">
+          <div class="feature">
+            <span class="badge">Multi-tenant</span>
+            <p>Isolamento de dados por empresa com controle de acesso granular.</p>
+          </div>
+          <div class="feature">
+            <span class="badge">Integrações</span>
+            <p>APIs REST para interoperabilidade com sistemas clínicos e ERPs.</p>
+          </div>
+          <div class="feature">
+            <span class="badge">Auditoria</span>
+            <p>Logs e trilhas para conformidade e rastreabilidade.</p>
+          </div>
+          <div class="feature">
+            <span class="badge">Desempenho</span>
+            <p>Compressão, cache e otimizações aplicadas no backend e frontend.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="seguranca" class="section">
+      <div class="container">
+        <h2>Segurança em primeiro lugar</h2>
+        <ul class="list">
+          <li>Autenticação JWT com expiração de sessão configurável</li>
+          <li>CORS restrito e headers de segurança com Helmet</li>
+          <li>Criptografia de senhas com bcrypt</li>
+          <li>Boas práticas de OWASP aplicadas</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="contato" class="cta">
+      <div class="container cta-wrap">
+        <div>
+          <h2>Pronto para começar?</h2>
+          <p>Fale conosco para ativar o ambiente, migrar dados e treinar sua equipe.</p>
+        </div>
+        <a class="btn btn-primary" href="mailto:contato@prescrimed.com">Solicitar Demonstração</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <p>© Prescrimed — Plataforma de Prescrições Médicas</p>
+      <nav class="footer-nav">
+        <a href="#">Termos</a>
+        <a href="#">Privacidade</a>
+        <a href="#contato">Contato</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

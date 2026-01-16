@@ -1,121 +1,126 @@
-# Sistema Prescrimed - Modo Standalone
+# 🏥 Prescrimed - Sistema de Prescrições Médicas
 
-## 🎯 Visão Geral
+Sistema completo de gestão de prescrições médicas **multi-tenant** com PostgreSQL, autenticação JWT e interface moderna.
 
-Sistema simplificado **sem banco de dados**, ideal para demonstrações e desenvolvimento de frontend.
+## ✨ Características
 
-## 🚀 Como Usar
+- 🏢 **Multi-tenant**: Isolamento completo por empresa
+- 🔐 **Segurança**: JWT, bcrypt, CORS, Helmet
+- ⚡ **Performance**: Compressão, cache, otimizações
+- 📱 **Responsivo**: Interface adaptável (mobile-first)
+- 🎨 **Moderno**: React + Vite + Tailwind CSS
+- 🗄️ **PostgreSQL**: Banco robusto com Sequelize ORM
 
-### 1. Instalação
+## 🚀 Início Rápido
 
 ```bash
+# Clonar repositório
+git clone <repo-url>
+cd prescrimed-main
+
+# Backend
 npm install
-cd client && npm install && cd ..
-```
+cp .env.example .env
+# Configurar .env com PostgreSQL
+npm run server
 
-### 2. Build do Frontend
-
-```bash
-npm run build:full
-```
-
-### 3. Iniciar o Servidor
-
-```bash
-npm start
-```
-
-O sistema estará disponível em: `http://localhost:3000`
-
-## 📡 Endpoints Disponíveis
-
-- **Health Check**: `GET /health` - Status do servidor
-- **API Test**: `GET /api/test` - Teste básico da API
-- **API Info**: `GET /api/info` - Informações sobre a API
-
-## 🔧 Desenvolvimento
-
-### Modo Desenvolvimento (Hot Reload)
-
-```bash
-# Terminal 1 - Backend
+# Frontend (outro terminal)
+cd client
+npm install
 npm run dev
-
-# Terminal 2 - Frontend
-npm run client
 ```
 
-Frontend dev: `http://localhost:5173`
+Acesse: http://localhost:5173
 
-### Resetar Configurações Locais
+## 📚 Documentação
 
-```bash
-npm run reset:local
+- [Guia de Deploy](DEPLOY.md) - Configuração completa Railway/Netlify/Render
+- [Documentação API](docs/DOCUMENTATION.md) - Endpoints e exemplos
+- [Manual do Sistema](docs/MANUAL_COMPLETO_SISTEMA.md) - Guia do usuário
+
+## 🏗️ Estrutura do Projeto
+
 ```
+prescrimed/
+├── server.js              # Backend principal
+├── models/                # Modelos Sequelize
+│   ├── Usuario.js
+│   ├── Empresa.js
+│   ├── Paciente.js
+│   └── Prescricao.js
+├── routes/                # Rotas da API
+│   ├── auth.routes.js
+│   ├── usuario.routes.js
+│   ├── empresa.routes.js
+│   ├── paciente.routes.js
+│   └── prescricao.routes.js
+├── client/                # Frontend React
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   └── store/
+│   └── dist/              # Build de produção
+└── WEB/                   # Landing page estática
+```
+
+## 🔑 Credenciais Padrão
+
+Ver [docs/CREDENCIAIS_USUARIOS.md](docs/CREDENCIAIS_USUARIOS.md)
+
+## 🛠️ Tecnologias
+
+**Backend**
+- Node.js + Express
+- PostgreSQL + Sequelize
+- JWT + bcrypt
+- Helmet + CORS
+
+**Frontend**
+- React 18
+- Vite
+- TailwindCSS
+- Zustand
+- React Router
+- Axios
 
 ## 📦 Scripts Disponíveis
 
-- `npm start` - Inicia o servidor (produção)
-- `npm run dev` - Inicia o servidor (desenvolvimento)
-- `npm run client` - Inicia o frontend (dev)
-- `npm run build` - Build do frontend
-- `npm run build:full` - Build completo (instala deps + build)
-- `npm run dev:full` - Backend + Frontend simultâneos
-- `npm run reset:local` - Reseta .env e build
+```bash
+# Desenvolvimento
+npm run dev              # Backend apenas
+npm run client           # Frontend apenas
+npm run dev:full         # Backend + Frontend
 
-## 🎨 Layout Responsivo
+# Produção
+npm run build            # Build frontend
+npm run build:full       # Instalar + Build completo
+npm start                # Servidor produção
 
-O frontend mantém o **design Premium com TailwindCSS**:
-
-- ✅ Responsivo (mobile, tablet, desktop)
-- ✅ Interface moderna e profissional
-- ✅ Componentes React otimizados
-- ✅ Dark mode (se implementado)
+# Utilidades
+npm run server           # Backend sem nodemon
+```
 
 ## 🌐 Deploy
 
-### Netlify / Vercel (Frontend + Backend)
+### Railway (Recomendado)
+- Backend: Conectar repo + adicionar PostgreSQL
+- Frontend: Netlify ou Railway separado
 
-1. Build: `npm run build:full`
-2. Deploy pasta `client/dist` (frontend)
-3. Deploy raiz do projeto (backend)
+Ver [DEPLOY.md](DEPLOY.md) para instruções detalhadas.
 
-### Render (Backend)
+## 🤝 Contribuindo
 
-1. Conectar repositório
-2. Build Command: `npm run build:full`
-3. Start Command: `npm start`
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/MinhaFeature`)
+3. Commit suas mudanças (`git commit -m 'feat: Adiciona MinhaFeature'`)
+4. Push para a branch (`git push origin feature/MinhaFeature`)
+5. Abra um Pull Request
 
-### GitHub Pages (Apenas Frontend)
+## 📄 Licença
 
-Veja [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml)
+MIT License - Sistema Prescrimed
 
-## 📝 Notas
+---
 
-- Sistema **não persiste dados** (sem banco de dados)
-- Ideal para **protótipos** e **demonstrações**
-- Layout e UI **totalmente funcionais**
-- Para adicionar persistência, considere:
-  - SQLite local
-  - JSON file storage
-  - LocalStorage (frontend)
-  - Integração com APIs externas
-
-## 🔐 Variáveis de Ambiente
-
-Copie `.env.example` para `.env`:
-
-```bash
-cp .env.example .env
-```
-
-Variáveis principais:
-
-- `NODE_ENV` - Ambiente (development/production)
-- `PORT` - Porta do servidor (padrão: 3000)
-- `JWT_SECRET` - Secret para JWT
-- `FRONTEND_URL` - URL do frontend
-
-## 📞 Suporte
-
-Para adicionar funcionalidades ou integrar banco de dados, consulte a documentação do projeto original.
+**Desenvolvido com ❤️ para profissionais de saúde**

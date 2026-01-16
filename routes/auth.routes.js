@@ -36,7 +36,7 @@ router.post('/login', async (req, res) => {
 
     res.json({
       token,
-      usuario: {
+      user: {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
@@ -51,10 +51,28 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Registro (apenas para superadmin criar empresas)
+// Registro / Onboarding
+// Suporta dois fluxos:
+// 1) Onboarding completo: cria Empresa e o usuário admin (campos: tipoSistema, nomeEmpresa, cnpj, nomeAdmin/nomeUsuario, email, senha, cpf, contato)
+// 2) Registro de usuário em empresa existente: nome, email, senha, role, empresaId
 router.post('/register', async (req, res) => {
   try {
-    const { nome, email, senha, role, empresaId } = req.body;
+    const {
+      // Fluxo onboarding
+      tipoSistema,
+      nomeEmpresa,
+      cnpj,
+      nomeAdmin,
+      nomeUsuario,
+      cpf,
+      contato,
+      // Comuns
+      email,
+      senha,
+      // Fluxo existente
+      role,
+      empresaId
+    } = req.body;
 
     const usuarioExistente = await Usuario.findOne({ where: { email } });
     if (usuarioExistente) {
@@ -63,8 +81,39 @@ router.post('/register', async (req, res) => {
 
     const senhaHash = await bcrypt.hash(senha, 10);
 
+    // Se houver nomeEmpresa, executa onboarding completo
+    if (nomeEmpresa && typeof nomeEmpresa === 'string' && nomeEmpresa.trim().length > 0) {
+      // Cria empresa com tipoSistema (inclui fisioterapia)
+      const empresa = await Empresa.create({
+        nome: nomeEmpresa,
+        tipoSistema: tipoSistema || 'casa-repouso',
+        cnpj,
+        email, // opcionalmente usa o mesmo email como contato da empresa
+        telefone: contato
+      });
+
+      const adminNome = nomeAdmin || nomeUsuario || 'Administrador';
+
+      const usuario = await Usuario.create({
+        nome: adminNome,
+        email,
+        senha: senhaHash,
+        role: 'admin',
+        empresaId: empresa.id,
+        cpf,
+        contato
+      });
+
+      return res.status(201).json({
+        message: 'Empresa e usuário administrador criados com sucesso',
+        empresa: { id: empresa.id, nome: empresa.nome, tipoSistema: empresa.tipoSistema },
+        usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, role: usuario.role }
+      });
+    }
+
+    // Caso contrário, cria apenas usuário em empresa existente
     const usuario = await Usuario.create({
-      nome,
+      nome: req.body.nome || nomeUsuario || 'Usuário',
       email,
       senha: senhaHash,
       role: role || 'atendente',
