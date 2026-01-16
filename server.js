@@ -36,7 +36,9 @@ async function connectDB() {
     
     // Sincronizar modelos (criar tabelas se não existirem)
     if (process.env.NODE_ENV !== 'production') {
-      await sequelize.sync({ alter: true });
+      // Em desenvolvimento, usar force: false para não recriar tabelas a cada restart
+      // Isso evita loops infinitos de alter table
+      await sequelize.sync({ force: false });
       console.log('✅ Tabelas sincronizadas (modo desenvolvimento)');
     } else {
       // Em produção, usar alter se FORCE_SYNC=true (para criar tabelas inicialmente)

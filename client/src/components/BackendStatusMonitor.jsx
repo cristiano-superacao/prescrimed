@@ -11,14 +11,22 @@ export default function BackendStatusMonitor() {
     const checkBackendStatus = async () => {
       try {
         const healthUrlRoot = getApiRootUrl();
-        
-        // Se estamos no mesmo domínio (servidor único), usar caminho relativo
-        const isSameDomain = !healthUrlRoot || healthUrlRoot.includes(window.location.hostname);
-        
-        if (isSameDomain) {
-          // Frontend e backend no mesmo servidor, usar rota relativa
-          const healthUrl = '/health';
-          const response = await fetch(healthUrl, {
+        // Comparar ORIGIN (host + porta) para decidir mesma origem
+        let isSameOrigin = false;
+        try {
+          if (!healthUrlRoot) {
+            isSameOrigin = true; // sem root explícito, tenta mesma origem (caso backend sirva o frontend)
+          } else {
+            const backendOrigin = new URL(healthUrlRoot).origin;
+            isSameOrigin = backendOrigin === window.location.origin;
+          }
+        } catch (_) {
+          isSameOrigin = false;
+        }
+
+        if (isSameOrigin) {
+          // Frontend e backend na MESMA origem (mesmo host+porta)
+          const response = await fetch('/health', {
             method: 'GET',
             signal: AbortSignal.timeout(5000)
           });
@@ -34,13 +42,30 @@ export default function BackendStatusMonitor() {
           return;
         }
 
-        // Se não há raiz configurada em setup separado, não mostramos alerta
+        // Se não há raiz configurada e não é mesma origem, assumir localhost:3000 em desenvolvimento
         if (!healthUrlRoot) {
-          console.warn('⚠️ BackendStatusMonitor: VITE_BACKEND_ROOT não configurado, desabilitando healthcheck');
-          setIsOnline(true);
-          setShowAlert(false);
-          setLastCheck(new Date());
-          return;
+          if (import.meta.env.DEV) {
+            const guessedRoot = 'http://localhost:3000';
+            const response = await fetch(`${guessedRoot}/health`, {
+              method: 'GET',
+              signal: AbortSignal.timeout(5000)
+            });
+            if (response.ok) {
+              setIsOnline(true);
+              setShowAlert(false);
+            } else {
+              setIsOnline(false);
+              setShowAlert(true);
+            }
+            setLastCheck(new Date());
+            return;
+          } else {
+            console.warn('⚠️ BackendStatusMonitor: VITE_BACKEND_ROOT não configurado, desabilitando healthcheck');
+            setIsOnline(true);
+            setShowAlert(false);
+            setLastCheck(new Date());
+            return;
+          }
         }
 
         // Evitar tentar localhost em produção hospedada

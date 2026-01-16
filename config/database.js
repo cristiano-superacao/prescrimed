@@ -51,7 +51,7 @@ if (process.env.DATABASE_URL) {
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: './database.sqlite',
-    logging: process.env.NODE_ENV === 'development' ? console.log : false
+    logging: false  // Desabilitar logs SQL para não poluir console
   });
 }
 
