@@ -99,8 +99,11 @@ const baseOrigins = [
   'https://prescrimed.netlify.app',
   'https://precrimed.netlify.app',
   'https://prescrimer.netlify.app',
-  // GitHub Pages (usuário/organização)
+  // GitHub Pages
   'https://cristiano-superacao.github.io',
+  'https://cristiano-superacao.github.io/prescrimed',
+  // Railway backend
+  'https://prescrimed-backend-production.up.railway.app',
   process.env.FRONTEND_URL,
   process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null
 ].filter(Boolean);

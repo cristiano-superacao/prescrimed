@@ -34,21 +34,18 @@ jobs:
           cd client
           npm ci
 
-      - name: Configure environment (with Railway fallbacks)
-        env:
-          DEFAULT_API_URL: https://prescrimed-backend-production-c5e0.up.railway.app/api
-          DEFAULT_BACKEND_ROOT: https://prescrimed-backend-production-c5e0.up.railway.app
+      - name: Configure environment
         run: |
-          API_URL="${{ secrets.VITE_API_URL }}"; [ -z "$API_URL" ] && API_URL="$DEFAULT_API_URL"
-          BACKEND_ROOT="${{ secrets.VITE_BACKEND_ROOT }}"; [ -z "$BACKEND_ROOT" ] && BACKEND_ROOT="$DEFAULT_BACKEND_ROOT"
-          mkdir -p client
-          printf "VITE_API_URL=%s\nVITE_BACKEND_ROOT=%s\n" "$API_URL" "$BACKEND_ROOT" | tee client/.env client/.env.production
+          cd client
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL || 'https://prescrimed-backend-production.up.railway.app/api' }}" > .env.production
+          echo "VITE_BACKEND_ROOT=${{ secrets.VITE_BACKEND_ROOT || 'https://prescrimed-backend-production.up.railway.app' }}" >> .env.production
+          cat .env.production
         shell: bash
 
       - name: Build client for Pages
         run: |
           cd client
-          VITE_BASE="/${{ github.event.repository.name }}/" npm run build -- --base="/${{ github.event.repository.name }}/"
+          npm run build
           cp dist/index.html dist/404.html
 
       - name: Upload artifact
