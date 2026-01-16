@@ -39,8 +39,16 @@ async function connectDB() {
       await sequelize.sync({ alter: true });
       console.log('✅ Tabelas sincronizadas (modo desenvolvimento)');
     } else {
-      await sequelize.sync({ force: false });
-      console.log('✅ Modelos sincronizados (produção)');
+      // Em produção, usar alter se FORCE_SYNC=true (para criar tabelas inicialmente)
+      const useAlter = process.env.FORCE_SYNC === 'true';
+      if (useAlter) {
+        console.log('🔧 FORCE_SYNC ativado - criando/atualizando tabelas...');
+        await sequelize.sync({ alter: true });
+        console.log('✅ Tabelas criadas/sincronizadas (produção com FORCE_SYNC)');
+      } else {
+        await sequelize.sync({ force: false });
+        console.log('✅ Modelos sincronizados (produção)');
+      }
     }
     
     dbReady = true;

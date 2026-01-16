@@ -3,12 +3,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configuração do PostgreSQL compatível com Railway
+// Configuração do banco de dados compatível com Railway e desenvolvimento local
 let sequelize;
 
 if (process.env.DATABASE_URL) {
-  // Railway ou Render fornece DATABASE_URL completa
-  console.log('📡 Usando DATABASE_URL do Railway/Render');
+  // Railway ou Render fornece DATABASE_URL completa (PostgreSQL em produção)
+  console.log('📡 Usando DATABASE_URL do Railway/Render (PostgreSQL)');
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     dialectOptions: {
@@ -25,15 +25,15 @@ if (process.env.DATABASE_URL) {
       idle: 10000
     }
   });
-} else {
-  // Configuração local com variáveis separadas
+} else if (process.env.PGHOST) {
+  // Configuração local com PostgreSQL instalado
   console.log('📦 Usando configuração local PostgreSQL');
   sequelize = new Sequelize(
     process.env.PGDATABASE || 'prescrimed',
     process.env.PGUSER || 'postgres',
     process.env.PGPASSWORD || 'postgres',
     {
-      host: process.env.PGHOST || 'localhost',
+      host: process.env.PGHOST,
       port: parseInt(process.env.PGPORT || '5432', 10),
       dialect: 'postgres',
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
@@ -45,6 +45,14 @@ if (process.env.DATABASE_URL) {
       }
     }
   );
+} else {
+  // Desenvolvimento local sem PostgreSQL - usa SQLite
+  console.log('💾 Usando SQLite para desenvolvimento local');
+  sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: './database.sqlite',
+    logging: process.env.NODE_ENV === 'development' ? console.log : false
+  });
 }
 
 export default sequelize;
