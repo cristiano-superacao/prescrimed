@@ -21,6 +21,13 @@ dotenv.config();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 let dbReady = false;
 
+// Defaults seguros para ambiente de desenvolvimento (evita 500 por JWT/variáveis ausentes)
+if (process.env.NODE_ENV !== 'production') {
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+  process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-me';
+  process.env.SESSION_TIMEOUT = process.env.SESSION_TIMEOUT || '8h';
+}
+
 // Conectar ao MongoDB em background (não bloqueia início do servidor)
 async function connectDB() {
   try {
