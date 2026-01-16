@@ -15,6 +15,7 @@ import {
 import { financeiroService } from '../services/financeiro.service';
 import TransacaoModal from '../components/TransacaoModal';
 import toast from 'react-hot-toast';
+import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -53,7 +54,7 @@ export default function Financeiro() {
       setStats(statsData);
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao carregar dados financeiros');
+      toast.error(errorMessage('load', 'dados financeiros'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +72,7 @@ export default function Financeiro() {
       toast.success('Transação excluída');
       loadData();
     } catch (error) {
-      toast.error('Erro ao excluir transação');
+      toast.error(errorMessage('delete', 'transação'));
     }
   };
 

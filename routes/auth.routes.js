@@ -1,8 +1,10 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { body, validationResult } from 'express-validator';
+import { body } from 'express-validator';
 import Empresa from '../models/Empresa.js';
 import Usuario from '../models/Usuario.js';
+import { validateRequest } from '../middleware/validate.middleware.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
 
@@ -20,15 +22,8 @@ const loginValidation = [
 ];
 
 // POST /api/auth/register - Registrar nova empresa e administrador
-router.post('/register', registerValidation, async (req, res) => {
+router.post('/register', [...registerValidation, validateRequest], async (req, res) => {
   try {
-    // Validar erros
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.log('Erros de validação no registro:', errors.array());
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { 
       tipoSistema, 
       nomeEmpresa, 
@@ -117,20 +112,13 @@ router.post('/register', registerValidation, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Erro no registro:', error);
-    res.status(500).json({ error: 'Erro ao criar empresa e usuário' });
+    return sendError(res, 500, 'Erro ao criar empresa e usuário', error);
   }
 });
 
 // POST /api/auth/login - Login
-router.post('/login', loginValidation, async (req, res) => {
+router.post('/login', [...loginValidation, validateRequest], async (req, res) => {
   try {
-    // Validar erros
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { email, senha } = req.body;
 
     // Buscar usuário com senha
@@ -196,8 +184,7 @@ router.post('/login', loginValidation, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Erro no login:', error);
-    res.status(500).json({ error: 'Erro ao realizar login' });
+    return sendError(res, 500, 'Erro ao realizar login', error);
   }
 });
 
@@ -235,8 +222,7 @@ router.post('/refresh', async (req, res) => {
       token: newToken,
     });
   } catch (error) {
-    console.error('Erro ao renovar token:', error);
-    res.status(401).json({ error: 'Token inválido' });
+    return sendError(res, 401, 'Token inválido', error);
   }
 });
 

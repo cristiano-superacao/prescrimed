@@ -1,10 +1,30 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
+import { body } from 'express-validator';
 import { authenticate, isAdmin } from '../middleware/auth.middleware.js';
 import Usuario from '../models/Usuario.js';
 import Empresa from '../models/Empresa.js';
+import { validateRequest } from '../middleware/validate.middleware.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
+
+const handleUsuarioNotFound = (res) => res.status(404).json({ error: 'Usuário não encontrado' });
+const handleAccessDenied = (res) => res.status(403).json({ error: 'Acesso negado' });
+
+const findUsuarioByIdForEmpresa = async (id, req, res) => {
+  const usuario = await Usuario.findById(id);
+  if (!usuario) {
+    handleUsuarioNotFound(res);
+    return null;
+  }
+
+  if (usuario.empresaId !== req.user.empresaId) {
+    handleAccessDenied(res);
+    return null;
+  }
+
+  return usuario;
+};
 
 // Todas as rotas requerem autenticação
 router.use(authenticate);
@@ -29,8 +49,7 @@ router.get('/', async (req, res) => {
       offset: parseInt(offset),
     });
   } catch (error) {
-    console.error('Erro ao listar usuários:', error);
-    res.status(500).json({ error: 'Erro ao listar usuários' });
+    return sendError(res, 500, 'Erro ao listar usuários', error);
   }
 });
 
@@ -40,13 +59,12 @@ router.get('/me', async (req, res) => {
     const usuario = await Usuario.findById(req.user.id);
 
     if (!usuario) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
+      return handleUsuarioNotFound(res);
     }
 
     res.json(usuario);
   } catch (error) {
-    console.error('Erro ao buscar dados do usuário:', error);
-    res.status(500).json({ error: 'Erro ao buscar dados do usuário' });
+    return sendError(res, 500, 'Erro ao buscar dados do usuário', error);
   }
 });
 
@@ -59,7 +77,7 @@ router.get('/me/summary', async (req, res) => {
     ]);
 
     if (!usuario) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
+      return handleUsuarioNotFound(res);
     }
 
     const pendingSecurityTasks = [];
@@ -105,8 +123,7 @@ router.get('/me/summary', async (req, res) => {
       pendingSecurityTasks,
     });
   } catch (error) {
-    console.error('Erro ao buscar resumo do usuário:', error);
-    res.status(500).json({ error: 'Erro ao buscar resumo' });
+    return sendError(res, 500, 'Erro ao buscar resumo', error);
   }
 });
 
@@ -114,13 +131,9 @@ router.get('/me/summary', async (req, res) => {
 router.put('/me', [
   body('nome').optional().trim().notEmpty().withMessage('Nome não pode ficar vazio'),
   body('email').optional().isEmail().withMessage('Email inválido').normalizeEmail(),
+  validateRequest,
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { nome, email, telefone, especialidade, crm } = req.body;
 
     const updateData = {};
@@ -148,29 +161,19 @@ router.put('/me', [
       usuario: usuarioAtualizado,
     });
   } catch (error) {
-    console.error('Erro ao atualizar perfil do usuário:', error);
-    res.status(500).json({ error: 'Erro ao atualizar perfil' });
+    return sendError(res, 500, 'Erro ao atualizar perfil', error);
   }
 });
 
 // GET /api/usuarios/:id - Buscar usuário por ID
 router.get('/:id', async (req, res) => {
   try {
-    const usuario = await Usuario.findById(req.params.id);
-
-    if (!usuario) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
-    }
-
-    // Verificar se pertence à mesma empresa
-    if (usuario.empresaId !== req.user.empresaId) {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
+    const usuario = await findUsuarioByIdForEmpresa(req.params.id, req, res);
+    if (!usuario) return;
 
     res.json(usuario);
   } catch (error) {
-    console.error('Erro ao buscar usuário:', error);
-    res.status(500).json({ error: 'Erro ao buscar usuário' });
+    return sendError(res, 500, 'Erro ao buscar usuário', error);
   }
 });
 
@@ -181,13 +184,9 @@ router.post('/', isAdmin, [
   body('senha').isLength({ min: 6 }).withMessage('Senha deve ter no mínimo 6 caracteres'),
   body('role').isIn(['admin', 'usuario']).withMessage('Role inválido'),
   body('permissoes').optional().isArray().withMessage('Permissões devem ser um array'),
+  validateRequest,
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { nome, email, senha, role, crm, especialidade, telefone, permissoes } = req.body;
 
     // Verificar se email já existe
@@ -224,8 +223,7 @@ router.post('/', isAdmin, [
       usuario,
     });
   } catch (error) {
-    console.error('Erro ao criar usuário:', error);
-    res.status(500).json({ error: 'Erro ao criar usuário' });
+    return sendError(res, 500, 'Erro ao criar usuário', error);
   }
 });
 
@@ -235,16 +233,8 @@ router.put('/:id', isAdmin, async (req, res) => {
     const { id } = req.params;
     const { nome, email, crm, especialidade, telefone, role, permissoes, status } = req.body;
 
-    // Buscar usuário
-    const usuario = await Usuario.findById(id);
-    if (!usuario) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
-    }
-
-    // Verificar se pertence à mesma empresa
-    if (usuario.empresaId !== req.user.empresaId) {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
+    const usuario = await findUsuarioByIdForEmpresa(id, req, res);
+    if (!usuario) return;
 
     // Não permitir alterar o próprio role
     if (id === req.user.id && role && role !== usuario.role) {
@@ -268,34 +258,21 @@ router.put('/:id', isAdmin, async (req, res) => {
       usuario: usuarioAtualizado,
     });
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
-    res.status(500).json({ error: 'Erro ao atualizar usuário' });
+    return sendError(res, 500, 'Erro ao atualizar usuário', error);
   }
 });
 
 // PUT /api/usuarios/:id/permissoes - Atualizar permissões do usuário
 router.put('/:id/permissoes', isAdmin, [
   body('permissoes').isArray().withMessage('Permissões devem ser um array'),
+  validateRequest,
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { id } = req.params;
     const { permissoes } = req.body;
 
-    // Buscar usuário
-    const usuario = await Usuario.findById(id);
-    if (!usuario) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
-    }
-
-    // Verificar se pertence à mesma empresa
-    if (usuario.empresaId !== req.user.empresaId) {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
+    const usuario = await findUsuarioByIdForEmpresa(id, req, res);
+    if (!usuario) return;
 
     const usuarioAtualizado = await Usuario.updatePermissions(id, permissoes);
 
@@ -304,8 +281,7 @@ router.put('/:id/permissoes', isAdmin, [
       usuario: usuarioAtualizado,
     });
   } catch (error) {
-    console.error('Erro ao atualizar permissões:', error);
-    res.status(500).json({ error: 'Erro ao atualizar permissões' });
+    return sendError(res, 500, 'Erro ao atualizar permissões', error);
   }
 });
 
@@ -313,33 +289,23 @@ router.put('/:id/permissoes', isAdmin, [
 router.put('/:id/senha', [
   body('senhaAtual').if(() => req.user.role !== 'admin').notEmpty().withMessage('Senha atual é obrigatória'),
   body('novaSenha').isLength({ min: 6 }).withMessage('Nova senha deve ter no mínimo 6 caracteres'),
+  validateRequest,
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { id } = req.params;
     const { senhaAtual, novaSenha } = req.body;
 
     // Apenas o próprio usuário ou admin pode alterar senha
     if (id !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Acesso negado' });
+      return handleAccessDenied(res);
     }
 
-    // Buscar usuário com senha
-    const usuario = await Usuario.findByEmailWithPassword(
-      (await Usuario.findById(id)).email
-    );
+    const usuarioBase = await findUsuarioByIdForEmpresa(id, req, res);
+    if (!usuarioBase) return;
 
+    const usuario = await Usuario.findByEmailWithPassword(usuarioBase.email);
     if (!usuario) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
-    }
-
-    // Verificar se pertence à mesma empresa
-    if (usuario.empresaId !== req.user.empresaId) {
-      return res.status(403).json({ error: 'Acesso negado' });
+      return handleUsuarioNotFound(res);
     }
 
     // Se não for admin, verificar senha atual
@@ -355,8 +321,7 @@ router.put('/:id/senha', [
 
     res.json({ message: 'Senha alterada com sucesso' });
   } catch (error) {
-    console.error('Erro ao alterar senha:', error);
-    res.status(500).json({ error: 'Erro ao alterar senha' });
+    return sendError(res, 500, 'Erro ao alterar senha', error);
   }
 });
 
@@ -370,23 +335,14 @@ router.delete('/:id', isAdmin, async (req, res) => {
       return res.status(403).json({ error: 'Você não pode deletar sua própria conta' });
     }
 
-    // Buscar usuário
-    const usuario = await Usuario.findById(id);
-    if (!usuario) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
-    }
-
-    // Verificar se pertence à mesma empresa
-    if (usuario.empresaId !== req.user.empresaId) {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
+    const usuario = await findUsuarioByIdForEmpresa(id, req, res);
+    if (!usuario) return;
 
     await Usuario.delete(id);
 
     res.json({ message: 'Usuário desativado com sucesso' });
   } catch (error) {
-    console.error('Erro ao deletar usuário:', error);
-    res.status(500).json({ error: 'Erro ao deletar usuário' });
+    return sendError(res, 500, 'Erro ao deletar usuário', error);
   }
 });
 

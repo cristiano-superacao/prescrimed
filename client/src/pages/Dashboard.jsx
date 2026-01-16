@@ -22,6 +22,7 @@ import {
 import { dashboardService } from '../services/dashboard.service';
 import SimpleChart from '../components/SimpleChart';
 import toast from 'react-hot-toast';
+import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import { useAuthStore } from '../store/authStore';
@@ -69,7 +70,7 @@ export default function Dashboard() {
         setChartData(chartPoints);
       }
     } catch (error) {
-      toast.error('Erro ao carregar dados do dashboard');
+      toast.error(errorMessage('load', 'dados do dashboard'));
     } finally {
       setLoading(false);
     }

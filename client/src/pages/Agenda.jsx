@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { agendamentoService } from '../services/agendamento.service';
 import toast from 'react-hot-toast';
+import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -57,7 +58,7 @@ export default function Agenda() {
       });
       setAgendamentos(data);
     } catch (error) {
-      toast.error('Erro ao carregar agenda');
+      toast.error(errorMessage('load', 'agenda'));
     } finally {
       setLoading(false);
     }
@@ -81,17 +82,17 @@ export default function Agenda() {
 
       if (editingId) {
         await agendamentoService.update(editingId, payload);
-        toast.success('Agendamento atualizado com sucesso');
+        toast.success(successMessage('update', 'Agendamento'));
       } else {
         await agendamentoService.create(payload);
-        toast.success('Agendamento criado com sucesso');
+        toast.success(successMessage('create', 'Agendamento'));
       }
 
       setModalOpen(false);
       resetForm();
       loadAgendamentos();
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erro ao salvar agendamento');
+      toast.error(apiErrorMessage(error, errorMessage('save', 'agendamento')));
     }
   };
 
@@ -102,7 +103,7 @@ export default function Agenda() {
       toast.success('Agendamento excluído');
       loadAgendamentos();
     } catch (error) {
-      toast.error('Erro ao excluir agendamento');
+      toast.error(errorMessage('delete', 'agendamento'));
     }
   };
 
@@ -127,7 +128,7 @@ export default function Agenda() {
       toast.success('Status atualizado');
       loadAgendamentos();
     } catch (error) {
-      toast.error('Erro ao atualizar status');
+      toast.error(errorMessage('update', 'status'));
     }
   };
 

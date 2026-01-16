@@ -1,53 +1,43 @@
-import api from './api';
+import { get, post, put, del } from './request';
 
 export const usuarioService = {
   getAll: async () => {
-    const response = await api.get('/usuarios');
-    return response.data;
+    return get('/usuarios');
   },
 
   getById: async (id) => {
-    const response = await api.get(`/usuarios/${id}`);
-    return response.data;
+    return get(`/usuarios/${id}`);
   },
 
   create: async (data) => {
-    const response = await api.post('/usuarios', data);
-    return response.data;
+    return post('/usuarios', data);
   },
 
   update: async (id, data) => {
-    const response = await api.put(`/usuarios/${id}`, data);
-    return response.data;
+    return put(`/usuarios/${id}`, data);
   },
 
   updatePermissions: async (id, permissoes) => {
-    const response = await api.put(`/usuarios/${id}/permissoes`, { permissoes });
-    return response.data;
+    return put(`/usuarios/${id}/permissoes`, { permissoes });
   },
 
   updatePassword: async (id, senhaAtual, novaSenha) => {
-    const response = await api.put(`/usuarios/${id}/senha`, { senhaAtual, novaSenha });
-    return response.data;
+    return put(`/usuarios/${id}/senha`, { senhaAtual, novaSenha });
   },
 
   delete: async (id) => {
-    const response = await api.delete(`/usuarios/${id}`);
-    return response.data;
+    return del(`/usuarios/${id}`);
   },
 
   getMe: async () => {
-    const response = await api.get('/usuarios/me');
-    return response.data;
+    return get('/usuarios/me');
   },
 
   getProfileSummary: async () => {
-    const response = await api.get('/usuarios/me/summary');
-    return response.data;
+    return get('/usuarios/me/summary');
   },
 
   updateMe: async (data) => {
-    const response = await api.put('/usuarios/me', data);
-    return response.data;
+    return put('/usuarios/me', data);
   },
 };

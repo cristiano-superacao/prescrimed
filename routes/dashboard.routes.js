@@ -3,6 +3,8 @@ import { authenticate, hasPermission } from '../middleware/auth.middleware.js';
 import Prescricao from '../models/Prescricao.js';
 import Paciente from '../models/Paciente.js';
 import Usuario from '../models/Usuario.js';
+import { calculateAge } from '../utils/date.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
 
@@ -76,8 +78,7 @@ router.get('/stats', async (req, res) => {
       periodo: parseInt(periodo),
     });
   } catch (error) {
-    console.error('Erro ao buscar estatísticas:', error);
-    res.status(500).json({ error: 'Erro ao buscar estatísticas' });
+    return sendError(res, 500, 'Erro ao buscar estatísticas', error);
   }
 });
 
@@ -99,8 +100,7 @@ router.get('/prescricoes-recentes', async (req, res) => {
 
     res.json({ prescricoes: prescricoesFormatadas });
   } catch (error) {
-    console.error('Erro ao buscar prescrições recentes:', error);
-    res.status(500).json({ error: 'Erro ao buscar prescrições' });
+    return sendError(res, 500, 'Erro ao buscar prescrições', error);
   }
 });
 
@@ -112,24 +112,14 @@ router.get('/pacientes-recentes', async (req, res) => {
       .limit(10)
       .lean();
     
-    const pacientesComIdade = pacientes.map(p => {
-      let idade = null;
-      if (p.dataNascimento) {
-        const hoje = new Date();
-        const nascimento = new Date(p.dataNascimento);
-        idade = hoje.getFullYear() - nascimento.getFullYear();
-        const m = hoje.getMonth() - nascimento.getMonth();
-        if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
-          idade--;
-        }
-      }
-      return { ...p, idade };
-    });
+    const pacientesComIdade = pacientes.map(p => ({
+      ...p,
+      idade: calculateAge(p.dataNascimento)
+    }));
 
     res.json({ pacientes: pacientesComIdade });
   } catch (error) {
-    console.error('Erro ao buscar pacientes recentes:', error);
-    res.status(500).json({ error: 'Erro ao buscar pacientes' });
+    return sendError(res, 500, 'Erro ao buscar pacientes recentes', error);
   }
 });
 
@@ -203,8 +193,7 @@ router.get('/next-steps', async (req, res) => {
 
     res.json({ nextSteps });
   } catch (error) {
-    console.error('Erro ao montar próximos passos:', error);
-    res.status(500).json({ error: 'Erro ao buscar próximos passos' });
+    return sendError(res, 500, 'Erro ao buscar próximos passos', error);
   }
 });
 
@@ -258,8 +247,7 @@ router.get('/alerts', async (req, res) => {
 
     res.json({ alerts });
   } catch (error) {
-    console.error('Erro ao montar alertas do dashboard:', error);
-    res.status(500).json({ error: 'Erro ao buscar alertas' });
+    return sendError(res, 500, 'Erro ao buscar alertas', error);
   }
 });
 

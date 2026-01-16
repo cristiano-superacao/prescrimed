@@ -1,32 +1,24 @@
-import api from './api';
+import { get, buildQueryString } from './request';
 
 export const dashboardService = {
   getStats: async (dataInicio, dataFim) => {
-    const params = new URLSearchParams();
-    if (dataInicio) params.append('dataInicio', dataInicio);
-    if (dataFim) params.append('dataFim', dataFim);
-    
-    const response = await api.get(`/dashboard/stats${params.toString() ? `?${params}` : ''}`);
-    return response.data;
+    const qs = buildQueryString({ dataInicio, dataFim });
+    return get(`/dashboard/stats${qs}`);
   },
 
   getPrescricoesRecentes: async () => {
-    const response = await api.get('/dashboard/prescricoes-recentes');
-    return response.data;
+    return get('/dashboard/prescricoes-recentes');
   },
 
   getPacientesRecentes: async () => {
-    const response = await api.get('/dashboard/pacientes-recentes');
-    return response.data;
+    return get('/dashboard/pacientes-recentes');
   },
 
   getNextSteps: async () => {
-    const response = await api.get('/dashboard/next-steps');
-    return response.data;
+    return get('/dashboard/next-steps');
   },
 
   getPriorityAlerts: async () => {
-    const response = await api.get('/dashboard/alerts');
-    return response.data;
+    return get('/dashboard/alerts');
   },
 };

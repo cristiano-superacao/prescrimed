@@ -4,6 +4,7 @@ import { LogIn, Mail, Lock, Building2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import HeroBackground from '../components/HeroBackground';
 import toast from 'react-hot-toast';
+import { errorMessage, apiErrorMessage } from '../utils/toastMessages';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function Login() {
       toast.success('Login realizado com sucesso!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Erro ao fazer login');
+      toast.error(apiErrorMessage(error, errorMessage('login', 'usuário')));
     } finally {
       setLoading(false);
     }

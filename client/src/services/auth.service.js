@@ -1,18 +1,17 @@
-import api from './api';
+import { post } from './request';
 
 export const authService = {
   register: async (data) => {
-    const response = await api.post('/auth/register', data);
-    return response.data;
+    return post('/auth/register', data);
   },
 
   login: async (email, senha) => {
-    const response = await api.post('/auth/login', { email, senha });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+    const data = await post('/auth/login', { email, senha });
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
     }
-    return response.data;
+    return data;
   },
 
   logout: () => {

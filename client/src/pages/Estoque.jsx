@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { estoqueService } from '../services/estoque.service';
 import toast from 'react-hot-toast';
+import { errorMessage, apiErrorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -48,7 +49,7 @@ export default function Estoque() {
       const itemsList = Array.isArray(data) ? data : (data.items || data.medicamentos || data.alimentos || []);
       setItems(itemsList);
     } catch (error) {
-      toast.error('Erro ao carregar itens');
+      toast.error(errorMessage('load', 'itens'));
       console.error(error);
     } finally {
       setLoading(false);
@@ -70,7 +71,7 @@ export default function Estoque() {
       setMovimentacoes(data.movimentacoes || []);
       setShowHistorico(true);
     } catch (error) {
-      toast.error('Erro ao carregar histórico');
+      toast.error(errorMessage('load', 'histórico'));
     }
   };
 
@@ -86,7 +87,7 @@ export default function Estoque() {
       closeModal();
       loadItems();
     } catch (error) {
-      toast.error('Erro ao cadastrar');
+      toast.error(errorMessage('create', 'item'));
     }
   };
 
@@ -108,7 +109,7 @@ export default function Estoque() {
       closeModal();
       loadItems();
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erro na movimentação');
+      toast.error(apiErrorMessage(error, errorMessage('save', 'movimentação')));
     }
   };
 

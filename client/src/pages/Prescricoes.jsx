@@ -11,6 +11,7 @@ import {
 import { prescricaoService } from '../services/prescricao.service';
 import { pacienteService } from '../services/paciente.service';
 import toast from 'react-hot-toast';
+import { successMessage, errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import EmptyState from '../components/common/EmptyState';
@@ -51,7 +52,7 @@ export default function Prescricoes() {
         : (pacientesData.pacientes || []);
       setPacientes(pacientesList);
     } catch (error) {
-      toast.error('Erro ao carregar dados');
+      toast.error(errorMessage('load', 'dados'));
     } finally {
       setLoading(false);
     }
@@ -84,7 +85,7 @@ export default function Prescricoes() {
         medicamentos: medicamentos.filter(m => m.nome.trim() !== ''),
       });
 
-      toast.success('Prescrição criada com sucesso');
+      toast.success(successMessage('create', 'Prescrição', { gender: 'f' }));
       setModalOpen(false);
       setSelectedPaciente('');
       setTipo('comum');
@@ -92,7 +93,7 @@ export default function Prescricoes() {
       setFeedback({ type: 'success', message: 'Prescrição cadastrada com sucesso.' });
       loadData();
     } catch (error) {
-      toast.error('Erro ao criar prescrição');
+      toast.error(errorMessage('create', 'prescrição'));
     }
   };
 
@@ -107,7 +108,7 @@ export default function Prescricoes() {
       setFeedback({ type: 'warning', message: 'Prescrição foi cancelada.' });
       loadData();
     } catch (error) {
-      toast.error('Erro ao cancelar prescrição');
+      toast.error(errorMessage('cancel', 'prescrição'));
     }
   };
 

@@ -1,34 +1,29 @@
-import api from './api';
+import { get, post, put, del, buildQueryString } from './request';
 
 export const financeiroService = {
   getAll: async (filters = {}) => {
-    const params = new URLSearchParams();
-    if (filters.tipo) params.append('tipo', filters.tipo);
-    if (filters.status) params.append('status', filters.status);
-    if (filters.dataInicio) params.append('dataInicio', filters.dataInicio);
-    if (filters.dataFim) params.append('dataFim', filters.dataFim);
-    
-    const response = await api.get(`/financeiro?${params.toString()}`);
-    return response.data;
+    const qs = buildQueryString({
+      tipo: filters.tipo,
+      status: filters.status,
+      dataInicio: filters.dataInicio,
+      dataFim: filters.dataFim,
+    });
+    return get(`/financeiro${qs}`);
   },
 
   getStats: async () => {
-    const response = await api.get('/financeiro/stats');
-    return response.data;
+    return get('/financeiro/stats');
   },
 
   create: async (data) => {
-    const response = await api.post('/financeiro', data);
-    return response.data;
+    return post('/financeiro', data);
   },
 
   update: async (id, data) => {
-    const response = await api.put(`/financeiro/${id}`, data);
-    return response.data;
+    return put(`/financeiro/${id}`, data);
   },
 
   delete: async (id) => {
-    const response = await api.delete(`/financeiro/${id}`);
-    return response.data;
+    return del(`/financeiro/${id}`);
   }
 };

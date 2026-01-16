@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { empresaService } from '../services/empresa.service';
 import toast from 'react-hot-toast';
+import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
 
 export default function EmpresaModal({ empresa, onClose, onSave }) {
   const [formData, setFormData] = useState({
@@ -44,12 +45,12 @@ export default function EmpresaModal({ empresa, onClose, onSave }) {
       } else {
         // Criar nova empresa
         await empresaService.create(formData);
-        toast.success('Empresa criada com sucesso!');
+        toast.success(successMessage('create', 'Empresa', { gender: 'f', suffix: '!' }));
         onSave();
       }
       onClose();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Erro ao salvar empresa');
+      toast.error(apiErrorMessage(error, errorMessage('save', 'empresa')));
     } finally {
       setLoading(false);
     }

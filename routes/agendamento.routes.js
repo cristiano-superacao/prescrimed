@@ -1,11 +1,30 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
-import { authenticate, checkEmpresaOwnership } from '../middleware/auth.middleware.js';
+import { body } from 'express-validator';
+import { authenticate } from '../middleware/auth.middleware.js';
 import Agendamento from '../models/Agendamento.js';
-import Paciente from '../models/Paciente.js';
-import Usuario from '../models/Usuario.js';
+import { validateRequest } from '../middleware/validate.middleware.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
+
+const handleAgendamentoNotFound = (res) =>
+  res.status(404).json({ error: 'Agendamento não encontrado' });
+
+const populateAgendamento = (id) =>
+  Agendamento.findById(id)
+    .populate('pacienteId', 'nome telefone')
+    .populate('medicoId', 'nome');
+
+const findAgendamentoByEmpresa = async (id, req, res) => {
+  const agendamento = await Agendamento.findOne({ _id: id, empresaId: req.user.empresaId });
+
+  if (!agendamento) {
+    handleAgendamentoNotFound(res);
+    return null;
+  }
+
+  return agendamento;
+};
 
 router.use(authenticate);
 
@@ -32,8 +51,7 @@ router.get('/', async (req, res) => {
 
     res.json(agendamentos);
   } catch (error) {
-    console.error('Erro ao listar agendamentos:', error);
-    res.status(500).json({ error: 'Erro ao listar agendamentos' });
+    return sendError(res, 500, 'Erro ao listar agendamentos', error);
   }
 });
 
@@ -42,13 +60,9 @@ router.post('/', [
   body('titulo').notEmpty().withMessage('Título é obrigatório'),
   body('dataHoraInicio').isISO8601().withMessage('Data de início inválida'),
   body('dataHoraFim').isISO8601().withMessage('Data de fim inválida'),
+  validateRequest,
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { titulo, local, participante, pacienteId, medicoId, dataHoraInicio, dataHoraFim, tipo, observacoes } = req.body;
 
     // Verificar conflitos de horário para o médico
@@ -84,14 +98,11 @@ router.post('/', [
       status: 'agendado'
     });
 
-    const agendamentoPopulated = await Agendamento.findById(agendamento._id)
-      .populate('pacienteId', 'nome telefone')
-      .populate('medicoId', 'nome');
+    const agendamentoPopulated = await populateAgendamento(agendamento._id);
 
     res.status(201).json(agendamentoPopulated);
   } catch (error) {
-    console.error('Erro ao criar agendamento:', error);
-    res.status(500).json({ error: 'Erro ao criar agendamento' });
+    return sendError(res, 500, 'Erro ao criar agendamento', error);
   }
 });
 
@@ -99,11 +110,8 @@ router.post('/', [
 router.put('/:id', async (req, res) => {
   try {
     const { status, observacoes, dataHoraInicio, dataHoraFim, titulo, local, participante } = req.body;
-    const agendamento = await Agendamento.findOne({ _id: req.params.id, empresaId: req.user.empresaId });
-
-    if (!agendamento) {
-      return res.status(404).json({ error: 'Agendamento não encontrado' });
-    }
+    const agendamento = await findAgendamentoByEmpresa(req.params.id, req, res);
+    if (!agendamento) return;
 
     if (status) agendamento.status = status;
     if (observacoes) agendamento.observacoes = observacoes;
@@ -115,14 +123,11 @@ router.put('/:id', async (req, res) => {
 
     await agendamento.save();
 
-    const agendamentoPopulated = await Agendamento.findById(agendamento._id)
-      .populate('pacienteId', 'nome telefone')
-      .populate('medicoId', 'nome');
+    const agendamentoPopulated = await populateAgendamento(agendamento._id);
 
     res.json(agendamentoPopulated);
   } catch (error) {
-    console.error('Erro ao atualizar agendamento:', error);
-    res.status(500).json({ error: 'Erro ao atualizar agendamento' });
+    return sendError(res, 500, 'Erro ao atualizar agendamento', error);
   }
 });
 
@@ -132,13 +137,12 @@ router.delete('/:id', async (req, res) => {
     const agendamento = await Agendamento.findOneAndDelete({ _id: req.params.id, empresaId: req.user.empresaId });
     
     if (!agendamento) {
-      return res.status(404).json({ error: 'Agendamento não encontrado' });
+      return handleAgendamentoNotFound(res);
     }
 
     res.json({ message: 'Agendamento excluído com sucesso' });
   } catch (error) {
-    console.error('Erro ao excluir agendamento:', error);
-    res.status(500).json({ error: 'Erro ao excluir agendamento' });
+    return sendError(res, 500, 'Erro ao excluir agendamento', error);
   }
 });
 

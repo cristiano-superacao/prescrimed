@@ -1,9 +1,29 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
+import { body } from 'express-validator';
 import { authenticate, hasPermission } from '../middleware/auth.middleware.js';
 import Prescricao from '../models/Prescricao.js';
+import { validateRequest } from '../middleware/validate.middleware.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
+
+const findPrescricaoByEmpresa = async (id, req, res) => {
+  const prescricao = await Prescricao.findById(id, req.user.empresaId);
+  if (!prescricao) {
+    res.status(404).json({ error: 'Prescrição não encontrada' });
+    return null;
+  }
+  return prescricao;
+};
+
+const executarAcaoPrescricao = async (action, id, req, res, successMessage) => {
+  try {
+    const prescricao = await action(id, req.user.empresaId);
+    res.json({ message: successMessage, prescricao });
+  } catch (error) {
+    return sendError(res, 500, error.message, error);
+  }
+};
 
 router.use(authenticate);
 router.use(hasPermission('prescricoes'));
@@ -24,8 +44,7 @@ router.get('/', async (req, res) => {
 
     res.json({ prescricoes, total, limit: parseInt(limit), offset: parseInt(offset) });
   } catch (error) {
-    console.error('Erro ao listar prescrições:', error);
-    res.status(500).json({ error: 'Erro ao listar prescrições' });
+    return sendError(res, 500, 'Erro ao listar prescrições', error);
   }
 });
 
@@ -38,22 +57,18 @@ router.get('/paciente/:pacienteId', async (req, res) => {
     );
     res.json({ prescricoes });
   } catch (error) {
-    console.error('Erro ao buscar prescrições do paciente:', error);
-    res.status(500).json({ error: 'Erro ao buscar prescrições' });
+    return sendError(res, 500, 'Erro ao buscar prescrições', error);
   }
 });
 
 // GET /api/prescricoes/:id - Buscar prescrição
 router.get('/:id', async (req, res) => {
   try {
-    const prescricao = await Prescricao.findById(req.params.id, req.user.empresaId);
-    if (!prescricao) {
-      return res.status(404).json({ error: 'Prescrição não encontrada' });
-    }
+    const prescricao = await findPrescricaoByEmpresa(req.params.id, req, res);
+    if (!prescricao) return;
     res.json(prescricao);
   } catch (error) {
-    console.error('Erro ao buscar prescrição:', error);
-    res.status(500).json({ error: 'Erro ao buscar prescrição' });
+    return sendError(res, 500, 'Erro ao buscar prescrição', error);
   }
 });
 
@@ -61,13 +76,9 @@ router.get('/:id', async (req, res) => {
 router.post('/', [
   body('pacienteId').notEmpty(),
   body('medicamentos').isArray().notEmpty(),
+  validateRequest,
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const prescricao = await Prescricao.create({
       ...req.body,
       empresaId: req.user.empresaId,
@@ -76,31 +87,30 @@ router.post('/', [
 
     res.status(201).json({ message: 'Prescrição criada com sucesso', prescricao });
   } catch (error) {
-    console.error('Erro ao criar prescrição:', error);
-    res.status(500).json({ error: 'Erro ao criar prescrição' });
+    return sendError(res, 500, 'Erro ao criar prescrição', error);
   }
 });
 
 // PUT /api/prescricoes/:id/cancelar - Cancelar prescrição
 router.put('/:id/cancelar', async (req, res) => {
-  try {
-    const prescricao = await Prescricao.cancel(req.params.id, req.user.empresaId);
-    res.json({ message: 'Prescrição cancelada com sucesso', prescricao });
-  } catch (error) {
-    console.error('Erro ao cancelar prescrição:', error);
-    res.status(500).json({ error: error.message });
-  }
+  return executarAcaoPrescricao(
+    Prescricao.cancel,
+    req.params.id,
+    req,
+    res,
+    'Prescrição cancelada com sucesso'
+  );
 });
 
 // PUT /api/prescricoes/:id/arquivar - Arquivar prescrição
 router.put('/:id/arquivar', async (req, res) => {
-  try {
-    const prescricao = await Prescricao.archive(req.params.id, req.user.empresaId);
-    res.json({ message: 'Prescrição arquivada com sucesso', prescricao });
-  } catch (error) {
-    console.error('Erro ao arquivar prescrição:', error);
-    res.status(500).json({ error: error.message });
-  }
+  return executarAcaoPrescricao(
+    Prescricao.archive,
+    req.params.id,
+    req,
+    res,
+    'Prescrição arquivada com sucesso'
+  );
 });
 
 export default router;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { usuarioService } from '../services/usuario.service';
 import toast from 'react-hot-toast';
+import { successMessage, errorMessage, customErrorMessage, apiErrorMessage } from '../utils/toastMessages';
 
 export default function UsuarioModal({ usuario, onClose }) {
   const [formData, setFormData] = useState({
@@ -71,20 +72,20 @@ export default function UsuarioModal({ usuario, onClose }) {
           delete dataToUpdate.senha; // Remove senha se vazia
         }
         await usuarioService.update(usuario.id, dataToUpdate);
-        toast.success('Usuário atualizado com sucesso!');
+        toast.success(successMessage('update', 'Usuário', { suffix: '!' }));
       } else {
         // Criar novo usuário
         if (!formData.senha || formData.senha.length < 6) {
-          toast.error('Senha deve ter no mínimo 6 caracteres');
+          toast.error(customErrorMessage('minPassword'));
           setLoading(false);
           return;
         }
         await usuarioService.create(formData);
-        toast.success('Usuário criado com sucesso!');
+        toast.success(successMessage('create', 'Usuário', { suffix: '!' }));
       }
       onClose();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Erro ao salvar usuário');
+      toast.error(apiErrorMessage(error, errorMessage('save', 'usuário')));
     } finally {
       setLoading(false);
     }

@@ -2,8 +2,18 @@ import express from 'express';
 import mongoose from 'mongoose';
 import Transacao from '../models/Transacao.js';
 import { authenticate as auth } from '../middleware/auth.middleware.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
+
+const getTransacaoFilter = (req) => ({
+  _id: req.params.id,
+  empresaId: req.user.empresaId,
+});
+
+const handleTransacaoNotFound = (res) => {
+  res.status(404).json({ message: 'Transação não encontrada' });
+};
 
 // Middleware de autenticação para todas as rotas
 router.use(auth);
@@ -30,7 +40,11 @@ router.get('/', async (req, res) => {
 
     res.json(transacoes);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar transações', error: error.message });
+    return sendError(res, 500, 'Erro ao buscar transações', error, {
+      messageKey: 'message',
+      errorKey: 'error',
+      log: false,
+    });
   }
 });
 
@@ -91,7 +105,11 @@ router.get('/stats', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erro ao buscar estatísticas', error: error.message });
+    return sendError(res, 500, 'Erro ao buscar estatísticas', error, {
+      messageKey: 'message',
+      errorKey: 'error',
+      log: false,
+    });
   }
 });
 
@@ -107,7 +125,11 @@ router.post('/', async (req, res) => {
     await transacao.save();
     res.status(201).json(transacao);
   } catch (error) {
-    res.status(400).json({ message: 'Erro ao criar transação', error: error.message });
+    return sendError(res, 400, 'Erro ao criar transação', error, {
+      messageKey: 'message',
+      errorKey: 'error',
+      log: false,
+    });
   }
 });
 
@@ -115,36 +137,43 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const transacao = await Transacao.findOneAndUpdate(
-      { _id: req.params.id, empresaId: req.user.empresaId },
+      getTransacaoFilter(req),
       req.body,
       { new: true }
     );
 
     if (!transacao) {
-      return res.status(404).json({ message: 'Transação não encontrada' });
+      handleTransacaoNotFound(res);
+      return;
     }
 
     res.json(transacao);
   } catch (error) {
-    res.status(400).json({ message: 'Erro ao atualizar transação', error: error.message });
+    return sendError(res, 400, 'Erro ao atualizar transação', error, {
+      messageKey: 'message',
+      errorKey: 'error',
+      log: false,
+    });
   }
 });
 
 // Excluir transação
 router.delete('/:id', async (req, res) => {
   try {
-    const transacao = await Transacao.findOneAndDelete({
-      _id: req.params.id,
-      empresaId: req.user.empresaId
-    });
+    const transacao = await Transacao.findOneAndDelete(getTransacaoFilter(req));
 
     if (!transacao) {
-      return res.status(404).json({ message: 'Transação não encontrada' });
+      handleTransacaoNotFound(res);
+      return;
     }
 
     res.json({ message: 'Transação excluída com sucesso' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao excluir transação', error: error.message });
+    return sendError(res, 500, 'Erro ao excluir transação', error, {
+      messageKey: 'message',
+      errorKey: 'error',
+      log: false,
+    });
   }
 });
 

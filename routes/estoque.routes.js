@@ -3,33 +3,100 @@ import Medicamento from '../models/Medicamento.js';
 import Alimento from '../models/Alimento.js';
 import MovimentacaoEstoque from '../models/MovimentacaoEstoque.js';
 import { authenticate as authMiddleware } from '../middleware/auth.middleware.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
+
+const processarMovimentacao = async ({
+  Model,
+  itemId,
+  itemTipo,
+  itemLabel,
+  req,
+  res,
+  tipo,
+  quantidade,
+  motivo,
+  observacao,
+}) => {
+  const item = await Model.findOne({
+    _id: itemId,
+    empresaId: req.user.empresaId,
+  });
+
+  if (!item) {
+    res.status(404).json({ error: `${itemLabel} não encontrado ou não pertence à sua empresa` });
+    return null;
+  }
+
+  const qtd = Number(quantidade);
+  if (isNaN(qtd) || qtd <= 0) {
+    res.status(400).json({ error: 'Quantidade inválida' });
+    return null;
+  }
+
+  if (tipo === 'saida' && item.quantidade < qtd) {
+    res.status(400).json({ error: 'Estoque insuficiente' });
+    return null;
+  }
+
+  if (tipo === 'entrada') {
+    item.quantidade += qtd;
+  } else {
+    item.quantidade -= qtd;
+  }
+  await item.save();
+
+  const movimentacao = new MovimentacaoEstoque({
+    empresaId: req.user.empresaId,
+    tipo,
+    itemTipo,
+    itemId: item._id,
+    quantidade: qtd,
+    usuarioId: req.user.id,
+    motivo,
+    observacao,
+  });
+  await movimentacao.save();
+
+  return { item, movimentacao };
+};
+
+const listarItensPorEmpresa = async (Model, req, res, errorMessage) => {
+  try {
+    const itens = await Model.find({ empresaId: req.user.empresaId }).sort({ nome: 1 });
+    res.json(itens);
+  } catch (error) {
+    return sendError(res, 500, errorMessage, error, { log: false });
+  }
+};
+
+const cadastrarItemPorEmpresa = async (Model, req, res, errorMessage) => {
+  try {
+    const novoItem = new Model({
+      ...req.body,
+      empresaId: req.user.empresaId,
+    });
+    await novoItem.save();
+    res.status(201).json(novoItem);
+  } catch (error) {
+    return sendError(res, 400, errorMessage, error, {
+      includeDetails: true,
+      log: false,
+    });
+  }
+};
 
 // --- MEDICAMENTOS ---
 
 // Listar todos os medicamentos (filtrado por empresa)
 router.get('/medicamentos', authMiddleware, async (req, res) => {
-  try {
-    const medicamentos = await Medicamento.find({ empresaId: req.user.empresaId }).sort({ nome: 1 });
-    res.json(medicamentos);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar medicamentos' });
-  }
+  return listarItensPorEmpresa(Medicamento, req, res, 'Erro ao buscar medicamentos');
 });
 
 // Cadastrar medicamento (com empresaId)
 router.post('/medicamentos', authMiddleware, async (req, res) => {
-  try {
-    const novoMedicamento = new Medicamento({
-      ...req.body,
-      empresaId: req.user.empresaId
-    });
-    await novoMedicamento.save();
-    res.status(201).json(novoMedicamento);
-  } catch (error) {
-    res.status(400).json({ error: 'Erro ao cadastrar medicamento', details: error.message });
-  }
+  return cadastrarItemPorEmpresa(Medicamento, req, res, 'Erro ao cadastrar medicamento');
 });
 
 // Movimentação de Medicamento (Entrada/Saída) com controle de empresa
@@ -37,48 +104,27 @@ router.post('/medicamentos/movimentacao', authMiddleware, async (req, res) => {
   const { medicamentoId, tipo, quantidade, motivo, observacao } = req.body;
 
   try {
-    const medicamento = await Medicamento.findOne({
-      _id: medicamentoId,
-      empresaId: req.user.empresaId
-    });
-
-    if (!medicamento) {
-      return res.status(404).json({ error: 'Medicamento não encontrado ou não pertence à sua empresa' });
-    }
-
-    const qtd = Number(quantidade);
-    if (isNaN(qtd) || qtd <= 0) {
-      return res.status(400).json({ error: 'Quantidade inválida' });
-    }
-
-    if (tipo === 'saida' && medicamento.quantidade < qtd) {
-      return res.status(400).json({ error: 'Estoque insuficiente' });
-    }
-
-    // Atualizar quantidade
-    if (tipo === 'entrada') {
-      medicamento.quantidade += qtd;
-    } else {
-      medicamento.quantidade -= qtd;
-    }
-    await medicamento.save();
-
-    // Registrar movimentação
-    const movimentacao = new MovimentacaoEstoque({
-      empresaId: req.user.empresaId,
-      tipo,
+    const resultado = await processarMovimentacao({
+      Model: Medicamento,
+      itemId: medicamentoId,
       itemTipo: 'Medicamento',
-      itemId: medicamento._id,
-      quantidade: qtd,
-      usuarioId: req.user.id,
+      itemLabel: 'Medicamento',
+      req,
+      res,
+      tipo,
+      quantidade,
       motivo,
-      observacao
+      observacao,
     });
-    await movimentacao.save();
 
-    res.json({ medicamento, movimentacao });
+    if (!resultado) return;
+
+    res.json({ medicamento: resultado.item, movimentacao: resultado.movimentacao });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao registrar movimentação', details: error.message });
+    return sendError(res, 500, 'Erro ao registrar movimentação', error, {
+      includeDetails: true,
+      log: false,
+    });
   }
 });
 
@@ -86,26 +132,12 @@ router.post('/medicamentos/movimentacao', authMiddleware, async (req, res) => {
 
 // Listar todos os alimentos (filtrado por empresa)
 router.get('/alimentos', authMiddleware, async (req, res) => {
-  try {
-    const alimentos = await Alimento.find({ empresaId: req.user.empresaId }).sort({ nome: 1 });
-    res.json(alimentos);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar alimentos' });
-  }
+  return listarItensPorEmpresa(Alimento, req, res, 'Erro ao buscar alimentos');
 });
 
 // Cadastrar alimento (com empresaId)
 router.post('/alimentos', authMiddleware, async (req, res) => {
-  try {
-    const novoAlimento = new Alimento({
-      ...req.body,
-      empresaId: req.user.empresaId
-    });
-    await novoAlimento.save();
-    res.status(201).json(novoAlimento);
-  } catch (error) {
-    res.status(400).json({ error: 'Erro ao cadastrar alimento', details: error.message });
-  }
+  return cadastrarItemPorEmpresa(Alimento, req, res, 'Erro ao cadastrar alimento');
 });
 
 // Movimentação de Alimento (Entrada/Saída) com controle de empresa
@@ -113,48 +145,27 @@ router.post('/alimentos/movimentacao', authMiddleware, async (req, res) => {
   const { alimentoId, tipo, quantidade, motivo, observacao } = req.body;
 
   try {
-    const alimento = await Alimento.findOne({
-      _id: alimentoId,
-      empresaId: req.user.empresaId
-    });
-
-    if (!alimento) {
-      return res.status(404).json({ error: 'Alimento não encontrado ou não pertence à sua empresa' });
-    }
-
-    const qtd = Number(quantidade);
-    if (isNaN(qtd) || qtd <= 0) {
-      return res.status(400).json({ error: 'Quantidade inválida' });
-    }
-
-    if (tipo === 'saida' && alimento.quantidade < qtd) {
-      return res.status(400).json({ error: 'Estoque insuficiente' });
-    }
-
-    // Atualizar quantidade
-    if (tipo === 'entrada') {
-      alimento.quantidade += qtd;
-    } else {
-      alimento.quantidade -= qtd;
-    }
-    await alimento.save();
-
-    // Registrar movimentação
-    const movimentacao = new MovimentacaoEstoque({
-      empresaId: req.user.empresaId,
-      tipo,
+    const resultado = await processarMovimentacao({
+      Model: Alimento,
+      itemId: alimentoId,
       itemTipo: 'Alimento',
-      itemId: alimento._id,
-      quantidade: qtd,
-      usuarioId: req.user.id,
+      itemLabel: 'Alimento',
+      req,
+      res,
+      tipo,
+      quantidade,
       motivo,
-      observacao
+      observacao,
     });
-    await movimentacao.save();
 
-    res.json({ alimento, movimentacao });
+    if (!resultado) return;
+
+    res.json({ alimento: resultado.item, movimentacao: resultado.movimentacao });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao registrar movimentação', details: error.message });
+    return sendError(res, 500, 'Erro ao registrar movimentação', error, {
+      includeDetails: true,
+      log: false,
+    });
   }
 });
 
@@ -210,7 +221,10 @@ router.get('/stats', authMiddleware, async (req, res) => {
       totalCategorias: categorias.size
     });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar estatísticas', details: error.message });
+    return sendError(res, 500, 'Erro ao buscar estatísticas', error, {
+      includeDetails: true,
+      log: false,
+    });
   }
 });
 
@@ -249,7 +263,10 @@ router.get('/movimentacoes', authMiddleware, async (req, res) => {
 
     res.json({ movimentacoes: movimentacoesComNomes });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar movimentações', details: error.message });
+    return sendError(res, 500, 'Erro ao buscar movimentações', error, {
+      includeDetails: true,
+      log: false,
+    });
   }
 });
 

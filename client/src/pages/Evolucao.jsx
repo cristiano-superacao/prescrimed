@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { pacienteService } from '../services/paciente.service';
 import toast from 'react-hot-toast';
+import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -32,7 +33,7 @@ export default function Evolucao() {
       const lista = Array.isArray(data) ? data : (data.pacientes || []);
       setPacientes(lista);
     } catch (error) {
-      toast.error('Erro ao carregar residentes');
+      toast.error(errorMessage('load', 'residentes'));
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import express from 'express';
 import Empresa from '../models/Empresa.js';
 import Usuario from '../models/Usuario.js';
 import Paciente from '../models/Paciente.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
 
@@ -25,9 +26,10 @@ router.get('/diagnostico', async (req, res) => {
       empresas: empresasList
     });
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: error.message
+    return sendError(res, 500, error?.message, error, {
+      messageKey: 'message',
+      extraPayload: { status: 'error' },
+      log: false,
     });
   }
 });
@@ -47,10 +49,13 @@ router.post('/seed', async (req, res) => {
       output
     });
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: error.message,
-      output: error.stdout || error.stderr
+    return sendError(res, 500, error?.message, error, {
+      messageKey: 'message',
+      extraPayload: {
+        status: 'error',
+        ...(error.stdout || error.stderr ? { output: error.stdout || error.stderr } : {}),
+      },
+      log: false,
     });
   }
 });
@@ -70,10 +75,13 @@ router.post('/init-db', async (req, res) => {
       output
     });
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: error.message,
-      output: error.stdout || error.stderr
+    return sendError(res, 500, error?.message, error, {
+      messageKey: 'message',
+      extraPayload: {
+        status: 'error',
+        ...(error.stdout || error.stderr ? { output: error.stdout || error.stderr } : {}),
+      },
+      log: false,
     });
   }
 });

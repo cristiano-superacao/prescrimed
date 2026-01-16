@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Save, DollarSign } from 'lucide-react';
 import { financeiroService } from '../services/financeiro.service';
 import toast from 'react-hot-toast';
+import { successMessage, errorMessage } from '../utils/toastMessages';
 
 export default function TransacaoModal({ transacao, onClose }) {
   const [formData, setFormData] = useState({
@@ -31,14 +32,14 @@ export default function TransacaoModal({ transacao, onClose }) {
     try {
       if (transacao) {
         await financeiroService.update(transacao._id, formData);
-        toast.success('Transação atualizada com sucesso');
+        toast.success(successMessage('update', 'Transação', { gender: 'f' }));
       } else {
         await financeiroService.create(formData);
-        toast.success('Transação criada com sucesso');
+        toast.success(successMessage('create', 'Transação', { gender: 'f' }));
       }
       onClose();
     } catch (error) {
-      toast.error('Erro ao salvar transação');
+      toast.error(errorMessage('save', 'transação'));
     } finally {
       setLoading(false);
     }

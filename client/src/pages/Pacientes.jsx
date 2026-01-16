@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { pacienteService } from '../services/paciente.service';
 import toast from 'react-hot-toast';
+import { successMessage, errorMessage } from '../utils/toastMessages';
 import PacienteModal from '../components/PacienteModal';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
@@ -48,7 +49,7 @@ export default function Pacientes() {
       const pacientesList = Array.isArray(data) ? data : (data.pacientes || []);
       setPacientes(pacientesList);
     } catch (error) {
-      toast.error('Erro ao carregar pacientes');
+      toast.error(errorMessage('load', 'pacientes'));
     } finally {
       setLoading(false);
     }
@@ -60,7 +61,7 @@ export default function Pacientes() {
       const response = await pacienteService.getHistorico(paciente.id || paciente._id);
       setHistoricoPrescricoes(response.prescricoes || []);
     } catch (error) {
-      toast.error('Erro ao carregar histórico');
+      toast.error(errorMessage('load', 'histórico'));
     }
   };
 
@@ -81,10 +82,10 @@ export default function Pacientes() {
 
     try {
       await pacienteService.delete(id);
-      toast.success('Paciente excluído com sucesso');
+      toast.success(successMessage('delete', 'Paciente'));
       loadPacientes(searchTerm);
     } catch (error) {
-      toast.error('Erro ao excluir paciente');
+      toast.error(errorMessage('delete', 'paciente'));
     }
   };
 

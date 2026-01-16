@@ -1,9 +1,20 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
+import { body } from 'express-validator';
 import { authenticate, isAdmin, isSuperAdmin } from '../middleware/auth.middleware.js';
 import Empresa from '../models/Empresa.js';
+import { validateRequest } from '../middleware/validate.middleware.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
+
+const findEmpresaByIdOr404 = async (id, res) => {
+  const empresa = await Empresa.findById(id);
+  if (!empresa) {
+    res.status(404).json({ error: 'Empresa não encontrada' });
+    return null;
+  }
+  return empresa;
+};
 
 // Todas as rotas requerem autenticação
 router.use(authenticate);
@@ -14,8 +25,7 @@ router.get('/', isSuperAdmin, async (req, res) => {
     const empresas = await Empresa.find().sort({ createdAt: -1 });
     res.json(empresas);
   } catch (error) {
-    console.error('Erro ao listar empresas:', error);
-    res.status(500).json({ error: 'Erro ao listar empresas' });
+    return sendError(res, 500, 'Erro ao listar empresas', error);
   }
 });
 
@@ -23,13 +33,9 @@ router.get('/', isSuperAdmin, async (req, res) => {
 router.post('/', isSuperAdmin, [
   body('nome').trim().notEmpty().withMessage('Nome é obrigatório'),
   body('email').isEmail().withMessage('Email inválido'),
+  validateRequest,
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { nome, cnpj, email, telefone, plano } = req.body;
 
     if (cnpj) {
@@ -54,38 +60,32 @@ router.post('/', isSuperAdmin, [
 
     res.status(201).json(empresa);
   } catch (error) {
-    console.error('Erro ao criar empresa:', error);
-    res.status(500).json({ error: 'Erro ao criar empresa' });
+    return sendError(res, 500, 'Erro ao criar empresa', error);
   }
 });
 
 // DELETE /api/empresas/:id - Excluir empresa (Super Admin)
 router.delete('/:id', isSuperAdmin, async (req, res) => {
   try {
-    const empresa = await Empresa.findByIdAndDelete(req.params.id);
-    if (!empresa) {
-      return res.status(404).json({ error: 'Empresa não encontrada' });
-    }
+    const empresa = await findEmpresaByIdOr404(req.params.id, res);
+    if (!empresa) return;
+
+    await Empresa.findByIdAndDelete(req.params.id);
     res.json({ message: 'Empresa excluída com sucesso' });
   } catch (error) {
-    console.error('Erro ao excluir empresa:', error);
-    res.status(500).json({ error: 'Erro ao excluir empresa' });
+    return sendError(res, 500, 'Erro ao excluir empresa', error);
   }
 });
 
 // GET /api/empresas/me - Buscar dados da própria empresa
 router.get('/me', async (req, res) => {
   try {
-    const empresa = await Empresa.findById(req.user.empresaId);
-    
-    if (!empresa) {
-      return res.status(404).json({ error: 'Empresa não encontrada' });
-    }
+    const empresa = await findEmpresaByIdOr404(req.user.empresaId, res);
+    if (!empresa) return;
 
     res.json(empresa);
   } catch (error) {
-    console.error('Erro ao buscar empresa:', error);
-    res.status(500).json({ error: 'Erro ao buscar empresa' });
+    return sendError(res, 500, 'Erro ao buscar empresa', error);
   }
 });
 
@@ -93,13 +93,9 @@ router.get('/me', async (req, res) => {
 router.put('/me', isAdmin, [
   body('nome').optional().trim().notEmpty(),
   body('email').optional().isEmail().normalizeEmail(),
+  validateRequest,
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { nome, cnpj, email, telefone, endereco, configuracoes } = req.body;
 
     const updateData = {};
@@ -117,27 +113,22 @@ router.put('/me', isAdmin, [
       empresa,
     });
   } catch (error) {
-    console.error('Erro ao atualizar empresa:', error);
-    res.status(500).json({ error: 'Erro ao atualizar empresa' });
+    return sendError(res, 500, 'Erro ao atualizar empresa', error);
   }
 });
 
 // GET /api/empresas/configuracoes - Buscar configurações da empresa
 router.get('/configuracoes', async (req, res) => {
   try {
-    const empresa = await Empresa.findById(req.user.empresaId);
-    
-    if (!empresa) {
-      return res.status(404).json({ error: 'Empresa não encontrada' });
-    }
+    const empresa = await findEmpresaByIdOr404(req.user.empresaId, res);
+    if (!empresa) return;
 
     res.json({
       configuracoes: empresa.configuracoes,
       plano: empresa.plano,
     });
   } catch (error) {
-    console.error('Erro ao buscar configurações:', error);
-    res.status(500).json({ error: 'Erro ao buscar configurações' });
+    return sendError(res, 500, 'Erro ao buscar configurações', error);
   }
 });
 
@@ -157,8 +148,7 @@ router.put('/configuracoes', isAdmin, async (req, res) => {
       configuracoes: empresa.configuracoes,
     });
   } catch (error) {
-    console.error('Erro ao atualizar configurações:', error);
-    res.status(500).json({ error: 'Erro ao atualizar configurações' });
+    return sendError(res, 500, 'Erro ao atualizar configurações', error);
   }
 });
 

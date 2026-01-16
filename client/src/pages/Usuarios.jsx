@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Shield, RefreshCcw, Users, CheckCircle2, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, RefreshCcw, Users, CheckCircle2, Search } from 'lucide-react';
 import { usuarioService } from '../services/usuario.service';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
+import { successMessage, errorMessage, customErrorMessage } from '../utils/toastMessages';
 import UsuarioModal from '../components/UsuarioModal';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import AccessDeniedCard from '../components/common/AccessDeniedCard';
 
 export default function Usuarios() {
   const { user } = useAuthStore();
@@ -24,7 +26,7 @@ export default function Usuarios() {
     if (isAdmin) {
       loadUsuarios();
     } else {
-      toast.error('Acesso negado');
+      toast.error(customErrorMessage('accessDenied'));
     }
   }, [isAdmin]);
 
@@ -35,7 +37,7 @@ export default function Usuarios() {
       const usuariosList = Array.isArray(data) ? data : (data.usuarios || []);
       setUsuarios(usuariosList);
     } catch (error) {
-      toast.error('Erro ao carregar usuários');
+      toast.error(errorMessage('load', 'usuários'));
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ export default function Usuarios() {
 
   const handleDelete = async (id) => {
     if (id === user.id) {
-      toast.error('Você não pode excluir seu próprio usuário');
+      toast.error(customErrorMessage('cannotDeleteSelf'));
       return;
     }
     if (!window.confirm('Tem certeza que deseja excluir este usuário?')) {
@@ -56,11 +58,11 @@ export default function Usuarios() {
     }
     try {
       await usuarioService.delete(id);
-      toast.success('Usuário excluído com sucesso');
+      toast.success(successMessage('delete', 'Usuário'));
       setFeedback({ type: 'success', message: 'Usuário excluído e lista atualizada.' });
       loadUsuarios();
     } catch (error) {
-      toast.error('Erro ao excluir usuário');
+      toast.error(errorMessage('delete', 'usuário'));
     }
   };
 
@@ -79,11 +81,7 @@ export default function Usuarios() {
 
   if (!isAdmin) {
     return (
-      <div className="card text-center py-12">
-        <Shield size={48} className="mx-auto text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Acesso Negado</h2>
-        <p className="text-slate-600">Apenas administradores podem acessar esta página.</p>
-      </div>
+      <AccessDeniedCard message="Apenas administradores podem acessar esta página." />
     );
   }
 

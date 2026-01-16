@@ -1,28 +1,23 @@
-import api from './api';
+import { get, post, put, del } from './request';
 
 export const empresaService = {
   getAll: async () => {
-    const response = await api.get('/empresas');
-    return response.data;
+    return get('/empresas');
   },
 
   create: async (data) => {
-    const response = await api.post('/empresas', data);
-    return response.data;
+    return post('/empresas', data);
   },
 
   delete: async (id) => {
-    const response = await api.delete(`/empresas/${id}`);
-    return response.data;
+    return del(`/empresas/${id}`);
   },
 
   getMyCompany: async () => {
-    const response = await api.get('/empresas/me');
-    return response.data;
+    return get('/empresas/me');
   },
 
   updateMyCompany: async (data) => {
-    const response = await api.put('/empresas/me', data);
-    return response.data;
+    return put('/empresas/me', data);
   },
 };

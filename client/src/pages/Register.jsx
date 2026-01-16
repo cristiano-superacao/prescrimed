@@ -4,6 +4,7 @@ import { UserPlus, Building2, Briefcase, ShieldCheck, Home, PawPrint, HeartPulse
 import HeroBackground from '../components/HeroBackground';
 import { authService } from '../services/auth.service';
 import toast from 'react-hot-toast';
+import { errorMessage, customErrorMessage } from '../utils/toastMessages';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ export default function Register() {
     e.preventDefault();
 
     if (formData.senha !== formData.confirmarSenha) {
-      toast.error('As senhas não coincidem');
+      toast.error(customErrorMessage('passwordMismatch'));
       return;
     }
 
@@ -67,7 +68,7 @@ export default function Register() {
       toast.success('Cadastro realizado com sucesso! Faça login para continuar.');
       navigate('/login');
     } catch (error) {
-      const errorMsg = error?.response?.data?.error || 'Erro ao realizar cadastro';
+      const errorMsg = error?.response?.data?.error || errorMessage('register', 'conta');
       toast.error(errorMsg);
     } finally {
       setLoading(false);

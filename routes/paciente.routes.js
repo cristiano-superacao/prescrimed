@@ -1,10 +1,27 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
+import { body } from 'express-validator';
 import { authenticate, hasPermission } from '../middleware/auth.middleware.js';
 import Paciente from '../models/Paciente.js';
 import Prescricao from '../models/Prescricao.js';
+import { calculateAge } from '../utils/date.js';
+import { validateRequest } from '../middleware/validate.middleware.js';
+import { sendError } from '../utils/error.js';
 
 const router = express.Router();
+
+const findPacienteByEmpresa = async (id, req, res, { lean = false } = {}) => {
+  const query = { _id: id, empresaId: req.user.empresaId };
+  const paciente = lean
+    ? await Paciente.findOne(query).lean()
+    : await Paciente.findOne(query);
+
+  if (!paciente) {
+    res.status(404).json({ error: 'Paciente não encontrado' });
+    return null;
+  }
+
+  return paciente;
+};
 
 router.use(authenticate);
 router.use(hasPermission('pacientes'));
@@ -37,55 +54,30 @@ router.get('/', async (req, res) => {
     ]);
 
     // Adicionar idade calculada
-    const pacientesComIdade = pacientes.map(p => {
-      let idade = null;
-      if (p.dataNascimento) {
-        const hoje = new Date();
-        const nascimento = new Date(p.dataNascimento);
-        idade = hoje.getFullYear() - nascimento.getFullYear();
-        const m = hoje.getMonth() - nascimento.getMonth();
-        if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
-          idade--;
-        }
-      }
-      return { ...p, id: p._id, idade };
-    });
+    const pacientesComIdade = pacientes.map(p => ({
+      ...p,
+      id: p._id,
+      idade: calculateAge(p.dataNascimento)
+    }));
 
     res.json({ pacientes: pacientesComIdade, total, limit: parseInt(limit), offset: parseInt(offset) });
   } catch (error) {
-    console.error('Erro ao listar pacientes:', error);
-    res.status(500).json({ error: 'Erro ao listar pacientes' });
+    return sendError(res, 500, 'Erro ao listar pacientes', error);
   }
 });
 
 // GET /api/pacientes/:id - Buscar paciente
 router.get('/:id', async (req, res) => {
   try {
-    const paciente = await Paciente.findOne({
-      _id: req.params.id,
-      empresaId: req.user.empresaId
-    }).lean();
-
-    if (!paciente) {
-      return res.status(404).json({ error: 'Paciente não encontrado' });
-    }
+    const paciente = await findPacienteByEmpresa(req.params.id, req, res, { lean: true });
+    if (!paciente) return;
 
     // Adicionar idade
-    let idade = null;
-    if (paciente.dataNascimento) {
-      const hoje = new Date();
-      const nascimento = new Date(paciente.dataNascimento);
-      idade = hoje.getFullYear() - nascimento.getFullYear();
-      const m = hoje.getMonth() - nascimento.getMonth();
-      if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
-        idade--;
-      }
-    }
+    const idade = calculateAge(paciente.dataNascimento);
 
     res.json({ ...paciente, id: paciente._id, idade });
   } catch (error) {
-    console.error('Erro ao buscar paciente:', error);
-    res.status(500).json({ error: 'Erro ao buscar paciente' });
+    return sendError(res, 500, 'Erro ao buscar paciente', error);
   }
 });
 
@@ -94,14 +86,8 @@ router.get('/:id/prescricoes', async (req, res) => {
   try {
     const { limit = 20, offset = 0 } = req.query;
 
-    const paciente = await Paciente.findOne({
-      _id: req.params.id,
-      empresaId: req.user.empresaId
-    });
-
-    if (!paciente) {
-      return res.status(404).json({ error: 'Paciente não encontrado' });
-    }
+    const paciente = await findPacienteByEmpresa(req.params.id, req, res);
+    if (!paciente) return;
 
     const [prescricoes, total] = await Promise.all([
       Prescricao.find({
@@ -121,8 +107,7 @@ router.get('/:id/prescricoes', async (req, res) => {
 
     res.json({ prescricoes, total });
   } catch (error) {
-    console.error('Erro ao buscar prescrições do paciente:', error);
-    res.status(500).json({ error: 'Erro ao buscar prescrições' });
+    return sendError(res, 500, 'Erro ao buscar prescrições', error);
   }
 });
 
@@ -132,13 +117,9 @@ router.post('/', [
   body('dataNascimento').notEmpty(),
   body('sexo').isIn(['M', 'F', 'Outro']),
   body('telefone').notEmpty(),
+  validateRequest,
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const paciente = await Paciente.create({
       ...req.body,
       empresaId: req.user.empresaId,
@@ -147,8 +128,7 @@ router.post('/', [
 
     res.status(201).json({ message: 'Paciente criado com sucesso', paciente });
   } catch (error) {
-    console.error('Erro ao criar paciente:', error);
-    res.status(500).json({ error: 'Erro ao criar paciente' });
+    return sendError(res, 500, 'Erro ao criar paciente', error);
   }
 });
 
@@ -158,8 +138,7 @@ router.put('/:id', async (req, res) => {
     const paciente = await Paciente.update(req.params.id, req.user.empresaId, req.body);
     res.json({ message: 'Paciente atualizado com sucesso', paciente });
   } catch (error) {
-    console.error('Erro ao atualizar paciente:', error);
-    res.status(500).json({ error: error.message });
+    return sendError(res, 500, error.message, error);
   }
 });
 
@@ -169,8 +148,7 @@ router.delete('/:id', async (req, res) => {
     await Paciente.delete(req.params.id, req.user.empresaId);
     res.json({ message: 'Paciente desativado com sucesso' });
   } catch (error) {
-    console.error('Erro ao deletar paciente:', error);
-    res.status(500).json({ error: error.message });
+    return sendError(res, 500, error.message, error);
   }
 });
 

@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { usuarioService } from '../services/usuario.service';
 import { empresaService } from '../services/empresa.service';
 import toast from 'react-hot-toast';
+import { successMessage, customErrorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 
 export default function Configuracoes() {
@@ -105,7 +106,7 @@ export default function Configuracoes() {
       const data = await usuarioService.updateMe(payload);
       const updatedUser = data?.usuario || payload;
       persistUser(updatedUser);
-      toast.success('Perfil atualizado com sucesso!');
+      toast.success(successMessage('update', 'Perfil', { suffix: '!' }));
       loadSummary();
     } catch (error) {
       const message = error?.response?.data?.error || 'Erro ao atualizar perfil';
@@ -144,7 +145,7 @@ export default function Configuracoes() {
     const confirmaSenha = form.confirmaSenha.value;
 
     if (novaSenha !== confirmaSenha) {
-      toast.error('As senhas não coincidem');
+      toast.error(customErrorMessage('passwordMismatch'));
       return;
     }
 

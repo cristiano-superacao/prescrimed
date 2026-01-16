@@ -9,6 +9,7 @@ import {
 import { pacienteService } from '../services/paciente.service';
 import { prescricaoService } from '../services/prescricao.service';
 import toast from 'react-hot-toast';
+import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -53,7 +54,7 @@ export default function CensoMP() {
       setCensoData(mappedData);
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao carregar dados do Censo');
+      toast.error(errorMessage('load', 'dados do censo'));
     } finally {
       setLoading(false);
     }

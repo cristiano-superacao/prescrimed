@@ -1,34 +1,28 @@
-import api from './api';
+import { get, post, put, buildQueryString } from './request';
 
 export const prescricaoService = {
   getAll: async (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    const response = await api.get(`/prescricoes${params ? `?${params}` : ''}`);
-    return response.data;
+    const qs = buildQueryString(filters);
+    return get(`/prescricoes${qs}`);
   },
 
   getByPaciente: async (pacienteId) => {
-    const response = await api.get(`/prescricoes/paciente/${pacienteId}`);
-    return response.data;
+    return get(`/prescricoes/paciente/${pacienteId}`);
   },
 
   getById: async (id) => {
-    const response = await api.get(`/prescricoes/${id}`);
-    return response.data;
+    return get(`/prescricoes/${id}`);
   },
 
   create: async (data) => {
-    const response = await api.post('/prescricoes', data);
-    return response.data;
+    return post('/prescricoes', data);
   },
 
   cancelar: async (id) => {
-    const response = await api.put(`/prescricoes/${id}/cancelar`);
-    return response.data;
+    return put(`/prescricoes/${id}/cancelar`);
   },
 
   arquivar: async (id) => {
-    const response = await api.put(`/prescricoes/${id}/arquivar`);
-    return response.data;
+    return put(`/prescricoes/${id}/arquivar`);
   },
 };

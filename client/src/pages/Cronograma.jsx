@@ -16,6 +16,7 @@ import {
 import { agendamentoService } from '../services/agendamento.service';
 import { prescricaoService } from '../services/prescricao.service';
 import toast from 'react-hot-toast';
+import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 
@@ -81,7 +82,7 @@ export default function Cronograma() {
 
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao carregar cronograma');
+      toast.error(errorMessage('load', 'cronograma'));
     } finally {
       setLoading(false);
     }

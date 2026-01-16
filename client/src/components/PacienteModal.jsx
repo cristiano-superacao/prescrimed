@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { pacienteService } from '../services/paciente.service';
 import toast from 'react-hot-toast';
+import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
 
 export default function PacienteModal({ paciente, onClose }) {
   const [formData, setFormData] = useState({
@@ -45,14 +46,14 @@ export default function PacienteModal({ paciente, onClose }) {
     try {
       if (paciente) {
         await pacienteService.update(paciente.id, formData);
-        toast.success('Paciente atualizado com sucesso');
+        toast.success(successMessage('update', 'Paciente'));
       } else {
         await pacienteService.create(formData);
-        toast.success('Paciente criado com sucesso');
+        toast.success(successMessage('create', 'Paciente'));
       }
       onClose();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Erro ao salvar paciente');
+      toast.error(apiErrorMessage(error, errorMessage('save', 'paciente')));
     } finally {
       setLoading(false);
     }

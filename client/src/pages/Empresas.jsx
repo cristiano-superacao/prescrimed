@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Shield, RefreshCcw, Building2, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, RefreshCcw, Building2, CheckCircle2 } from 'lucide-react';
 import { empresaService } from '../services/empresa.service';
 import { useAuthStore } from '../store/authStore';
 import EmpresaModal from '../components/EmpresaModal';
 import toast from 'react-hot-toast';
+import { successMessage, errorMessage, customErrorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import EmptyState from '../components/common/EmptyState';
+import AccessDeniedCard from '../components/common/AccessDeniedCard';
 
 export default function Empresas() {
   const { user } = useAuthStore();
@@ -20,7 +22,7 @@ export default function Empresas() {
     if (isSuperAdmin) {
       loadEmpresas();
     } else {
-      toast.error('Acesso negado');
+      toast.error(customErrorMessage('accessDenied'));
     }
   }, [isSuperAdmin]);
 
@@ -31,7 +33,7 @@ export default function Empresas() {
       const empresasList = Array.isArray(data) ? data : (data.empresas || []);
       setEmpresas(empresasList);
     } catch (error) {
-      toast.error('Erro ao carregar empresas');
+      toast.error(errorMessage('load', 'empresas'));
     } finally {
       setLoading(false);
     }
@@ -43,20 +45,19 @@ export default function Empresas() {
     }
     try {
       await empresaService.delete(id);
-      toast.success('Empresa excluída com sucesso');
+      toast.success(successMessage('delete', 'Empresa', { gender: 'f' }));
       loadEmpresas();
     } catch (error) {
-      toast.error('Erro ao excluir empresa');
+      toast.error(errorMessage('delete', 'empresa'));
     }
   };
 
   if (!isSuperAdmin) {
     return (
-      <div className="card text-center py-12">
-        <Shield size={48} className="mx-auto text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Acesso Negado</h2>
-        <p className="text-gray-600">Apenas Super Administradores podem acessar esta página.</p>
-      </div>
+      <AccessDeniedCard
+        message="Apenas Super Administradores podem acessar esta página."
+        messageClassName="text-gray-600"
+      />
     );
   }
 
