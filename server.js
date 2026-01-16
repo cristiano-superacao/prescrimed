@@ -5,13 +5,11 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Importar rotas
 import apiRouter from './routes/index.js';
-import { seedDatabase } from './utils/seed.js';
 
 // ES Modules __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +17,6 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const PORT = parseInt(process.env.PORT || '3000', 10);
-let dbReady = false;
 
 // Defaults seguros para ambiente de desenvolvimento (evita 500 por JWT/variáveis ausentes)
 if (process.env.NODE_ENV !== 'production') {
@@ -28,49 +25,9 @@ if (process.env.NODE_ENV !== 'production') {
   process.env.SESSION_TIMEOUT = process.env.SESSION_TIMEOUT || '8h';
 }
 
-// Conectar ao MongoDB em background (não bloqueia início do servidor)
-async function connectDB() {
-  try {
-    const mongoUriEnv = process.env.MONGODB_URI || process.env.MONGO_URL || 
-                       process.env.MONGODB_URL || process.env.DATABASE_URL || 
-                       process.env.URL_MONGO || process.env.URL_PUBLICA_MONGO || 
-                       process.env.MONGO_URI || process.env.URL_DO_BANCO_DE_DADOS;
-
-    if (mongoUriEnv) {
-      console.log('📡 Conectando ao MongoDB Cloud...');
-      await mongoose.connect(mongoUriEnv);
-      console.log('✅ MongoDB Cloud conectado');
-      dbReady = true;
-    } else if (process.env.NODE_ENV !== 'production') {
-      try {
-        console.log('📦 Iniciando MongoDB Memory Server...');
-        const { MongoMemoryServer } = await import('mongodb-memory-server');
-        const mongoServer = await MongoMemoryServer.create();
-        await mongoose.connect(mongoServer.getUri());
-        console.log('✅ MongoDB Memory Server conectado');
-        dbReady = true;
-      } catch (e) {
-        console.warn('⚠️  Falha ao carregar MongoMemoryServer:', e.message);
-      }
-    } else {
-      console.warn('⚠️  MONGODB_URI não definida em produção. Iniciando sem banco.');
-    }
-
-    if (dbReady) {
-      console.log('🌱 Iniciando processamento de Seed...');
-      await seedDatabase();
-      console.log('✅ Processamento de Seed finalizado');
-    }
-  } catch (error) {
-    console.error('❌ Erro na rotina de banco/seed:', error.message);
-  }
-}
-
-connectDB();
-
 const app = express();
 
-// Iniciar servidor IMEDIATAMENTE para passar no healthcheck do Railway
+// Iniciar servidor
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor Ativo na porta ${PORT}`);
   console.log(`🩺 Health: http://0.0.0.0:${PORT}/health`);
@@ -81,7 +38,6 @@ app.get('/health', cors(), (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
     uptime: process.uptime(),
-    db: dbReady ? 'connected' : 'connecting/disconnected',
     timestamp: new Date().toISOString()
   });
 });
@@ -140,17 +96,6 @@ app.options('/api/*', cors(corsOptions));
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Gate de API: em produção, retorna 503 enquanto o banco não estiver pronto
-app.use('/api', (req, res, next) => {
-  if (process.env.NODE_ENV === 'production' && !dbReady) {
-    return res.status(503).json({ 
-      error: 'Serviço temporariamente indisponível',
-      db: 'connecting' 
-    });
-  }
-  next();
-});
 
 // Rotas da API
 app.use('/api', apiRouter);

@@ -14,16 +14,7 @@
     "build": "cd client && npm run build",
     "build:full": "npm install --production=false && cd client && npm install && npm run build && cd ..",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
-    "dev:all": "concurrently \"node start-mongo-memory.js\" \"npm run dev\" \"npm run client\"",
-    "test:local": "node start-mongo-memory.js",
-    "deploy": "node deploy.js",
-    "railway:deploy": "railway up",
-    "railway:logs": "railway logs",
-    "railway:init": "node scripts/railway-init.js",
-    "seed:cloud": "node scripts/seed-cloud.js",
-    "init:db": "node scripts/init-db.js",
-    "verify:empresas": "node scripts/verificar-empresas.js",
-    "db:test": "node scripts/test-db-connection.js"
+    "deploy": "node deploy.js"
   },
   "keywords": [
     "prescrimed",
@@ -42,13 +33,11 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.20.1",
     "morgan": "^1.10.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "mongodb-memory-server": "^10.3.0",
     "nodemon": "^3.0.2"
   }
 }
