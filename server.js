@@ -8,8 +8,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Importar rotas
+// Importar rotas e banco de dados
 import apiRouter from './routes/index.js';
+import { sequelize } from './models/index.js';
 
 // ES Modules __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -17,6 +18,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const PORT = parseInt(process.env.PORT || '3000', 10);
+let dbReady = false;
 
 // Defaults seguros para ambiente de desenvolvimento (evita 500 por JWT/variáveis ausentes)
 if (process.env.NODE_ENV !== 'production') {
@@ -24,6 +26,31 @@ if (process.env.NODE_ENV !== 'production') {
   process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-me';
   process.env.SESSION_TIMEOUT = process.env.SESSION_TIMEOUT || '8h';
 }
+
+// Conectar ao PostgreSQL em background
+async function connectDB() {
+  try {
+    console.log('📡 Conectando ao PostgreSQL...');
+    await sequelize.authenticate();
+    console.log('✅ PostgreSQL conectado com sucesso');
+    
+    // Sincronizar modelos (criar tabelas se não existirem)
+    if (process.env.NODE_ENV !== 'production') {
+      await sequelize.sync({ alter: true });
+      console.log('✅ Tabelas sincronizadas (modo desenvolvimento)');
+    } else {
+      await sequelize.sync();
+      console.log('✅ Modelos sincronizados');
+    }
+    
+    dbReady = true;
+  } catch (error) {
+    console.error('❌ Erro ao conectar no banco de dados:', error.message);
+    dbReady = false;
+  }
+}
+
+connectDB();
 
 const app = express();
 
@@ -38,6 +65,7 @@ app.get('/health', cors(), (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
     uptime: process.uptime(),
+    database: dbReady ? 'connected' : 'connecting',
     timestamp: new Date().toISOString()
   });
 });
