@@ -67,6 +67,17 @@ Após o deploy, acesse:
 
 O CORS já contempla `RAILWAY_PUBLIC_DOMAIN` automaticamente. O frontend (build do Vite) usa caminho relativo `/api` em produção caso `VITE_API_URL` não esteja setada, portanto funciona no mesmo domínio sem configuração extra.
 
+### Validação automática (script)
+Use o script PowerShell para validar o health após o deploy:
+
+```powershell
+# Passando a URL completa
+powershell -ExecutionPolicy Bypass -File scripts/check-health.ps1 -Url https://<seu-subdominio>.up.railway.app/health
+
+# Ou passando apenas o domínio
+powershell -ExecutionPolicy Bypass -File scripts/check-health.ps1 -Domain <seu-subdominio>.up.railway.app
+```
+
 ## Notas
 - Em caso de porta em uso, o servidor aplica fallback automático (3000 → 3001 → ...).
 - O `.railwayignore` garante que apenas artefatos necessários sejam enviados (inclui `client/dist`).
