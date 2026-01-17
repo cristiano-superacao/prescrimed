@@ -13,6 +13,7 @@
     "seed:demo": "node scripts/seed-demo-data.js",
     "seed:minimal": "node scripts/seed-minimal-demo.js",
     "smoke:api": "node scripts/smoke-api-flow.js",
+    "check:railway": "node scripts/check-railway-config.js",
     "reset:local": "scripts\\reset-local-config.bat",
     "reset:local:ps": "powershell -ExecutionPolicy Bypass -File scripts/reset-local-config.ps1",
     "client": "cd client && npm run dev",
