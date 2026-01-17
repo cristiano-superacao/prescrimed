@@ -32,10 +32,16 @@ jobs:
       - name: Install dependencies
         working-directory: ./client
         run: npm ci
+        env:
+          VITE_BACKEND_ROOT: https://prescrimed-backend.up.railway.app
+          VITE_API_URL: https://prescrimed-backend.up.railway.app/api
         
       - name: Build
         working-directory: ./client
         run: npm run build
+        env:
+          VITE_BACKEND_ROOT: https://prescrimed-backend.up.railway.app
+          VITE_API_URL: https://prescrimed-backend.up.railway.app/api
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
