@@ -68,7 +68,6 @@ function App() {
             }
           >
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route index element={<Navigate to="/dashboard" replace />} />
             
             {/* Dashboard - página inicial com estatísticas e resumo */}
             <Route path="dashboard" element={<Dashboard />} />
