@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Fallback padrão para produção em GitHub Pages quando variáveis não estão presentes
+const DEFAULT_RAILWAY_ROOT = 'https://prescrimed-backend.up.railway.app';
+
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
   // Detectar se está em ambiente hospedado (Railway/Netlify/Pages)
@@ -20,9 +23,15 @@ export const getApiUrl = () => {
     return `${root}/api`;
   }
 
-  // Em produção hospedada SEM variáveis configuradas, usar proxy relativo
+  // Em produção hospedada SEM variáveis configuradas
   if (isHostedProd) {
-    console.warn('⚠️ VITE_API_URL não configurada. Configure as variáveis de ambiente no Railway/Netlify.');
+    // Em GitHub Pages, apontar para o backend público no Railway
+    if (window.location.hostname.includes('github.io')) {
+      console.warn('⚠️ Variáveis VITE_* não configuradas. Usando fallback para Railway backend.');
+      return `${DEFAULT_RAILWAY_ROOT}/api`;
+    }
+    // Outros provedores: usar proxy relativo
+    console.warn('⚠️ VITE_API_URL não configurada. Usando proxy relativo /api.');
     return '/api';
   }
 
@@ -45,6 +54,10 @@ export const getApiRootUrl = () => {
   // Fallback: tentar derivar do getApiUrl
   const base = getApiUrl();
   if (base === '/api') {
+    // Se estiver em GitHub Pages, usar fallback do Railway
+    if (window.location.hostname.includes('github.io')) {
+      return DEFAULT_RAILWAY_ROOT;
+    }
     // Proxy relativo - healthcheck não funcionará sem BACKEND_ROOT
     console.warn('⚠️ VITE_BACKEND_ROOT não configurado. Banner de status offline não funcionará.');
     return '';
