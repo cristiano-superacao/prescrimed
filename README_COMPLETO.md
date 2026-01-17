@@ -392,10 +392,21 @@ Para suporte, abra uma [issue](https://github.com/cristiano-superacao/prescrimed
 
 ---
 
+## 👨‍💻 Autor
+
+**Cristiano Superação**
+
+- GitHub: [@cristiano-superacao](https://github.com/cristiano-superacao)
+- Repositório: [prescrimed](https://github.com/cristiano-superacao/prescrimed)
+
+---
+
 <div align="center">
 
 **Desenvolvido com ❤️ para profissionais de saúde**
 
-© 2025 Prescrimed. Todos os direitos reservados.
+© 2025-2026 Cristiano Superação - Prescrimed. Todos os direitos reservados.
+
+*Sistema de Prescrições Médicas Multi-Tenant*
 
 </div>
