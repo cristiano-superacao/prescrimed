@@ -1,6 +1,9 @@
+# Nixpacks Builder Configuration
+# This file is detected by Railway to override auto-detection
+
 [phases.setup]
 nixPkgs = ["nodejs_18"]
-aptPkgs = []
+providers = []
 
 [phases.install]
 cmds = [
@@ -9,7 +12,10 @@ cmds = [
 ]
 
 [phases.build]
-cmds = ["echo 'Build completed - Backend serves frontend from client/dist'"]
+cmds = ["echo 'Backend + Frontend build complete'"]
 
 [start]
 cmd = "node server.js"
+
+[variables]
+NODE_VERSION = "18"
