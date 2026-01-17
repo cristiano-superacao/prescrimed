@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Fallback padrão para produção em GitHub Pages quando variáveis não estão presentes
-const DEFAULT_RAILWAY_ROOT = 'https://prescrimed-backend.up.railway.app';
+const DEFAULT_RAILWAY_ROOT = 'https://prescrimed-backend-production.up.railway.app';
 
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
