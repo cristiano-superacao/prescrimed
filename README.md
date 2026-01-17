@@ -71,6 +71,16 @@ node scripts/check-health.js https://SEU_DOMINIO_RAILWAY
 cd client && npm ci && npm run build
 ```
 
+## Dashboard Streamlit (Opcional)
+Este dashboard é complementar para status rápido, sem alterar o layout do frontend.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run-streamlit.ps1
+```
+
+- Porta padrão: 8501 (http://localhost:8501)
+- Variável opcional: `BACKEND_URL` para apontar para outra instância.
+
 ## Troubleshooting
 - 404 em assets no GitHub Pages: garanta `base: '/prescrimed/'` no `client/vite.config.js`.
 - Banner "Backend Offline": confirme `VITE_BACKEND_ROOT`/`VITE_API_URL` ou aguarde publicação.

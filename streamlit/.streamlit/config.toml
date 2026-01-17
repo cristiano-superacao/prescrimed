@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#0ea5e9"         # sky-500
+backgroundColor = "#0b1220"      # dark canvas
+secondaryBackgroundColor = "#111827" # gray-900
+textColor = "#f9fafb"            # gray-50
+font = "sans serif"
