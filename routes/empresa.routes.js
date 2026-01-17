@@ -16,6 +16,28 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/empresas/me - Buscar empresa do usuário autenticado
+router.get('/me', async (req, res) => {
+  try {
+    if (!req.user || !req.user.empresaId) {
+      return res.status(401).json({ error: 'Usuário não autenticado ou sem empresa associada' });
+    }
+
+    const empresa = await Empresa.findByPk(req.user.empresaId, {
+      include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }]
+    });
+    
+    if (!empresa) {
+      return res.status(404).json({ error: 'Empresa não encontrada' });
+    }
+    
+    res.json(empresa);
+  } catch (error) {
+    console.error('Erro ao buscar empresa do usuário:', error);
+    res.status(500).json({ error: 'Erro ao buscar empresa' });
+  }
+});
+
 // Buscar empresa por ID
 router.get('/:id', async (req, res) => {
   try {

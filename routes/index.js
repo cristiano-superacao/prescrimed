@@ -10,6 +10,8 @@ import agendamentoRoutes from './agendamento.routes.js';
 import casaRepousoRoutes from './casa-repouso.routes.js';
 import petshopRoutes from './petshop.routes.js';
 import fisioterapiaRoutes from './fisioterapia.routes.js';
+import estoqueRoutes from './estoque.routes.js';
+import financeiroRoutes from './financeiro.routes.js';
 import { authenticate, tenantIsolation } from '../middleware/auth.middleware.js';
 
 // Router índice para consolidar endpoints da API
@@ -40,5 +42,9 @@ router.use('/agendamentos', authenticate, tenantIsolation, agendamentoRoutes);
 router.use('/casa-repouso', authenticate, tenantIsolation, casaRepousoRoutes);
 router.use('/petshop', authenticate, tenantIsolation, petshopRoutes);
 router.use('/fisioterapia', authenticate, tenantIsolation, fisioterapiaRoutes);
+
+// Rotas de estoque e financeiro
+router.use('/estoque', authenticate, tenantIsolation, estoqueRoutes);
+router.use('/financeiro', authenticate, tenantIsolation, financeiroRoutes);
 
 export default router;

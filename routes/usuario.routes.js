@@ -4,6 +4,44 @@ import { Usuario, Empresa } from '../models/index.js';
 
 const router = express.Router();
 
+// GET /api/usuarios/me/summary - Resumo do usuário autenticado
+router.get('/me/summary', async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Usuário não autenticado' });
+    }
+
+    const usuario = await Usuario.findByPk(req.user.id, {
+      attributes: { exclude: ['senha'] },
+      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nome', 'tipo'] }]
+    });
+    
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Mock de estatísticas - em produção, buscar do banco
+    const summary = {
+      usuario: usuario.toJSON(),
+      estatisticas: {
+        pacientesAtendidos: 45,
+        prescricoesCriadas: 120,
+        agendamentosHoje: 5,
+        notificacoes: 3
+      },
+      atividadesRecentes: [
+        { tipo: 'prescricao', descricao: 'Prescrição criada para João Silva', data: new Date().toISOString() },
+        { tipo: 'agendamento', descricao: 'Consulta agendada para Maria Santos', data: new Date().toISOString() }
+      ]
+    };
+    
+    res.json(summary);
+  } catch (error) {
+    console.error('Erro ao buscar resumo do usuário:', error);
+    res.status(500).json({ error: 'Erro ao buscar resumo do usuário' });
+  }
+});
+
 // Listar todos os usuários
 router.get('/', async (req, res) => {
   try {

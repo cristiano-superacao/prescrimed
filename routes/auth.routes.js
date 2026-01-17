@@ -79,12 +79,19 @@ router.post('/register', async (req, res) => {
     } = req.body;
 
     if (!email || !senha) {
-      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+      return res.status(400).json({ 
+        error: 'Email e senha são obrigatórios',
+        details: { email: !email ? 'required' : 'ok', senha: !senha ? 'required' : 'ok' }
+      });
     }
 
     const isOnboarding = nomeEmpresa && nomeEmpresa.trim().length > 0;
     if (!isOnboarding && !empresaId) {
-      return res.status(400).json({ error: 'Empresa existente deve ser informada via empresaId' });
+      return res.status(400).json({ 
+        error: 'Para registro, é necessário informar nomeEmpresa (onboarding) ou empresaId (usuário em empresa existente)',
+        isOnboarding: false,
+        hasEmpresaId: !!empresaId
+      });
     }
 
     const usuarioExistente = await Usuario.findOne({ where: { email } });
