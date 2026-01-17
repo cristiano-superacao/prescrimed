@@ -73,6 +73,50 @@ async function connectDB() {
     // Testa conexão com o banco
     await sequelize.authenticate();
     console.log('✅ PostgreSQL conectado com sucesso');
+
+    // Em PostgreSQL, ENUM não aceita novos valores sem ALTER TYPE.
+    // Para manter compatibilidade com bancos já existentes no Railway,
+    // adiciona (se necessário) as novas funções no enum de usuarios.role.
+    try {
+      const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : undefined;
+      if (dialect === 'postgres') {
+        const qi = sequelize.getQueryInterface();
+        const enumTypeName = 'enum_usuarios_role';
+        const roleValues = [
+          'superadmin',
+          'admin',
+          'nutricionista',
+          'atendente',
+          'enfermeiro',
+          'tecnico_enfermagem',
+          'fisioterapeuta',
+          'assistente_social',
+          'auxiliar_administrativo'
+        ];
+
+        for (const value of roleValues) {
+          // Só tenta alterar se o tipo existir e o label não existir
+          await qi.sequelize.query(
+            `DO $$
+            BEGIN
+              IF EXISTS (SELECT 1 FROM pg_type WHERE typname = :typeName) AND
+                 NOT EXISTS (
+                   SELECT 1
+                   FROM pg_type t
+                   JOIN pg_enum e ON t.oid = e.enumtypid
+                   WHERE t.typname = :typeName AND e.enumlabel = :value
+                 )
+              THEN
+                EXECUTE format('ALTER TYPE %I ADD VALUE %L', :typeName, :value);
+              END IF;
+            END $$;`,
+            { replacements: { typeName: enumTypeName, value } }
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Não foi possível garantir valores do ENUM usuarios.role:', e?.message || e);
+    }
     
     /**
      * Sincronização de modelos com banco de dados

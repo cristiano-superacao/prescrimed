@@ -181,6 +181,7 @@ export default function UsuarioModal({ usuario, onClose }) {
                 <option value="Médico">Médico</option>
                 <option value="Enfermeiro">Enfermeiro</option>
                 <option value="Técnico de Enfermagem">Técnico de Enfermagem</option>
+                <option value="Fisioterapeuta">Fisioterapeuta</option>
                 <option value="Nutricionista">Nutricionista</option>
                 <option value="Assistente Social">Assistente Social</option>
                 <option value="Administrador">Administrador</option>
@@ -228,7 +229,12 @@ export default function UsuarioModal({ usuario, onClose }) {
                 value={formData.role}
                 onChange={(e) => setFormData({...formData, role: e.target.value})}
               >
+                <option value="enfermeiro">Enfermeiro</option>
+                <option value="tecnico_enfermagem">Técnico de Enfermagem</option>
+                <option value="fisioterapeuta">Fisioterapeuta</option>
                 <option value="nutricionista">Nutricionista</option>
+                <option value="assistente_social">Assistente Social</option>
+                <option value="auxiliar_administrativo">Auxiliar Administrativo</option>
                 <option value="atendente">Atendente</option>
                 <option value="admin">Administrador</option>
                 <option value="superadmin">Super Administrador</option>

@@ -84,6 +84,11 @@ export default function Usuarios() {
     if (role === 'admin') return 'Administrador';
     if (role === 'nutricionista') return 'Nutricionista';
     if (role === 'atendente') return 'Atendente';
+    if (role === 'enfermeiro') return 'Enfermeiro';
+    if (role === 'tecnico_enfermagem') return 'Técnico de Enfermagem';
+    if (role === 'fisioterapeuta') return 'Fisioterapeuta';
+    if (role === 'assistente_social') return 'Assistente Social';
+    if (role === 'auxiliar_administrativo') return 'Auxiliar Administrativo';
     return 'Usuário';
   };
 
