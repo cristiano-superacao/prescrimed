@@ -14,8 +14,9 @@
     "reset:local": "scripts\\reset-local-config.bat",
     "reset:local:ps": "powershell -ExecutionPolicy Bypass -File scripts/reset-local-config.ps1",
     "client": "cd client && npm run dev",
-    "build:client": "cd client && npm run build",
+    "build:client": "cd client && npm install && npm run build",
     "build:full": "npm install --production=false && cd client && npm install && npm run build && cd ..",
+    "build": "cd client && npm install && npm run build",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
     "deploy": "node deploy.js"
   },
