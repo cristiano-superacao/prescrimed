@@ -6,6 +6,15 @@ const router = express.Router();
 // Verificação de tabelas e colunas no PostgreSQL
 router.get('/db-check', async (req, res) => {
   try {
+    const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : undefined;
+    if (dialect && dialect !== 'postgres') {
+      return res.status(400).json({
+        ok: false,
+        dialect,
+        hint: 'Este diagnóstico espera PostgreSQL. No Railway, configure DATABASE_URL (Postgres) no serviço do backend.'
+      });
+    }
+
     const [tables] = await sequelize.query(
       "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename"
     );

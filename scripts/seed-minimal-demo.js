@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { sequelize, Empresa, Usuario, Paciente, Prescricao } from '../models/index.js';
+import { pathToFileURL } from 'url';
 
 async function upsertUsuario({ nome, email, role, empresaId, senhaHash }) {
   const [usuario] = await Usuario.findOrCreate({
@@ -44,7 +45,7 @@ async function upsertPaciente({ nome, cpf, empresaId }) {
   return paciente;
 }
 
-async function main() {
+export async function seedMinimal({ closeConnection = true } = {}) {
   const senhaPadrao = process.env.SEED_PASSWORD || 'Prescri@2026';
   const slug = process.env.SEED_SLUG || 'empresa-teste';
 
@@ -71,7 +72,7 @@ async function main() {
     const senhaHash = await bcrypt.hash(senhaPadrao, 10);
 
     // Superadmin (sem empresa vinculada)
-    const superadmin = await upsertUsuario({
+    await upsertUsuario({
       nome: 'Super Admin',
       email: `superadmin+${slug}@prescrimed.com`,
       role: 'superadmin',
@@ -79,7 +80,7 @@ async function main() {
       senhaHash,
     });
 
-    const admin = await upsertUsuario({
+    await upsertUsuario({
       nome: 'Admin Teste',
       email: `admin+${slug}@prescrimed.com`,
       role: 'admin',
@@ -95,7 +96,7 @@ async function main() {
       senhaHash,
     });
 
-    const atendente = await upsertUsuario({
+    await upsertUsuario({
       nome: 'Atendente Teste',
       email: `atendente+${slug}@prescrimed.com`,
       role: 'atendente',
@@ -140,12 +141,27 @@ async function main() {
     console.log(`admin: admin+${slug}@prescrimed.com`);
     console.log(`nutricionista: nutri+${slug}@prescrimed.com`);
     console.log(`atendente: atendente+${slug}@prescrimed.com`);
-  } catch (error) {
-    console.error('❌ Falha no seed mínimo:', error);
-    process.exitCode = 1;
+
+    return { empresaId: empresa.id };
   } finally {
-    await sequelize.close();
+    if (closeConnection) {
+      await sequelize.close();
+    }
   }
 }
 
-main();
+const isMain = (() => {
+  try {
+    if (!process.argv?.[1]) return false;
+    return import.meta.url === pathToFileURL(process.argv[1]).href;
+  } catch {
+    return false;
+  }
+})();
+
+if (isMain) {
+  seedMinimal().catch((error) => {
+    console.error('❌ Falha no seed mínimo:', error);
+    process.exitCode = 1;
+  });
+}

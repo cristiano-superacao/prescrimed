@@ -13,16 +13,18 @@ import fisioterapiaRoutes from './fisioterapia.routes.js';
 import estoqueRoutes from './estoque.routes.js';
 import financeiroRoutes from './financeiro.routes.js';
 import { authenticate, tenantIsolation } from '../middleware/auth.middleware.js';
+import { sequelize } from '../models/index.js';
 
 // Router índice para consolidar endpoints da API
 const router = express.Router();
 
 // Rota de teste
 router.get('/test', (req, res) => {
+  const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : 'unknown';
   res.json({ 
     message: 'API Prescrimed com PostgreSQL',
     timestamp: new Date().toISOString(),
-    database: 'PostgreSQL + Sequelize'
+    database: `${dialect} + Sequelize`
   });
 });
 

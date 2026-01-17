@@ -117,6 +117,25 @@ async function connectDB() {
     
     // Marca banco como pronto
     app.locals.dbReady = true;
+
+    // Seed opcional (útil no primeiro deploy do Railway)
+    // Executa somente quando explicitamente ativado via variável de ambiente.
+    if (process.env.SEED_MINIMAL === 'true') {
+      const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : undefined;
+      if (dialect && dialect !== 'postgres') {
+        console.warn(`⚠️ SEED_MINIMAL=true ignorado: dialeto atual é '${dialect}'. Configure DATABASE_URL (Postgres) no Railway.`);
+      } else {
+        try {
+          console.log('🌱 SEED_MINIMAL=true - executando seed mínimo...');
+          const { seedMinimal } = await import('./scripts/seed-minimal-demo.js');
+          await seedMinimal({ closeConnection: false });
+          console.log('✅ Seed mínimo executado com sucesso');
+        } catch (seedError) {
+          console.error('❌ Seed mínimo falhou:', seedError);
+        }
+      }
+    }
+
     console.log('🎉 Sistema pronto para uso!');
   } catch (error) {
     console.error('❌ Erro ao conectar no banco de dados:', error.message);
@@ -184,6 +203,14 @@ app.use(morgan('dev'));
  */
 
 // Lista base de origens permitidas
+// Compatibilidade com variáveis comuns no Railway
+// (alguns projetos usam URL_FRONTEND/CORS_ORIGIN em vez de FRONTEND_URL/ALLOWED_ORIGINS)
+if (!process.env.FRONTEND_URL && process.env.URL_FRONTEND) {
+  process.env.FRONTEND_URL = process.env.URL_FRONTEND;
+}
+
+const corsOriginEnv = (process.env.CORS_ORIGIN || '').trim();
+
 const baseOrigins = [
   'http://localhost:5173',  // Vite dev server (frontend em desenvolvimento)
   'http://localhost:3000',  // Backend local
@@ -196,6 +223,8 @@ const baseOrigins = [
   // Railway backend (API em produção)
   'https://prescrimed-backend-production.up.railway.app',
   process.env.FRONTEND_URL, // URL customizada via variável de ambiente
+  process.env.URL_FRONTEND,
+  corsOriginEnv || null,
   process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null
 ].filter(Boolean); // Remove valores null/undefined
 
@@ -204,6 +233,10 @@ const extraOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')          // Divide string em array
   .map(o => o.trim())  // Remove espaços em branco
   .filter(Boolean);    // Remove strings vazias
+
+if (corsOriginEnv) {
+  extraOrigins.push(corsOriginEnv);
+}
 
 // Combina e remove duplicatas
 const allowedOrigins = Array.from(new Set([...baseOrigins, ...extraOrigins]));
