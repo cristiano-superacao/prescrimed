@@ -18,7 +18,8 @@
     "build:full": "npm install --production=false && cd client && npm install && npm run build && cd ..",
     "build": "cd client && npm install && npm run build",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
-    "deploy": "node deploy.js"
+    "deploy": "node deploy.js",
+    "check:health": "node scripts/check-health.js"
   },
   "engines": {
     "node": ">=18.0.0",

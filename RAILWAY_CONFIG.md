@@ -10,7 +10,7 @@ JWT_SECRET=<generate-strong-secret-32-chars>
 JWT_REFRESH_SECRET=<generate-strong-secret-32-chars>
 SESSION_TIMEOUT=8h
 FRONTEND_URL=https://prescrimed.netlify.app
-ALLOWED_ORIGINS=https://prescrimed.netlify.app,https://prescrimed.up.railway.app
+ALLOWED_ORIGINS=https://prescrimed.netlify.app,https://prescrimed.up.railway.app,https://cristiano-superacao.github.io,https://cristiano-superacao.github.io/prescrimed
 FORCE_SYNC=true
 ```
 
@@ -65,8 +65,8 @@ Railway automatically provides:
 
 4. **Primeiro Deploy**
    - Defina FORCE_SYNC=true
-   - Deploy automático via git push
-   - Aguardar criação de tabelas
+   - Deploy automático via git push (Railway vinculado ao GitHub)
+   - Aguardar criação/alteração de tabelas
 
 5. **Pós-Deploy**
    - Remover FORCE_SYNC=true (ou definir false)
@@ -75,7 +75,25 @@ Railway automatically provides:
 
 ---
 
-# 4. Frontend Separado (Opcional - Netlify)
+# 4. Frontend Separado (GitHub Pages ou Netlify)
+
+## GitHub Pages
+Workflow já incluso em `.github/workflows/deploy.yml`.
+
+Variáveis usadas no build:
+```
+VITE_BACKEND_ROOT=https://prescrimed-backend.up.railway.app
+VITE_API_URL=https://prescrimed-backend.up.railway.app/api
+```
+
+Configuração do Vite:
+```
+base = "/prescrimed/"
+```
+
+Publicação:
+- Settings → Pages → Source: GitHub Actions
+- Aguardar Actions publicar.
 
 Se preferir servir frontend via Netlify:
 
@@ -103,8 +121,9 @@ VITE_API_URL=https://prescrimed-backend.up.railway.app/api
 
 - Backend API: https://prescrimed-backend.up.railway.app/api
 - Health Check: https://prescrimed-backend.up.railway.app/health
-- Frontend (se Railway): https://prescrimed-backend.up.railway.app
-- Frontend (se Netlify): https://prescrimed.netlify.app
+- Frontend (Railway): https://prescrimed-backend.up.railway.app
+- Frontend (Netlify): https://prescrimed.netlify.app
+- Frontend (GitHub Pages): https://cristiano-superacao.github.io/prescrimed/
 - Landing Page: https://prescrimed-backend.up.railway.app/web
 
 ---
@@ -140,10 +159,14 @@ Deployments > Select Previous > Redeploy
 
 # 9. CI/CD
 
-Railway faz deploy automático em:
-- Push para branch main
-- Merge de pull requests
-- Tags git
+## Railway + GitHub
+- No Dashboard do Railway: New Project → Deploy from GitHub → selecione `cristiano-superacao/prescrimed`.
+- Ative Auto‑deploy on push.
+- Build: Nixpacks (root do repo) com start `npm start`.
+
+## GitHub Pages (frontend)
+- Workflow `deploy.yml` já existente constrói `client/` e publica.
+- Base do Vite definida para `/prescrimed/`.
 
 ---
 
