@@ -4,8 +4,10 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  // Base dinâmico: '/' padrão; em GitHub Pages será /prescrimed/
-  base: process.env.VITE_BASE || '/prescrimed/',
+  // Base dinâmico:
+  // - Railway/Netlify: '/' (raiz)
+  // - GitHub Pages: '/prescrimed/'
+  base: process.env.VITE_BASE || '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

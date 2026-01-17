@@ -8,7 +8,7 @@
     "dev": "nodemon server.js",
     "server": "node server.js",
     "start": "node server.js",
-    "railway:build": "npm install --production=false && cd client && npm install && npm run build",
+    "railway:build": "npm install --production=false && cd client && npm install && npm run build:railway",
     "railway:start": "node server.js",
     "seed:demo": "node scripts/seed-demo-data.js",
     "seed:minimal": "node scripts/seed-minimal-demo.js",

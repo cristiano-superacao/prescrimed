@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "build:netlify": "vite build",
     "build:railway": "vite build",
+    "build:github": "VITE_BASE=/prescrimed/ vite build",
     "start:railway": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",
     "lint": "echo 'Linting skipped'"
   },
