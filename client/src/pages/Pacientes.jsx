@@ -183,21 +183,21 @@ export default function Pacientes() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredPacientes.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-100">
+          <div className="overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
+            <table className="w-full min-w-[760px]">
+              <thead className="bg-slate-50 border-b border-slate-100 whitespace-nowrap">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">CPF</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nascimento</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Telefone</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">CPF</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nascimento</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Telefone</th>
+                  <th className="px-4 sm:px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredPacientes.map((paciente) => (
-                  <tr key={paciente.id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-6 py-4">
+                  <tr key={paciente.id || paciente._id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
                           {paciente.nome.charAt(0)}
@@ -205,12 +205,12 @@ export default function Pacientes() {
                         <span className="font-medium text-slate-900">{paciente.nome}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{paciente.cpf}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{paciente.cpf}</td>
+                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
                       {new Date(paciente.dataNascimento).toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{paciente.telefone}</td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{paciente.telefone}</td>
+                    <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleViewHistorico(paciente)}
@@ -227,7 +227,7 @@ export default function Pacientes() {
                           <Edit2 size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(paciente.id)}
+                          onClick={() => handleDelete(paciente.id || paciente._id)}
                           className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                           title="Excluir"
                         >

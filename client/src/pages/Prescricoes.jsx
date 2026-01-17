@@ -239,22 +239,22 @@ export default function Prescricoes() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredPrescricoes.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-100">
+          <div className="overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
+            <table className="w-full min-w-[1100px]">
+              <thead className="bg-slate-50 border-b border-slate-100 whitespace-nowrap">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Paciente</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data Emissão</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Medicamentos</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Paciente</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data Emissão</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Medicamentos</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 sm:px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredPrescricoes.map((prescricao) => (
-                  <tr key={prescricao.id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-6 py-4">
+                  <tr key={prescricao.id || prescricao._id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
                           {prescricao.pacienteNome ? prescricao.pacienteNome.charAt(0) : 'P'}
@@ -262,13 +262,13 @@ export default function Prescricoes() {
                         <span className="font-medium text-slate-900">{prescricao.pacienteNome}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
                       {new Date(prescricao.createdAt).toLocaleDateString('pt-BR')}
                       <span className="text-xs text-slate-400 block">
                         {new Date(prescricao.createdAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                         prescricao.tipo === 'controlado' 
                           ? 'bg-orange-100 text-orange-700' 
@@ -277,7 +277,7 @@ export default function Prescricoes() {
                         {prescricao.tipo === 'controlado' ? 'Controlado' : 'Comum'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600">
                       {prescricao.medicamentos && prescricao.medicamentos.length > 0 ? (
                         <div>
                           <span className="font-medium">{prescricao.medicamentos[0].nome}</span>
@@ -291,7 +291,7 @@ export default function Prescricoes() {
                         <span className="text-slate-400">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                         prescricao.status === 'ativa' 
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
@@ -304,10 +304,10 @@ export default function Prescricoes() {
                         )}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
                       {prescricao.status === 'ativa' && (
                         <button
-                          onClick={() => handleCancelar(prescricao.id)}
+                          onClick={() => handleCancelar(prescricao.id || prescricao._id)}
                           className="text-red-600 hover:text-red-800 text-xs font-semibold hover:underline"
                         >
                           Cancelar

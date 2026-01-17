@@ -7,7 +7,7 @@ export default function PageHeader({ title, subtitle, label, children }) {
         {label && (
           <p className="text-xs uppercase tracking-[0.4em] text-slate-400">{label}</p>
         )}
-        <h1 className="text-4xl font-bold text-slate-900">{title}</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">{title}</h1>
         {subtitle && (
           <p className="text-slate-500 text-sm max-w-2xl">
             {subtitle}
