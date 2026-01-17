@@ -14,10 +14,14 @@
     "reset:local": "scripts\\reset-local-config.bat",
     "reset:local:ps": "powershell -ExecutionPolicy Bypass -File scripts/reset-local-config.ps1",
     "client": "cd client && npm run dev",
-    "build": "cd client && npm run build",
+    "build:client": "cd client && npm run build",
     "build:full": "npm install --production=false && cd client && npm install && npm run build && cd ..",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
     "deploy": "node deploy.js"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "keywords": [
     "prescrimed",
