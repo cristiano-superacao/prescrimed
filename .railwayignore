@@ -17,17 +17,5 @@ WEB/
 !package.json
 !package-lock.json
 
-# Client source (apenas dist é necessário)
-client/src/
-client/public/
-client/index.html
-client/vite.config.js
-client/postcss.config.js
-client/tailwind.config.js
-WEB/
-*.html
-client/src/
-client/public/
-client/node_modules/
-client/.env.development
-client/.env.local
+# Não ignore o client: necessário para build do Vite
+# Removido bloqueios que impediam inclusão de index.html e fontes do client
