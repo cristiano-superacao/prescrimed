@@ -33,8 +33,8 @@ jobs:
         working-directory: ./client
         run: npm ci
         env:
-          VITE_BACKEND_ROOT: https://prescrimed-backend-production.up.railway.app
-          VITE_API_URL: https://prescrimed-backend-production.up.railway.app/api
+          VITE_BACKEND_ROOT: ${{ secrets.VITE_BACKEND_ROOT || 'https://prescrimed-backend-production.up.railway.app' }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://prescrimed-backend-production.up.railway.app/api' }}
         
       - name: Build
         working-directory: ./client
