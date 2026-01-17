@@ -1,4 +1,2 @@
 # Arquivo desativado: use apenas nixpacks.toml
-# Este arquivo existia com conteúdo em TOML mas nome .yaml incorreto,
-# o que pode causar detecção incorreta. Mantido vazio/neutralizado.
-NODE_VERSION = "18"
+# Mantido propositalmente sem configurações para evitar conflitos.

@@ -13,7 +13,7 @@ export default function UsuarioModal({ usuario, onClose }) {
     especialidade: '',
     crm: '',
     crmUf: '',
-    role: 'user',
+    role: 'atendente',
     permissoes: [],
     ativo: true
   });
@@ -44,7 +44,7 @@ export default function UsuarioModal({ usuario, onClose }) {
         especialidade: usuario.especialidade || '',
         crm: usuario.crm || '',
         crmUf: usuario.crmUf || '',
-        role: usuario.role || 'user',
+        role: usuario.role || 'atendente',
         permissoes: usuario.permissoes || [],
         ativo: usuario.ativo !== undefined ? usuario.ativo : true
       });
@@ -228,13 +228,8 @@ export default function UsuarioModal({ usuario, onClose }) {
                 value={formData.role}
                 onChange={(e) => setFormData({...formData, role: e.target.value})}
               >
-                <option value="usuario">Usuário</option>
-                <option value="medico">Médico</option>
-                <option value="enfermeiro">Enfermeiro</option>
-                <option value="tecnico_enfermagem">Técnico de Enfermagem</option>
                 <option value="nutricionista">Nutricionista</option>
-                <option value="assistente_social">Assistente Social</option>
-                <option value="auxiliar_administrativo">Auxiliar Administrativo</option>
+                <option value="atendente">Atendente</option>
                 <option value="admin">Administrador</option>
                 <option value="superadmin">Super Administrador</option>
               </select>

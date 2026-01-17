@@ -79,6 +79,14 @@ export default function Usuarios() {
     (u.crm && u.crm.includes(searchTerm))
   );
 
+  const roleLabel = (role) => {
+    if (role === 'superadmin') return 'Super Admin';
+    if (role === 'admin') return 'Administrador';
+    if (role === 'nutricionista') return 'Nutricionista';
+    if (role === 'atendente') return 'Atendente';
+    return 'Usuário';
+  };
+
   if (!isAdmin) {
     return (
       <AccessDeniedCard message="Apenas administradores podem acessar esta página." />
@@ -220,7 +228,7 @@ export default function Usuarios() {
                             : 'bg-slate-100 text-slate-700 border-slate-200'
                         }`}
                       >
-                        {usuario.role === 'superadmin' ? 'Super Admin' : usuario.role === 'admin' ? 'Administrador' : 'Usuário'}
+                        {roleLabel(usuario.role)}
                       </span>
                     </td>
                     <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>

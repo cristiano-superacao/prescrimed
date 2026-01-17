@@ -28,6 +28,7 @@ export const authenticate = async (req, res, next) => {
       nome: usuario.nome,
       email: usuario.email,
       role: usuario.role,
+      permissoes: usuario.permissoes || [],
       empresaId: usuario.empresaId,
       empresa: usuario.empresa
     };

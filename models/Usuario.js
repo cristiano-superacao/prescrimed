@@ -35,6 +35,23 @@ const Usuario = sequelize.define('Usuario', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  especialidade: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  crm: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  crmUf: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  permissoes: {
+    // JSON para compatibilidade com SQLite no desenvolvimento
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
   empresaId: {
     type: DataTypes.UUID,
     allowNull: true

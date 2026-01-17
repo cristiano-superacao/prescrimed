@@ -8,8 +8,8 @@ async function main() {
     await sequelize.authenticate();
     console.log('✅ Conectado ao banco de dados');
 
-    // Garante que as tabelas existam (não força recriação)
-    await sequelize.sync({ force: false });
+    // Garante que as tabelas existam e acompanhem o schema no ambiente local
+    await sequelize.sync({ force: false, alter: process.env.NODE_ENV !== 'production' });
 
     const empresasSpec = [
       {

@@ -31,7 +31,7 @@ import { fileURLToPath } from 'url'; // Conversão de URL para path (necessário
 
 // Importa rotas e configuração do banco de dados
 import apiRouter from './routes/index.js'; // Router principal da API
-import { sequelize } from './models/index.js'; // Instância do Sequelize (ORM)
+import { sequelize, Usuario } from './models/index.js'; // Instância do Sequelize (ORM)
 
 /**
  * Configuração do __dirname para ES Modules
@@ -81,16 +81,34 @@ async function connectDB() {
     if (process.env.NODE_ENV !== 'production') {
       // DESENVOLVIMENTO: force: false evita recriar tabelas a cada restart
       // Isso previne perda de dados durante desenvolvimento
-      await sequelize.sync({ force: false });
+      await sequelize.sync({ force: false, alter: true });
       console.log('✅ Tabelas sincronizadas (modo desenvolvimento)');
     } else {
       // PRODUÇÃO: usa alter apenas se FORCE_SYNC=true
       // Útil para primeira implantação ou atualizações de schema
-      const useAlter = process.env.FORCE_SYNC === 'true';
+      let useAlter = process.env.FORCE_SYNC === 'true';
+
+      // Se for uma atualização incremental (ex.: adicionamos novas colunas),
+      // tenta detectar schema desatualizado e aplicar alter automaticamente.
+      if (!useAlter) {
+        try {
+          const qi = sequelize.getQueryInterface();
+          const tableName = Usuario.getTableName();
+          const cols = await qi.describeTable(tableName);
+          if (!cols?.permissoes) {
+            console.log('🔧 Schema desatualizado detectado (faltando coluna permissoes) - aplicando alter...');
+            useAlter = true;
+          }
+        } catch {
+          // Se a tabela ainda não existir (primeiro deploy), precisa criar.
+          useAlter = true;
+        }
+      }
       if (useAlter) {
-        console.log('🔧 FORCE_SYNC ativado - criando/atualizando tabelas...');
+        const alterReason = process.env.FORCE_SYNC === 'true' ? 'FORCE_SYNC' : 'ALTER';
+        console.log(`🔧 ${alterReason} ativado - criando/atualizando tabelas...`);
         await sequelize.sync({ alter: true }); // Altera estrutura existente
-        console.log('✅ Tabelas criadas/sincronizadas (produção com FORCE_SYNC)');
+        console.log(`✅ Tabelas criadas/sincronizadas (produção com ${alterReason})`);
       } else {
         await sequelize.sync({ force: false }); // Não altera estrutura
         console.log('✅ Modelos sincronizados (produção)');

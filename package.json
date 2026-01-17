@@ -11,6 +11,8 @@
     "railway:build": "npm install --production=false && cd client && npm install && npm run build",
     "railway:start": "node server.js",
     "seed:demo": "node scripts/seed-demo-data.js",
+    "seed:minimal": "node scripts/seed-minimal-demo.js",
+    "smoke:api": "node scripts/smoke-api-flow.js",
     "reset:local": "scripts\\reset-local-config.bat",
     "reset:local:ps": "powershell -ExecutionPolicy Bypass -File scripts/reset-local-config.ps1",
     "client": "cd client && npm run dev",
@@ -22,8 +24,8 @@
     "check:health": "node scripts/check-health.js"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   },
   "keywords": [
     "prescrimed",

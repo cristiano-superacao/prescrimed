@@ -38,6 +38,45 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// PUT /api/empresas/me - Atualizar empresa do usuário autenticado
+router.put('/me', async (req, res) => {
+  try {
+    if (!req.user || !req.user.empresaId) {
+      return res.status(401).json({ error: 'Usuário não autenticado ou sem empresa associada' });
+    }
+
+    // Por padrão, só admin/superadmin pode alterar dados da empresa
+    if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+      return res.status(403).json({ error: 'Acesso negado: apenas admin pode atualizar dados da empresa' });
+    }
+
+    const empresa = await Empresa.findByPk(req.user.empresaId);
+    if (!empresa) {
+      return res.status(404).json({ error: 'Empresa não encontrada' });
+    }
+
+    // Atualiza somente campos esperados pelo frontend
+    const { nome, cnpj, endereco, telefone, email } = req.body || {};
+    const updateData = {};
+    if (nome != null) updateData.nome = nome;
+    if (cnpj != null) updateData.cnpj = cnpj;
+    if (endereco != null) updateData.endereco = endereco;
+    if (telefone != null) updateData.telefone = telefone;
+    if (email != null) updateData.email = email;
+
+    await empresa.update(updateData);
+
+    const atualizada = await Empresa.findByPk(req.user.empresaId, {
+      include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }]
+    });
+
+    res.json(atualizada);
+  } catch (error) {
+    console.error('Erro ao atualizar empresa do usuário:', error);
+    res.status(500).json({ error: 'Erro ao atualizar empresa' });
+  }
+});
+
 // Buscar empresa por ID
 router.get('/:id', async (req, res) => {
   try {

@@ -44,6 +44,11 @@ router.post('/login', async (req, res) => {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
+        telefone: usuario.contato || null,
+        especialidade: usuario.especialidade || null,
+        crm: usuario.crm || null,
+        crmUf: usuario.crmUf || null,
+        permissoes: usuario.permissoes || [],
         role: usuario.role,
         empresaId: usuario.empresaId,
         empresa: usuario.empresa
