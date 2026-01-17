@@ -390,29 +390,29 @@ export default function Estoque() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             icon={Package}
-            label="Total Itens"
-            value={stats.totalItens}
-            description={`${stats.totalMedicamentos} med. + ${stats.totalAlimentos} alim.`}
+            label="Total de Itens"
+            value={stats.totalItens || 0}
+            description={`${stats.totalMedicamentos ?? 0} med. + ${stats.totalAlimentos ?? 0} alim.`}
             color="primary"
           />
           <StatsCard
             icon={AlertTriangle}
             label="Baixo Estoque"
-            value={stats.baixoEstoque}
+            value={stats.baixoEstoque || 0}
             description="Itens precisando reposição"
             color="red"
           />
           <StatsCard
             icon={Calendar}
             label="Vencendo"
-            value={stats.vencendo}
+            value={stats.vencendo || 0}
             description="Nos próximos 30 dias"
             color="amber"
           />
           <StatsCard
             icon={Layers}
             label="Movimentações"
-            value={stats.movimentacoesRecentes}
+            value={stats.movimentacoesRecentes || 0}
             description="Últimos 30 dias"
             color="emerald"
           />

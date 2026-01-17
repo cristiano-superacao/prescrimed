@@ -12,7 +12,9 @@ export const financeiroService = {
   },
 
   getStats: async () => {
-    return get('/financeiro/stats');
+    const response = await get('/financeiro/stats');
+    // Se a resposta tiver um campo 'data', extrai ele
+    return response?.data || response;
   },
 
   create: async (data) => {

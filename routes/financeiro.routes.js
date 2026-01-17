@@ -56,9 +56,9 @@ router.get('/', async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     const stats = {
-      receitasMes: 2350.00,
-      despesasMes: 1420.50,
-      saldoMes: 929.50,
+      receitas: 2350.00,
+      despesas: 1420.50,
+      saldo: 929.50,
       receitasPendentes: 450.00,
       despesasPendentes: 120.00,
       fluxoCaixa: {

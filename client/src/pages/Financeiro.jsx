@@ -16,6 +16,7 @@ import { financeiroService } from '../services/financeiro.service';
 import TransacaoModal from '../components/TransacaoModal';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
+import { formatCurrency } from '../utils/currency';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -51,7 +52,15 @@ export default function Financeiro() {
         financeiroService.getStats()
       ]);
       setTransacoes(Array.isArray(transacoesData) ? transacoesData : []);
-      setStats(statsData);
+      
+      // Garantir que todos os valores sejam numéricos válidos
+      setStats({
+        receitas: Number(statsData?.receitas) || 0,
+        despesas: Number(statsData?.despesas) || 0,
+        saldo: Number(statsData?.saldo) || 0,
+        receitasPendentes: Number(statsData?.receitasPendentes) || 0,
+        despesasPendentes: Number(statsData?.despesasPendentes) || 0
+      });
     } catch (error) {
       console.error(error);
       toast.error(errorMessage('load', 'dados financeiros'));
@@ -89,13 +98,6 @@ export default function Financeiro() {
     const matchesStatus = filter.status ? t.status === filter.status : true;
     return matchesSearch && matchesTipo && matchesStatus;
   });
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
 
   return (
     <div className="space-y-8">
