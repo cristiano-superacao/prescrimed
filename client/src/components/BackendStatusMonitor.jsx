@@ -1,13 +1,54 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, Wifi, WifiOff } from 'lucide-react';
-import api, { getApiRootUrl } from '../services/api';
+import { AlertCircle, WifiOff } from 'lucide-react';
+import { getApiRootUrl } from '../services/api';
 
 export default function BackendStatusMonitor() {
-  const [isOnline, setIsOnline] = useState(true);
+  const [status, setStatus] = useState('online'); // online | degraded | offline
   const [showAlert, setShowAlert] = useState(false);
   const [lastCheck, setLastCheck] = useState(null);
+  const [dbStatus, setDbStatus] = useState(null);
 
   useEffect(() => {
+    const evaluateHealthResponse = async (response) => {
+      // offline: erro de rede ou CORS (tratado no catch)
+      // degraded: backend respondeu, mas DB não conectou ainda ou retornou 503
+      // online: backend respondeu e DB conectado
+
+      let data = null;
+      try {
+        data = await response.clone().json();
+      } catch (_) {
+        data = null;
+      }
+
+      // Alguns ambientes retornam 503 quando o banco não está pronto
+      if (response.status === 503) {
+        setStatus('degraded');
+        setDbStatus('connecting');
+        setShowAlert(true);
+        return;
+      }
+
+      if (!response.ok) {
+        setStatus('offline');
+        setDbStatus(null);
+        setShowAlert(true);
+        return;
+      }
+
+      const reportedDb = data?.database;
+      if (reportedDb && reportedDb !== 'connected') {
+        setStatus('degraded');
+        setDbStatus(reportedDb);
+        setShowAlert(true);
+        return;
+      }
+
+      setStatus('online');
+      setDbStatus(reportedDb || 'connected');
+      setShowAlert(false);
+    };
+
     const checkBackendStatus = async () => {
       try {
         const healthUrlRoot = getApiRootUrl();
@@ -30,14 +71,8 @@ export default function BackendStatusMonitor() {
             method: 'GET',
             signal: AbortSignal.timeout(5000)
           });
-          
-          if (response.ok) {
-            setIsOnline(true);
-            setShowAlert(false);
-          } else {
-            setIsOnline(false);
-            setShowAlert(true);
-          }
+
+          await evaluateHealthResponse(response);
           setLastCheck(new Date());
           return;
         }
@@ -50,18 +85,14 @@ export default function BackendStatusMonitor() {
               method: 'GET',
               signal: AbortSignal.timeout(5000)
             });
-            if (response.ok) {
-              setIsOnline(true);
-              setShowAlert(false);
-            } else {
-              setIsOnline(false);
-              setShowAlert(true);
-            }
+
+            await evaluateHealthResponse(response);
             setLastCheck(new Date());
             return;
           } else {
             console.warn('⚠️ BackendStatusMonitor: VITE_BACKEND_ROOT não configurado, desabilitando healthcheck');
-            setIsOnline(true);
+            setStatus('online');
+            setDbStatus(null);
             setShowAlert(false);
             setLastCheck(new Date());
             return;
@@ -74,7 +105,8 @@ export default function BackendStatusMonitor() {
              window.location.hostname.includes('netlify.app') ||
              window.location.hostname.includes('github.io'))) {
           console.error('❌ BackendStatusMonitor: tentando acessar localhost em produção! Configure VITE_BACKEND_ROOT.');
-          setIsOnline(false);
+          setStatus('offline');
+          setDbStatus(null);
           setShowAlert(true);
           setLastCheck(new Date());
           return;
@@ -86,17 +118,12 @@ export default function BackendStatusMonitor() {
           mode: 'cors',
           signal: AbortSignal.timeout(5000) // timeout de 5s
         });
-        
-        if (response.ok) {
-          setIsOnline(true);
-          setShowAlert(false);
-        } else {
-          setIsOnline(false);
-          setShowAlert(true);
-        }
+
+        await evaluateHealthResponse(response);
       } catch (error) {
         console.error('BackendStatusMonitor error:', error.message);
-        setIsOnline(false);
+        setStatus('offline');
+        setDbStatus(null);
         setShowAlert(true);
       }
       setLastCheck(new Date());
@@ -113,24 +140,46 @@ export default function BackendStatusMonitor() {
 
   if (!showAlert) return null;
 
+  const isOffline = status === 'offline';
+  const isDegraded = status === 'degraded';
+
+  const title = isOffline ? 'Backend Offline' : 'Backend Online (Banco Inicializando)';
+  const description = isOffline
+    ? 'Não foi possível conectar ao servidor. Verifique se o backend está rodando.'
+    : 'O servidor respondeu, mas o banco de dados ainda não está conectado. Aguarde alguns instantes e tente novamente.';
+
+  const testUrl = getApiRootUrl() ? getApiRootUrl() + '/health' : null;
+
+  const barClass = isOffline ? 'bg-red-600' : 'bg-amber-500';
+  const barSubClass = isOffline ? 'bg-red-700' : 'bg-amber-600';
+
   return (
     <div className="fixed top-0 left-0 right-0 z-50 animate-slide-down">
-      <div className="bg-red-600 text-white px-4 py-3 shadow-lg">
+      <div className={`${barClass} text-white px-4 py-3 shadow-lg`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <WifiOff className="w-5 h-5 animate-pulse" />
+            {isOffline ? (
+              <WifiOff className="w-5 h-5 animate-pulse" />
+            ) : (
+              <AlertCircle className="w-5 h-5" />
+            )}
             <div>
-              <p className="font-semibold">Backend Offline</p>
+              <p className="font-semibold">{title}</p>
               <p className="text-sm opacity-90">
-                Não foi possível conectar ao servidor. Verifique se o backend está rodando.
+                {description}
               </p>
+              {isDegraded && dbStatus ? (
+                <p className="text-xs opacity-90 mt-1">
+                  Status do banco: <span className="font-semibold">{dbStatus}</span>
+                </p>
+              ) : null}
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            {getApiRootUrl() ? (
+            {testUrl ? (
               <a
-                href={getApiRootUrl() + '/health'}
+                href={testUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm underline hover:no-underline"
@@ -140,7 +189,7 @@ export default function BackendStatusMonitor() {
             ) : null}
             <button
               onClick={() => setShowAlert(false)}
-              className="text-white hover:bg-red-700 rounded p-1 transition-colors"
+              className="text-white hover:bg-black/15 rounded p-1 transition-colors"
               aria-label="Fechar alerta"
             >
               ✕
@@ -149,10 +198,15 @@ export default function BackendStatusMonitor() {
         </div>
       </div>
       
-      <div className="bg-red-700 px-4 py-2">
+      <div className={`${barSubClass} px-4 py-2`}>
         <div className="max-w-7xl mx-auto">
           <p className="text-sm text-white/90">
-            <strong>Como resolver:</strong> Verifique se a API está rodando no Railway e se as variáveis <code className="bg-red-800 px-2 py-1 rounded text-xs">VITE_BACKEND_ROOT</code> ou <code className="bg-red-800 px-2 py-1 rounded text-xs">VITE_API_URL</code> estão configuradas corretamente no frontend.
+            <strong>Como resolver:</strong>{' '}
+            {isOffline ? (
+              <>Verifique se a API está rodando no Railway e se as variáveis <code className="bg-black/20 px-2 py-1 rounded text-xs">VITE_BACKEND_ROOT</code> ou <code className="bg-black/20 px-2 py-1 rounded text-xs">VITE_API_URL</code> estão configuradas corretamente no frontend.</>
+            ) : (
+              <>No Railway, confirme se o Postgres foi criado e se <code className="bg-black/20 px-2 py-1 rounded text-xs">DATABASE_URL</code> está presente. Enquanto isso, o sistema pode ficar parcialmente indisponível.</>
+            )}
           </p>
         </div>
       </div>
