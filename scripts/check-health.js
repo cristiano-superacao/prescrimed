@@ -3,7 +3,6 @@
  * Verifica health e endpoints principais do backend
  * Uso: node scripts/check-health.js https://seu-dominio.railway.app
  */
-import axios from 'axios';
 
 const base = (process.argv[2] || process.env.BACKEND_URL || 'https://prescrimed-backend.up.railway.app').replace(/\/$/,'');
 const endpoints = [
@@ -15,11 +14,14 @@ const endpoints = [
 
 async function check(url){
   try{
-    const res = await axios.get(url, { timeout: 10000 });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
     console.log(`✅ ${url} -> ${res.status}`);
   }catch(err){
-    const status = err.response?.status || 'ERR';
-    console.log(`❌ ${url} -> ${status} (${err.message})`);
+    const msg = err && err.message ? err.message : String(err);
+    console.log(`❌ ${url} -> ERR (${msg})`);
   }
 }
 
