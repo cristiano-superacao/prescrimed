@@ -18,6 +18,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Secrets são opcionais; fallback é aplicado no step de build.
+      VITE_BACKEND_ROOT: ${{ secrets.VITE_BACKEND_ROOT }}
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,16 +36,17 @@ jobs:
       - name: Install dependencies
         working-directory: ./client
         run: npm ci
-        env:
-          VITE_BACKEND_ROOT: ${{ secrets.VITE_BACKEND_ROOT || 'https://prescrimed-backend-production.up.railway.app' }}
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://prescrimed-backend-production.up.railway.app/api' }}
         
       - name: Build
         working-directory: ./client
-        run: npm run build
-        env:
-          VITE_BACKEND_ROOT: https://prescrimed-backend-production.up.railway.app
-          VITE_API_URL: https://prescrimed-backend-production.up.railway.app/api
+        run: |
+          if [ -z "$VITE_BACKEND_ROOT" ]; then
+            export VITE_BACKEND_ROOT="https://prescrimed-backend-production.up.railway.app"
+          fi
+          if [ -z "$VITE_API_URL" ]; then
+            export VITE_API_URL="${VITE_BACKEND_ROOT%/}/api"
+          fi
+          npm run build
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
