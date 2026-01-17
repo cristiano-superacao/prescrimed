@@ -46,8 +46,11 @@ dotenv.config();
 // Define porta inicial do servidor (padrão 3000 se não especificada)
 let PORT = parseInt(process.env.PORT || '3000', 10);
 
-// Flag para indicar se banco de dados está pronto
-let dbReady = false;
+// Cria instância do aplicativo Express
+const app = express();
+
+// Flag para indicar se banco de dados está pronto (compartilhado entre rotas)
+app.locals.dbReady = false;
 
 /**
  * Configuração de secrets padrão para desenvolvimento
@@ -95,12 +98,12 @@ async function connectDB() {
     }
     
     // Marca banco como pronto
-    dbReady = true;
+    app.locals.dbReady = true;
     console.log('🎉 Sistema pronto para uso!');
   } catch (error) {
     console.error('❌ Erro ao conectar no banco de dados:', error.message);
     console.error('Stack:', error.stack);
-    dbReady = false;
+    app.locals.dbReady = false;
     
     // Em produção, tenta reconectar automaticamente
     if (process.env.NODE_ENV === 'production') {
@@ -113,29 +116,31 @@ async function connectDB() {
 // Inicia conexão com banco de dados (não aguarda conclusão - assíncrono)
 connectDB();
 
-// Cria instância do aplicativo Express
-const app = express();
+// CORS liberal APENAS para endpoints de health (para funcionar no GitHub Pages)
+const healthCors = cors({ origin: true, methods: ['GET', 'OPTIONS'] });
 
 /**
  * Rota de Health Check
  * Endpoint simples para verificar se servidor está online
  * Usado por sistemas de monitoramento (Railway, Render, AWS, etc)
  */
-app.get('/health', cors(), (req, res) => {
+app.options('/health', healthCors);
+app.get('/health', healthCors, (req, res) => {
   res.status(200).json({ 
     status: 'ok',                              // Status do servidor
     uptime: process.uptime(),                  // Tempo ativo em segundos
-    database: dbReady ? 'connected' : 'connecting', // Status do banco
+    database: app.locals.dbReady ? 'connected' : 'connecting', // Status do banco
     timestamp: new Date().toISOString()        // Timestamp atual
   });
 });
 
 // Alternativa: health sob namespace da API, útil para plataformas que esperam /api/health
-app.get('/api/health', cors(), (req, res) => {
+app.options('/api/health', healthCors);
+app.get('/api/health', healthCors, (req, res) => {
   res.status(200).json({ 
     status: 'ok',
     uptime: process.uptime(),
-    database: dbReady ? 'connected' : 'connecting',
+    database: app.locals.dbReady ? 'connected' : 'connecting',
     timestamp: new Date().toISOString()
   });
 });
@@ -209,6 +214,22 @@ const corsOptions = {
 
 // Aplica CORS apenas nas rotas /api/* (não afeta /health)
 app.use('/api', cors(corsOptions));
+
+// Se o banco ainda não estiver pronto, evite 500 em produção e retorne 503 com mensagem clara
+app.use('/api', (req, res, next) => {
+  // Permitir endpoint de teste mesmo se o DB estiver indisponível
+  if (req.path === '/test') return next();
+  // Permitir diagnóstico (pode responder 503/500 conforme conexão)
+  if (req.path.startsWith('/diagnostic')) return next();
+
+  if (!app.locals.dbReady) {
+    return res.status(503).json({
+      error: 'Banco de dados indisponível no momento',
+      hint: 'Verifique se o PostgreSQL do Railway está criado e se DATABASE_URL está configurada.'
+    });
+  }
+  next();
+});
 
 // Trata requisições OPTIONS (preflight) para todas as rotas de API
 app.options('/api/*', cors(corsOptions));
