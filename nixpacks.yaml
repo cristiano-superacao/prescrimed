@@ -1,21 +1,4 @@
-# Nixpacks Builder Configuration
-# This file is detected by Railway to override auto-detection
-
-[phases.setup]
-nixPkgs = ["nodejs_18"]
-providers = []
-
-[phases.install]
-cmds = [
-  "npm ci --production=false",
-  "cd client && npm ci && npm run build && cd .."
-]
-
-[phases.build]
-cmds = ["echo 'Backend + Frontend build complete'"]
-
-[start]
-cmd = "node server.js"
-
-[variables]
+# Arquivo desativado: use apenas nixpacks.toml
+# Este arquivo existia com conteúdo em TOML mas nome .yaml incorreto,
+# o que pode causar detecção incorreta. Mantido vazio/neutralizado.
 NODE_VERSION = "18"
