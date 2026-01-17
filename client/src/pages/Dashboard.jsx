@@ -1,112 +1,195 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  FileText, 
-  UserCheck, 
-  TrendingUp, 
-  RefreshCcw, 
-  Download, 
-  AlertTriangle, 
-  ClipboardCheck,
-  Activity,
-  Calendar,
-  Clock,
-  ArrowUpRight,
-  ArrowDownRight,
-  Package,
-  DollarSign,
-  Building2,
-  Settings
-} from 'lucide-react';
-import { dashboardService } from '../services/dashboard.service';
-import SimpleChart from '../components/SimpleChart';
-import toast from 'react-hot-toast';
-import { errorMessage } from '../utils/toastMessages';
-import PageHeader from '../components/common/PageHeader';
-import StatsCard from '../components/common/StatsCard';
-import { useAuthStore } from '../store/authStore';
+/**
+ * Página Dashboard
+ * 
+ * Página principal do sistema exibida após o login.
+ * Apresenta visão geral com estatísticas, gráficos, alertas e acesso rápido
+ * às principais funcionalidades do sistema.
+ * 
+ * Funcionalidades:
+ * - Cards com estatísticas principais (pacientes, prescrições, usuários)
+ * - Gráfico de prescrições ao longo do tempo
+ * - Lista de prescrições e pacientes recentes
+ * - Alertas prioritários
+ * - Próximas ações sugeridas
+ * - Atalhos para navegação rápida
+ */
 
+// Importa hooks do React para gerenciamento de estado e efeitos
+import { useState, useEffect } from 'react';
+
+// Importa hook de navegação do React Router
+import { useNavigate } from 'react-router-dom';
+
+// Importa ícones da biblioteca Lucide React
+import { 
+  Users,          // Ícone de usuários/pacientes
+  FileText,       // Ícone de documentos/prescrições
+  UserCheck,      // Ícone de usuários verificados/ativos
+  TrendingUp,     // Ícone de tendência crescente
+  RefreshCcw,     // Ícone de atualizar/refresh
+  Download,       // Ícone de download/exportar
+  AlertTriangle,  // Ícone de alerta/aviso
+  ClipboardCheck, // Ícone de checklist/censo
+  Activity,       // Ícone de atividade/evolução
+  Calendar,       // Ícone de calendário/agenda
+  Clock,          // Ícone de relógio/cronograma
+  ArrowUpRight,   // Ícone de seta para cima (tendência positiva)
+  ArrowDownRight, // Ícone de seta para baixo (tendência negativa)
+  Package,        // Ícone de pacote/estoque
+  DollarSign,     // Ícone de dinheiro/financeiro
+  Building2,      // Ícone de prédio/empresas
+  Settings        // Ícone de configurações
+} from 'lucide-react';
+
+// Importa serviço de API do dashboard
+import { dashboardService } from '../services/dashboard.service';
+
+// Importa componentes
+import SimpleChart from '../components/SimpleChart'; // Gráfico simples de linhas
+import toast from 'react-hot-toast'; // Sistema de notificações toast
+import { errorMessage } from '../utils/toastMessages'; // Utilitário para mensagens de erro
+import PageHeader from '../components/common/PageHeader'; // Cabeçalho de página
+import StatsCard from '../components/common/StatsCard'; // Card de estatísticas
+import { useAuthStore } from '../store/authStore'; // Store de autenticação
+
+/**
+ * Componente Dashboard - Página principal do sistema
+ */
 export default function Dashboard() {
+  // Estado para armazenar estatísticas gerais do sistema
   const [stats, setStats] = useState(null);
+  
+  // Estado para lista de prescrições recentes
   const [prescricoesRecentes, setPrescricoesRecentes] = useState([]);
+  
+  // Estado para lista de pacientes recentes
   const [pacientesRecentes, setPacientesRecentes] = useState([]);
+  
+  // Estado para próximas ações sugeridas
   const [nextSteps, setNextSteps] = useState([]);
+  
+  // Estado para alertas prioritários
   const [priorityAlerts, setPriorityAlerts] = useState([]);
+  
+  // Estado para dados do gráfico (prescrições ao longo do tempo)
   const [chartData, setChartData] = useState([]);
+  
+  // Estado de carregamento (exibe spinner enquanto busca dados)
   const [loading, setLoading] = useState(true);
+  
+  // Hook de navegação para redirecionar usuário entre páginas
   const navigate = useNavigate();
+  
+  // Obtém informações do usuário logado do store de autenticação
   const { user } = useAuthStore();
 
+  /**
+   * Effect executado ao montar o componente
+   * Carrega todos os dados do dashboard
+   */
   useEffect(() => {
     loadData();
-  }, []);
+  }, []); // Array vazio = executa apenas uma vez ao montar
 
+  /**
+   * Função para carregar todos os dados do dashboard
+   * Busca dados em paralelo usando Promise.all para otimizar performance
+   */
   const loadData = async () => {
+    // Ativa estado de carregamento se não estiver já carregando
     if (!loading) {
       setLoading(true);
     }
+    
     try {
+      // Executa todas as requisições em paralelo para otimizar tempo de carregamento
       const [statsResponse, prescricoesResponse, pacientesResponse, nextStepsResponse, alertsResponse] = await Promise.all([
-        dashboardService.getStats(),
-        dashboardService.getPrescricoesRecentes(),
-        dashboardService.getPacientesRecentes(),
-        dashboardService.getNextSteps(),
-        dashboardService.getPriorityAlerts(),
+        dashboardService.getStats(),              // Busca estatísticas gerais
+        dashboardService.getPrescricoesRecentes(), // Busca prescrições recentes
+        dashboardService.getPacientesRecentes(),   // Busca pacientes recentes
+        dashboardService.getNextSteps(),           // Busca próximas ações sugeridas
+        dashboardService.getPriorityAlerts(),      // Busca alertas prioritários
       ]);
 
+      // Atualiza estados com os dados recebidos
+      // Usa operador ?. para acessar propriedade aninhada com segurança
+      // Usa || para fornecer valor padrão caso seja undefined/null
       setStats(statsResponse?.stats || statsResponse);
       setPrescricoesRecentes(prescricoesResponse?.prescricoes || []);
       setPacientesRecentes(pacientesResponse?.pacientes || []);
       setNextSteps(nextStepsResponse?.nextSteps || []);
       setPriorityAlerts(alertsResponse?.alerts || []);
       
-      // Preparar dados para o gráfico
+      // Prepara dados para o gráfico de prescrições
       if (statsResponse?.stats?.graficoPrescricoes) {
+        // Transforma dados da API em formato do gráfico
         const chartPoints = statsResponse.stats.graficoPrescricoes.map(item => ({
-          date: new Date(item.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-          value: item.total
+          date: new Date(item.data).toLocaleDateString('pt-BR', { 
+            day: '2-digit', 
+            month: 'short' 
+          }), // Formata data para exibição (ex: "15 jan")
+          value: item.total // Total de prescrições naquele dia
         }));
         setChartData(chartPoints);
       }
     } catch (error) {
+      // Exibe mensagem de erro em caso de falha na requisição
       toast.error(errorMessage('load', 'dados do dashboard'));
     } finally {
+      // Desativa estado de carregamento (executado sempre, com ou sem erro)
       setLoading(false);
     }
   };
 
+  /**
+   * Handler para botão de atualizar
+   * Recarrega todos os dados e exibe mensagem de sucesso
+   */
   const handleRefresh = async () => {
-    await loadData();
-    toast.success('Dados atualizados com sucesso!');
+    await loadData(); // Aguarda recarregamento dos dados
+    toast.success('Dados atualizados com sucesso!'); // Notificação de sucesso
   };
 
+  /**
+   * Handler para exportar relatório
+   * Simula exportação de dados (implementação futura: gerar PDF/Excel)
+   */
   const handleExport = () => {
+    // toast.promise exibe diferentes mensagens durante estados da Promise
     toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 2000)),
+      new Promise((resolve) => setTimeout(resolve, 2000)), // Simula operação assíncrona de 2s
       {
-        loading: 'Gerando relatório...',
-        success: 'Relatório enviado para seu e-mail!',
-        error: 'Erro ao gerar relatório',
+        loading: 'Gerando relatório...', // Mensagem durante carregamento
+        success: 'Relatório enviado para seu e-mail!', // Mensagem de sucesso
+        error: 'Erro ao gerar relatório', // Mensagem de erro
       }
     );
   };
 
+  /**
+   * Exibe spinner de carregamento enquanto dados estão sendo buscados
+   */
   if (loading) {
     return (
+      // Container centralizado ocupando altura total
       <div className="flex items-center justify-center h-full">
+        {/* Spinner animado com rotação infinita */}
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
 
+  /**
+   * Configuração dos cards de estatísticas principais
+   * Cada card exibe uma métrica importante do sistema
+   */
   const statCards = [
     {
-      title: 'Total de Pacientes',
-      value: stats?.totalPacientes || 0,
-      icon: Users,
-      accent: 'from-primary-500 to-primary-600',
-      trend: '+12% vs mês anterior',
+      title: 'Total de Pacientes',         // Título do card
+      value: stats?.totalPacientes || 0,   // Valor da estatística
+      icon: Users,                          // Ícone do card
+      accent: 'from-primary-500 to-primary-600', // Gradiente de cor
+      trend: '+12% vs mês anterior',       // Indicador de tendência
     },
     {
       title: 'Total de Prescrições',
@@ -131,12 +214,20 @@ export default function Dashboard() {
     },
   ];
 
+  /**
+   * Estilos visuais para diferentes tipos de alertas
+   * Define cores de fundo, texto e borda baseado na severidade
+   */
   const alertStyles = {
-    critical: 'bg-rose-50 text-rose-700 border-rose-200',
-    warning: 'bg-amber-50 text-amber-700 border-amber-200',
-    info: 'bg-primary-50 text-primary-700 border-primary-200',
+    critical: 'bg-rose-50 text-rose-700 border-rose-200',    // Crítico: vermelho
+    warning: 'bg-amber-50 text-amber-700 border-amber-200',  // Aviso: amarelo/âmbar
+    info: 'bg-primary-50 text-primary-700 border-primary-200', // Informação: azul primário
   };
 
+  /**
+   * Configuração de atalhos de acesso rápido
+   * Botões para navegação direta às principais funcionalidades
+   */
   const quickAccess = [
     { label: 'Dashboard', path: '/dashboard', icon: TrendingUp, accent: 'from-primary-500 to-primary-600' },
     { label: 'Agenda', path: '/agenda', icon: Calendar, accent: 'from-emerald-500 to-emerald-600' },

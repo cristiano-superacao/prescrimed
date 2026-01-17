@@ -1,50 +1,77 @@
+/**
+ * Prescrimed - Sistema de Gestão de Prescrições Médicas
+ * Componente principal da aplicação React
+ * 
+ * Este arquivo gerencia o roteamento e estrutura geral do frontend,
+ * incluindo rotas públicas (login/registro) e rotas protegidas (dashboard, etc).
+ */
+
+// Importações do React Router para gerenciamento de rotas
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// Biblioteca para notificações toast (alertas visuais)
 import { Toaster } from 'react-hot-toast';
 
-// Pages
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Pacientes from './pages/Pacientes';
-import Prescricoes from './pages/Prescricoes';
-import CensoMP from './pages/CensoMP';
-import Usuarios from './pages/Usuarios';
-import Empresas from './pages/Empresas';
-import Configuracoes from './pages/Configuracoes';
-import Agenda from './pages/Agenda';
-import Cronograma from './pages/Cronograma';
-import Estoque from './pages/Estoque';
-import Evolucao from './pages/Evolucao';
-import Financeiro from './pages/Financeiro';
-import Manual from './pages/Manual';
+// ===== PÁGINAS DA APLICAÇÃO =====
+// Páginas públicas (sem necessidade de autenticação)
+import Login from './pages/Login'; // Tela de login do usuário
+import Register from './pages/Register'; // Tela de registro/onboarding
 
-// Layout
-import Layout from './components/Layout';
-import ProtectedRoute from './components/ProtectedRoute';
-import BackendStatusMonitor from './components/BackendStatusMonitor';
+// Páginas protegidas (requerem autenticação)
+import Dashboard from './pages/Dashboard'; // Dashboard com estatísticas e resumo
+import Pacientes from './pages/Pacientes'; // Gestão de pacientes (CRUD)
+import Prescricoes from './pages/Prescricoes'; // Criação e gestão de prescrições médicas
+import CensoMP from './pages/CensoMP'; // Censo e mapas de pacientes
+import Usuarios from './pages/Usuarios'; // Gerenciamento de usuários do sistema
+import Empresas from './pages/Empresas'; // Gestão de empresas (multi-tenant)
+import Configuracoes from './pages/Configuracoes'; // Configurações do sistema
+import Agenda from './pages/Agenda'; // Agenda de consultas e atendimentos
+import Cronograma from './pages/Cronograma'; // Cronograma de atividades
+import Estoque from './pages/Estoque'; // Controle de estoque de medicamentos
+import Evolucao from './pages/Evolucao'; // Evolução clínica dos pacientes
+import Financeiro from './pages/Financeiro'; // Gestão financeira (receitas/despesas)
+import Manual from './pages/Manual'; // Manual de uso do sistema
 
+// ===== COMPONENTES DE LAYOUT E SEGURANÇA =====
+import Layout from './components/Layout'; // Layout principal com sidebar e header
+import ProtectedRoute from './components/ProtectedRoute'; // HOC para proteger rotas que requerem autenticação
+import BackendStatusMonitor from './components/BackendStatusMonitor'; // Monitor de status de conexão com backend
+
+/**
+ * Componente principal da aplicação
+ * Configura o sistema de roteamento e estrutura de páginas
+ * 
+ * @returns {JSX.Element} Estrutura completa de rotas da aplicação
+ */
 function App() {
   return (
     <>
+      {/* Monitor de status da API - mostra alerta se backend estiver offline */}
       <BackendStatusMonitor />
+      
+      {/* Configuração do roteador com flags de compatibilidade para React Router v7 */}
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          {/* ===== ROTAS PÚBLICAS (sem autenticação) ===== */}
+          <Route path="/login" element={<Login />} /> {/* Página de login */}
+          <Route path="/register" element={<Register />} /> {/* Página de registro/onboarding */}
 
-          {/* Protected Routes */}
+          {/* ===== ROTAS PROTEGIDAS (requerem autenticação) ===== */}
+          {/* Layout principal que envolve todas as rotas autenticadas */}
           <Route
             path="/"
             element={
-              <ProtectedRoute>
-                <Layout />
+              <ProtectedRoute> {/* Wrapper que verifica se usuário está autenticado */}
+                <Layout /> {/* Layout com sidebar, header e área de conteúdo */}
               </ProtectedRoute>
             }
           >
+            {/* Rota raiz redireciona para dashboard */}
             <Route index element={<Navigate to="/dashboard" replace />} />
+            
+            {/* Dashboard - página inicial com estatísticas e resumo */}
             <Route path="dashboard" element={<Dashboard />} />
             
+            {/* Agenda - gerenciamento de consultas e agendamentos */}
             <Route
               path="agenda"
               element={
@@ -54,6 +81,7 @@ function App() {
               }
             />
 
+            {/* Cronograma - visualização de atividades programadas */}
             <Route
               path="cronograma"
               element={
@@ -63,6 +91,7 @@ function App() {
               }
             />
 
+            {/* Censo MP - censo e mapa de pacientes (requer permissão específica) */}
             <Route
               path="censo-mp"
               element={
@@ -72,6 +101,7 @@ function App() {
               }
             />
 
+            {/* Prescrições - criação e gestão de prescrições médicas */}
             <Route
               path="prescricoes"
               element={
@@ -81,6 +111,7 @@ function App() {
               }
             />
 
+            {/* Estoque - controle de medicamentos e insumos */}
             <Route
               path="estoque"
               element={
@@ -90,6 +121,7 @@ function App() {
               }
             />
 
+            {/* Evolução - acompanhamento da evolução clínica dos pacientes */}
             <Route
               path="evolucao"
               element={
@@ -99,6 +131,7 @@ function App() {
               }
             />
 
+            {/* Financeiro - gestão de receitas, despesas e fluxo de caixa */}
             <Route
               path="financeiro"
               element={
@@ -108,6 +141,7 @@ function App() {
               }
             />
 
+            {/* Residentes/Pacientes - cadastro e gestão de pacientes */}
             <Route
               path="residentes"
               element={
@@ -117,9 +151,10 @@ function App() {
               }
             />
             
-            {/* Rotas legadas/redirecionamentos para manter compatibilidade se necessário */}
+            {/* Redirecionamento para manter compatibilidade com rota antiga */}
             <Route path="pacientes" element={<Navigate to="/residentes" replace />} />
             
+            {/* Usuários - gerenciamento de usuários do sistema (requer permissão admin) */}
             <Route
               path="usuarios"
               element={
@@ -129,6 +164,7 @@ function App() {
               }
             />
 
+            {/* Empresas - gestão de empresas (multi-tenant) */}
             <Route
               path="empresas"
               element={
@@ -138,6 +174,7 @@ function App() {
               }
             />
             
+            {/* Configurações - ajustes e preferências do sistema */}
             <Route
               path="configuracoes"
               element={
@@ -147,6 +184,7 @@ function App() {
               }
             />
 
+            {/* Manual - documentação e ajuda do sistema */}
             <Route
               path="manual"
               element={
@@ -157,13 +195,16 @@ function App() {
             />
           </Route>
 
-          {/* 404 */}
+          {/* Rota curinga (404) - redireciona qualquer rota não encontrada para /login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
+      
+      {/* Componente de notificações toast - exibe alertas em toda a aplicação */}
       <Toaster position="top-right" />
     </>
   );
 }
 
+// Exporta o componente App para ser usado no index.jsx
 export default App;
