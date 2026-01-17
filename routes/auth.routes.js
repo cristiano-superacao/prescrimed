@@ -10,6 +10,10 @@ router.post('/login', async (req, res) => {
   try {
     const { email, senha } = req.body;
 
+    if (!email || !senha) {
+      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+
     const usuario = await Usuario.findOne({ 
       where: { email },
       include: [{ model: Empresa, as: 'empresa' }]
@@ -73,6 +77,15 @@ router.post('/register', async (req, res) => {
       role,
       empresaId
     } = req.body;
+
+    if (!email || !senha) {
+      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+
+    const isOnboarding = nomeEmpresa && nomeEmpresa.trim().length > 0;
+    if (!isOnboarding && !empresaId) {
+      return res.status(400).json({ error: 'Empresa existente deve ser informada via empresaId' });
+    }
 
     const usuarioExistente = await Usuario.findOne({ where: { email } });
     if (usuarioExistente) {

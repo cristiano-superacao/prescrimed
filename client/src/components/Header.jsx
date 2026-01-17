@@ -35,14 +35,6 @@ export default function Header({ onToggleSidebar }) {
           >
             Nova Prescrição
           </button>
-          <a
-            href="/web"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 text-sm font-semibold hover:bg-slate-200 transition"
-          >
-            Site
-          </a>
           <button className="relative p-3 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
             <Bell size={20} />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-400 rounded-full"></span>

@@ -1,0 +1,18 @@
+[build]
+# Diretório base relativo ao repositório
+base = "client"
+# Diretório de publicação após o build
+publish = "client/dist"
+# Comando de build a ser executado dentro do base
+command = "npm run build"
+
+# Ambiente de build
+[build.environment]
+NODE_VERSION = "18"
+NPM_FLAGS = "--legacy-peer-deps"
+
+# Redirecionamentos básicos para SPA
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

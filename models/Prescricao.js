@@ -30,7 +30,8 @@ const Prescricao = sequelize.define('Prescricao', {
     type: DataTypes.TEXT
   },
   itens: {
-    type: DataTypes.JSONB,
+    // Usar JSON para compatibilidade com SQLite no desenvolvimento
+    type: DataTypes.JSON,
     defaultValue: []
   },
   status: {

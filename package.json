@@ -10,6 +10,7 @@
     "start": "node server.js",
     "railway:build": "npm install --production=false && cd client && npm install && npm run build",
     "railway:start": "node server.js",
+    "seed:demo": "node scripts/seed-demo-data.js",
     "reset:local": "scripts\\reset-local-config.bat",
     "reset:local:ps": "powershell -ExecutionPolicy Bypass -File scripts/reset-local-config.ps1",
     "client": "cd client && npm run dev",

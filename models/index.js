@@ -3,6 +3,10 @@ import Usuario from './Usuario.js';
 import Empresa from './Empresa.js';
 import Paciente from './Paciente.js';
 import Prescricao from './Prescricao.js';
+import Agendamento from './Agendamento.js';
+import CasaRepousoLeito from './CasaRepousoLeito.js';
+import Pet from './Pet.js';
+import SessaoFisio from './SessaoFisio.js';
 
 // Relacionamentos
 Empresa.hasMany(Usuario, { foreignKey: 'empresaId', as: 'usuarios' });
@@ -20,4 +24,27 @@ Prescricao.belongsTo(Paciente, { foreignKey: 'pacienteId', as: 'paciente' });
 Usuario.hasMany(Prescricao, { foreignKey: 'nutricionistaId', as: 'prescricoes' });
 Prescricao.belongsTo(Usuario, { foreignKey: 'nutricionistaId', as: 'nutricionista' });
 
-export { sequelize, Usuario, Empresa, Paciente, Prescricao };
+// Relacionamentos de Agendamento
+Empresa.hasMany(Agendamento, { foreignKey: 'empresaId', as: 'agendamentos' });
+Agendamento.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+Paciente.hasMany(Agendamento, { foreignKey: 'pacienteId', as: 'agendamentos' });
+Agendamento.belongsTo(Paciente, { foreignKey: 'pacienteId', as: 'paciente' });
+
+Usuario.hasMany(Agendamento, { foreignKey: 'usuarioId', as: 'agendamentos' });
+Agendamento.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'responsavel' });
+
+// Módulos por tipo de sistema
+// Casa de Repouso
+Empresa.hasMany(CasaRepousoLeito, { foreignKey: 'empresaId', as: 'leitos' });
+CasaRepousoLeito.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+// PetShop
+Empresa.hasMany(Pet, { foreignKey: 'empresaId', as: 'pets' });
+Pet.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+// Fisioterapia
+Empresa.hasMany(SessaoFisio, { foreignKey: 'empresaId', as: 'sessoesFisio' });
+SessaoFisio.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+export { sequelize, Usuario, Empresa, Paciente, Prescricao, Agendamento, CasaRepousoLeito, Pet, SessaoFisio };

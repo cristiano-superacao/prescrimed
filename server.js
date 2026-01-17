@@ -17,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
-const PORT = parseInt(process.env.PORT || '3000', 10);
+let PORT = parseInt(process.env.PORT || '3000', 10);
 let dbReady = false;
 
 // Defaults seguros para ambiente de desenvolvimento (evita 500 por JWT/variáveis ausentes)
@@ -71,12 +71,6 @@ async function connectDB() {
 connectDB();
 
 const app = express();
-
-// Iniciar servidor
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Servidor Ativo na porta ${PORT}`);
-  console.log(`📍 Acesse: http://localhost:${PORT}`);
-});
 
 // Rota de health check (antes de qualquer middleware pesado)
 app.get('/health', cors(), (req, res) => {
@@ -138,6 +132,19 @@ const corsOptions = {
 // Aplicar CORS apenas nas rotas de API para não interferir no /health
 app.use('/api', cors(corsOptions));
 app.options('/api/*', cors(corsOptions));
+// Responder HEAD genérico nas rotas de API para evitar 404/405 em verificações
+app.head('/api/*', (req, res) => {
+  res.status(200).end();
+});
+
+// Garantir status 405 para métodos HTTP fora dos permitidos
+const allowedApiMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD']);
+app.use('/api', (req, res, next) => {
+  if (!allowedApiMethods.has(req.method)) {
+    return res.status(405).json({ error: 'Método HTTP não permitido' });
+  }
+  next();
+});
 
 // Body parser
 app.use(express.json());
@@ -206,15 +213,38 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
-// Tratamento de erros do servidor
-server.on('error', (error) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`❌ Porta ${PORT} já está em uso`);
-    process.exit(1);
-  } else {
-    console.error('❌ Erro no servidor:', error);
-    process.exit(1);
-  }
-});
+// Em desenvolvimento, evitar que erros não capturados derrubem o processo
+if (process.env.NODE_ENV !== 'production') {
+  process.on('uncaughtException', (err) => {
+    console.error('🔴 Exceção não capturada:', err);
+  });
+  process.on('unhandledRejection', (reason) => {
+    console.error('🔴 Promessa rejeitada sem tratamento:', reason);
+  });
+}
+
+// Função para iniciar servidor com fallback de porta
+function startServer(initialPort, maxAttempts = 10) {
+  PORT = initialPort;
+  const srv = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor ativo na porta ${PORT}`);
+    console.log(`📍 Acesse: http://localhost:${PORT}`);
+  });
+
+  srv.on('error', (error) => {
+    if (error.code === 'EADDRINUSE' && maxAttempts > 0) {
+      const nextPort = PORT + 1;
+      console.warn(`⚠️ Porta ${PORT} em uso. Tentando ${nextPort}...`);
+      startServer(nextPort, maxAttempts - 1);
+    } else {
+      console.error('❌ Erro no servidor:', error);
+    }
+  });
+  
+  return srv;
+}
+
+// Iniciar servidor após configurar todas as rotas
+const server = startServer(PORT);
 
 export default app;

@@ -23,12 +23,21 @@ router.get('/', async (req, res) => {
 // Buscar paciente por ID
 router.get('/:id', async (req, res) => {
   try {
-    const paciente = await Paciente.findByPk(req.params.id, {
+    const { empresaId } = req.query;
+    const where = { id: req.params.id };
+    
+    // Aplica filtro de empresa se não for superadmin
+    if (empresaId) {
+      where.empresaId = empresaId;
+    }
+    
+    const paciente = await Paciente.findOne({
+      where,
       include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nome'] }]
     });
     
     if (!paciente) {
-      return res.status(404).json({ error: 'Paciente não encontrado' });
+      return res.status(404).json({ error: 'Paciente não encontrado ou sem permissão de acesso' });
     }
     
     res.json(paciente);
@@ -41,6 +50,7 @@ router.get('/:id', async (req, res) => {
 // Criar novo paciente
 router.post('/', async (req, res) => {
   try {
+    // empresaId já foi forçado pelo middleware tenantIsolation
     const paciente = await Paciente.create(req.body);
     res.status(201).json(paciente);
   } catch (error) {
@@ -52,13 +62,23 @@ router.post('/', async (req, res) => {
 // Atualizar paciente
 router.put('/:id', async (req, res) => {
   try {
-    const paciente = await Paciente.findByPk(req.params.id);
+    const where = { id: req.params.id };
     
-    if (!paciente) {
-      return res.status(404).json({ error: 'Paciente não encontrado' });
+    // Força filtro por empresa se não for superadmin
+    if (req.tenantEmpresaId) {
+      where.empresaId = req.tenantEmpresaId;
     }
     
-    await paciente.update(req.body);
+    const paciente = await Paciente.findOne({ where });
+    
+    if (!paciente) {
+      return res.status(404).json({ error: 'Paciente não encontrado ou sem permissão de acesso' });
+    }
+    
+    // Remove empresaId do body para evitar alteração
+    const { empresaId, ...updateData } = req.body;
+    
+    await paciente.update(updateData);
     res.json(paciente);
   } catch (error) {
     console.error('Erro ao atualizar paciente:', error);
@@ -69,10 +89,17 @@ router.put('/:id', async (req, res) => {
 // Deletar paciente
 router.delete('/:id', async (req, res) => {
   try {
-    const paciente = await Paciente.findByPk(req.params.id);
+    const where = { id: req.params.id };
+    
+    // Força filtro por empresa se não for superadmin
+    if (req.tenantEmpresaId) {
+      where.empresaId = req.tenantEmpresaId;
+    }
+    
+    const paciente = await Paciente.findOne({ where });
     
     if (!paciente) {
-      return res.status(404).json({ error: 'Paciente não encontrado' });
+      return res.status(404).json({ error: 'Paciente não encontrado ou sem permissão de acesso' });
     }
     
     await paciente.destroy();

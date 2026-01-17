@@ -6,6 +6,11 @@ import pacienteRoutes from './paciente.routes.js';
 import prescricaoRoutes from './prescricao.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import diagnosticRoutes from './diagnostic.routes.js';
+import agendamentoRoutes from './agendamento.routes.js';
+import casaRepousoRoutes from './casa-repouso.routes.js';
+import petshopRoutes from './petshop.routes.js';
+import fisioterapiaRoutes from './fisioterapia.routes.js';
+import { authenticate, tenantIsolation } from '../middleware/auth.middleware.js';
 
 // Router índice para consolidar endpoints da API
 const router = express.Router();
@@ -19,13 +24,21 @@ router.get('/test', (req, res) => {
   });
 });
 
-// Rotas principais
+// Rotas públicas (sem autenticação)
 router.use('/auth', authRoutes);
-router.use('/empresas', empresaRoutes);
-router.use('/usuarios', usuarioRoutes);
-router.use('/pacientes', pacienteRoutes);
-router.use('/prescricoes', prescricaoRoutes);
-router.use('/dashboard', dashboardRoutes);
 router.use('/diagnostic', diagnosticRoutes);
+
+// Rotas protegidas com autenticação e isolamento multi-tenant
+router.use('/empresas', authenticate, empresaRoutes);
+router.use('/usuarios', authenticate, tenantIsolation, usuarioRoutes);
+router.use('/pacientes', authenticate, tenantIsolation, pacienteRoutes);
+router.use('/prescricoes', authenticate, tenantIsolation, prescricaoRoutes);
+router.use('/dashboard', authenticate, tenantIsolation, dashboardRoutes);
+router.use('/agendamentos', authenticate, tenantIsolation, agendamentoRoutes);
+
+// Rotas específicas por tipo de sistema
+router.use('/casa-repouso', authenticate, tenantIsolation, casaRepousoRoutes);
+router.use('/petshop', authenticate, tenantIsolation, petshopRoutes);
+router.use('/fisioterapia', authenticate, tenantIsolation, fisioterapiaRoutes);
 
 export default router;

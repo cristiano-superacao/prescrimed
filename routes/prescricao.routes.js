@@ -29,7 +29,16 @@ router.get('/', async (req, res) => {
 // Buscar prescrição por ID
 router.get('/:id', async (req, res) => {
   try {
-    const prescricao = await Prescricao.findByPk(req.params.id, {
+    const { empresaId } = req.query;
+    const where = { id: req.params.id };
+    
+    // Aplica filtro de empresa se não for superadmin
+    if (empresaId) {
+      where.empresaId = empresaId;
+    }
+    
+    const prescricao = await Prescricao.findOne({
+      where,
       include: [
         { model: Paciente, as: 'paciente' },
         { model: Usuario, as: 'nutricionista', attributes: ['id', 'nome', 'email'] }
@@ -37,7 +46,7 @@ router.get('/:id', async (req, res) => {
     });
     
     if (!prescricao) {
-      return res.status(404).json({ error: 'Prescrição não encontrada' });
+      return res.status(404).json({ error: 'Prescrição não encontrada ou sem permissão de acesso' });
     }
     
     res.json(prescricao);
@@ -50,6 +59,7 @@ router.get('/:id', async (req, res) => {
 // Criar nova prescrição
 router.post('/', async (req, res) => {
   try {
+    // empresaId já foi forçado pelo middleware tenantIsolation
     const prescricao = await Prescricao.create(req.body);
     res.status(201).json(prescricao);
   } catch (error) {
@@ -61,13 +71,23 @@ router.post('/', async (req, res) => {
 // Atualizar prescrição
 router.put('/:id', async (req, res) => {
   try {
-    const prescricao = await Prescricao.findByPk(req.params.id);
+    const where = { id: req.params.id };
     
-    if (!prescricao) {
-      return res.status(404).json({ error: 'Prescrição não encontrada' });
+    // Força filtro por empresa se não for superadmin
+    if (req.tenantEmpresaId) {
+      where.empresaId = req.tenantEmpresaId;
     }
     
-    await prescricao.update(req.body);
+    const prescricao = await Prescricao.findOne({ where });
+    
+    if (!prescricao) {
+      return res.status(404).json({ error: 'Prescrição não encontrada ou sem permissão de acesso' });
+    }
+    
+    // Remove empresaId do body para evitar alteração
+    const { empresaId, ...updateData } = req.body;
+    
+    await prescricao.update(updateData);
     res.json(prescricao);
   } catch (error) {
     console.error('Erro ao atualizar prescrição:', error);
@@ -78,10 +98,17 @@ router.put('/:id', async (req, res) => {
 // Deletar prescrição
 router.delete('/:id', async (req, res) => {
   try {
-    const prescricao = await Prescricao.findByPk(req.params.id);
+    const where = { id: req.params.id };
+    
+    // Força filtro por empresa se não for superadmin
+    if (req.tenantEmpresaId) {
+      where.empresaId = req.tenantEmpresaId;
+    }
+    
+    const prescricao = await Prescricao.findOne({ where });
     
     if (!prescricao) {
-      return res.status(404).json({ error: 'Prescrição não encontrada' });
+      return res.status(404).json({ error: 'Prescrição não encontrada ou sem permissão de acesso' });
     }
     
     await prescricao.destroy();
