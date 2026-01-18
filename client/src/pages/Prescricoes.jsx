@@ -15,7 +15,16 @@ import { successMessage, errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import EmptyState from '../components/common/EmptyState';
-import useLockBodyScroll from '../utils/useLockBodyScroll';
+import { 
+  TableContainer, 
+  MobileGrid, 
+  MobileCard, 
+  TableWrapper, 
+  TableHeader, 
+  TBody, 
+  Tr, 
+  Td 
+} from '../components/common/Table';
 
 export default function Prescricoes() {
   const [prescricoes, setPrescricoes] = useState([]);
@@ -31,22 +40,9 @@ export default function Prescricoes() {
   const [tipoFilter, setTipoFilter] = useState('todas');
   const [feedback, setFeedback] = useState(null);
 
-  useLockBodyScroll(modalOpen);
-
   useEffect(() => {
     loadData();
   }, []);
-
-  useEffect(() => {
-    if (!modalOpen) return;
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') setModalOpen(false);
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [modalOpen]);
 
   const loadData = async () => {
     try {
@@ -247,117 +243,100 @@ export default function Prescricoes() {
         </div>
       )}
 
-      <div className="card overflow-hidden">
+      <TableContainer title="Prescrições">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredPrescricoes.length > 0 ? (
           <>
-            {/* Mobile: cards */}
-            <div className="md:hidden p-4 sm:p-6 space-y-3">
-              {filteredPrescricoes.map((prescricao) => (
-                <div
-                  key={prescricao.id || prescricao._id}
-                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-slate-900 truncate">
-                        {prescricao.pacienteNome || 'Paciente'}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        {new Date(prescricao.createdAt).toLocaleDateString('pt-BR')} •{' '}
-                        {new Date(prescricao.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+            {/* Mobile */}
+            <MobileGrid>
+              {filteredPrescricoes.map((p) => (
+                <MobileCard key={p.id || p._id}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
+                        {p.pacienteNome ? p.pacienteNome.charAt(0) : 'P'}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900 dark:text-gray-100">{p.pacienteNome}</p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-600 dark:text-gray-300">
+                          <span>{new Date(p.createdAt).toLocaleDateString('pt-BR')}</span>
+                          <span className="text-slate-400">
+                            {new Date(p.createdAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border shrink-0 ${
-                        prescricao.status === 'ativa'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                          : 'bg-red-50 text-red-700 border-red-100'
-                      }`}
-                    >
-                      {prescricao.status === 'ativa' ? (
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                      p.tipo === 'controlado' 
+                        ? 'bg-orange-100 text-orange-700' 
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {p.tipo === 'controlado' ? 'Controlado' : 'Comum'}
+                    </span>
+                  </div>
+                  <div className="mt-3 text-sm text-slate-700 dark:text-gray-200">
+                    {p.medicamentos && p.medicamentos.length > 0 ? (
+                      <div>
+                        <span className="font-medium">{p.medicamentos[0].nome}</span>
+                        {p.medicamentos.length > 1 && (
+                          <span className="text-slate-400 text-xs ml-1">
+                            +{p.medicamentos.length - 1} outros
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">-</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                      p.status === 'ativa' 
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                        : 'bg-red-50 text-red-700 border border-red-100'
+                    }`}>
+                      {p.status === 'ativa' ? (
                         <><CheckCircle2 size={12} /> Ativa</>
                       ) : (
                         <><X size={12} /> Cancelada</>
                       )}
                     </span>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        prescricao.tipo === 'controlado'
-                          ? 'bg-orange-100 text-orange-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}
-                    >
-                      {prescricao.tipo === 'controlado' ? 'Controlado' : 'Comum'}
-                    </span>
-
-                    <span className="text-xs text-slate-600">
-                      {prescricao.medicamentos && prescricao.medicamentos.length > 0 ? (
-                        <>
-                          <span className="font-medium">{prescricao.medicamentos[0].nome}</span>
-                          {prescricao.medicamentos.length > 1 && (
-                            <span className="text-slate-400"> +{prescricao.medicamentos.length - 1} outros</span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-slate-400">Sem medicamentos</span>
-                      )}
-                    </span>
-                  </div>
-
-                  {prescricao.status === 'ativa' && (
-                    <div className="mt-4 flex justify-end">
+                    {p.status === 'ativa' && (
                       <button
-                        type="button"
-                        onClick={() => handleCancelar(prescricao.id || prescricao._id)}
-                        className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
+                        onClick={() => handleCancelar(p.id || p._id)}
+                        className="text-red-600 hover:text-red-800 text-xs font-semibold hover:underline"
                       >
                         Cancelar
                       </button>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                </MobileCard>
               ))}
-            </div>
+            </MobileGrid>
 
-            {/* Desktop: table */}
-            <div className="hidden md:block overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-              <table className="w-full min-w-[1100px]">
-              <thead className="bg-slate-50 border-b border-slate-100 whitespace-nowrap">
-                <tr>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Paciente</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data Emissão</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Medicamentos</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 sm:px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+            {/* Desktop */}
+            <TableWrapper>
+              <TableHeader columns={["Paciente","Data Emissão","Tipo","Medicamentos","Status","Ações"]} />
+              <TBody>
                 {filteredPrescricoes.map((prescricao) => (
-                  <tr key={prescricao.id || prescricao._id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                  <Tr key={prescricao.id || prescricao._id}>
+                    <Td>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
                           {prescricao.pacienteNome ? prescricao.pacienteNome.charAt(0) : 'P'}
                         </div>
-                        <span className="font-medium text-slate-900">{prescricao.pacienteNome}</span>
+                        <span className="font-medium text-slate-900 dark:text-gray-100">{prescricao.pacienteNome}</span>
                       </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
+                    </Td>
+                    <Td className="text-sm text-slate-600 dark:text-gray-300">
                       {new Date(prescricao.createdAt).toLocaleDateString('pt-BR')}
                       <span className="text-xs text-slate-400 block">
                         {new Date(prescricao.createdAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
                       </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                         prescricao.tipo === 'controlado' 
                           ? 'bg-orange-100 text-orange-700' 
@@ -365,8 +344,8 @@ export default function Prescricoes() {
                       }`}>
                         {prescricao.tipo === 'controlado' ? 'Controlado' : 'Comum'}
                       </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600">
+                    </Td>
+                    <Td className="text-sm text-slate-600 dark:text-gray-300">
                       {prescricao.medicamentos && prescricao.medicamentos.length > 0 ? (
                         <div>
                           <span className="font-medium">{prescricao.medicamentos[0].nome}</span>
@@ -379,8 +358,8 @@ export default function Prescricoes() {
                       ) : (
                         <span className="text-slate-400">-</span>
                       )}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                         prescricao.status === 'ativa' 
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
@@ -392,8 +371,8 @@ export default function Prescricoes() {
                           <><X size={12} /> Cancelada</>
                         )}
                       </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
+                    </Td>
+                    <Td className="text-right">
                       {prescricao.status === 'ativa' && (
                         <button
                           onClick={() => handleCancelar(prescricao.id || prescricao._id)}
@@ -402,12 +381,11 @@ export default function Prescricoes() {
                           Cancelar
                         </button>
                       )}
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-              </table>
-            </div>
+              </TBody>
+            </TableWrapper>
           </>
         ) : (
           <EmptyState
@@ -418,22 +396,12 @@ export default function Prescricoes() {
             onAction={() => setModalOpen(true)}
           />
         )}
-      </div>
+      </TableContainer>
 
       {modalOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/70 flex items-center justify-center p-4 z-50"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setModalOpen(false);
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="bg-white rounded-2xl sm:rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100 bg-white/90 backdrop-blur-sm shrink-0">
+        <div className="fixed inset-0 bg-slate-900/70 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cadastro</p>
                 <h2 className="text-2xl font-bold">Nova Prescrição</h2>
@@ -441,15 +409,12 @@ export default function Prescricoes() {
               <button
                 onClick={() => setModalOpen(false)}
                 className="p-2 hover:bg-slate-50 rounded-2xl"
-                type="button"
-                aria-label="Fechar modal"
               >
                 <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-              <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Paciente *</label>
@@ -573,10 +538,12 @@ export default function Prescricoes() {
                 </div>
               </div>
 
-              </div>
-
-              <div className="flex justify-end gap-4 px-6 py-5 border-t border-slate-100 bg-white shrink-0">
-                <button type="button" onClick={() => setModalOpen(false)} className="btn btn-secondary">
+              <div className="flex justify-end gap-4 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="btn btn-secondary"
+                >
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">

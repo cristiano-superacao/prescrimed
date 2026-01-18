@@ -14,6 +14,16 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import { 
+  TableContainer, 
+  MobileGrid, 
+  MobileCard, 
+  TableWrapper, 
+  TableHeader, 
+  TBody, 
+  Tr, 
+  Td 
+} from '../components/common/Table';
 
 export default function CensoMP() {
   const [censoData, setCensoData] = useState([]);
@@ -132,38 +142,79 @@ export default function CensoMP() {
         onFilterChange={setFilterStatus}
       />
 
-      {/* Table */}
-      <div className="card overflow-hidden">
+      <TableContainer title="Residentes">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredData.length > 0 ? (
-          <div className="overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-            <table className="w-full min-w-[860px]">
-              <thead className="bg-slate-50 border-b border-slate-100 whitespace-nowrap">
-                <tr>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Residente</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Prescrições Ativas</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalhes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+          <>
+            {/* Mobile */}
+            <MobileGrid>
+              {filteredData.map((item) => (
+                <MobileCard key={item.id || item._id}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm">
+                        {item.nome.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900 dark:text-gray-100">{item.nome}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">CPF: {item.cpf || 'N/A'}</p>
+                      </div>
+                    </div>
+                    {item.hasPrescription ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        <CheckCircle2 size={12} /> Coberto
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                        <AlertCircle size={12} /> Pendente
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Pill size={16} className="text-slate-400" />
+                      <span className="text-sm font-medium text-slate-700 dark:text-gray-200">
+                        {item.prescriptionCount} prescrições
+                      </span>
+                    </div>
+                    {item.hasPrescription ? (
+                      <div className="flex flex-wrap gap-1">
+                        {item.prescriptions.map(p => (
+                          <span key={p.id} className="text-xs text-slate-500 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded">
+                            {p.medicamentos?.[0]?.nome}
+                            {p.medicamentos?.length > 1 && ` +${p.medicamentos.length - 1}`}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-gray-500 italic">Nenhuma prescrição ativa</span>
+                    )}
+                  </div>
+                </MobileCard>
+              ))}
+            </MobileGrid>
+
+            {/* Desktop */}
+            <TableWrapper>
+              <TableHeader columns={["Residente","Status","Prescrições Ativas","Detalhes"]} />
+              <TBody>
                 {filteredData.map((item) => (
-                  <tr key={item.id || item._id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-4 sm:px-6 py-4">
+                  <Tr key={item.id || item._id}>
+                    <Td>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm">
                           {item.nome.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{item.nome}</p>
-                          <p className="text-xs text-slate-500">CPF: {item.cpf || 'N/A'}</p>
+                          <p className="font-medium text-slate-900 dark:text-gray-100">{item.nome}</p>
+                          <p className="text-xs text-slate-500 dark:text-gray-400">CPF: {item.cpf || 'N/A'}</p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>
                       {item.hasPrescription ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
                           <CheckCircle2 size={14} /> Coberto
@@ -173,36 +224,36 @@ export default function CensoMP() {
                           <AlertCircle size={14} /> Pendente
                         </span>
                       )}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>
                       <div className="flex items-center gap-2">
                         <Pill size={16} className="text-slate-400" />
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-slate-700 dark:text-gray-200">
                           {item.prescriptionCount} prescrições
                         </span>
                       </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4">
+                    </Td>
+                    <Td>
                       {item.hasPrescription ? (
                         <div className="flex flex-col gap-1">
                           {item.prescriptions.map(p => (
-                            <span key={p.id} className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded inline-block w-fit">
-                              {p.medicamentos?.[0]?.nome} 
+                            <span key={p.id} className="text-xs text-slate-500 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded inline-block w-fit">
+                              {p.medicamentos?.[0]?.nome}
                               {p.medicamentos?.length > 1 && ` +${p.medicamentos.length - 1}`}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-400 italic">Nenhuma prescrição ativa</span>
+                        <span className="text-xs text-slate-400 dark:text-gray-500 italic">Nenhuma prescrição ativa</span>
                       )}
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TBody>
+            </TableWrapper>
+          </>
         ) : (
-          <div className="p-12">
+          <div className="p-8">
             <EmptyState
               icon={Users}
               title="Nenhum residente encontrado"
@@ -210,7 +261,7 @@ export default function CensoMP() {
             />
           </div>
         )}
-      </div>
+      </TableContainer>
     </div>
   );
 }

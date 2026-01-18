@@ -3,11 +3,8 @@ import { X } from 'lucide-react';
 import { usuarioService } from '../services/usuario.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, customErrorMessage, apiErrorMessage } from '../utils/toastMessages';
-import useLockBodyScroll from '../utils/useLockBodyScroll';
 
 export default function UsuarioModal({ usuario, onClose }) {
-  useLockBodyScroll(true);
-
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -54,15 +51,6 @@ export default function UsuarioModal({ usuario, onClose }) {
     }
   }, [usuario]);
 
-  useEffect(() => {
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose?.();
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-
   const handlePermissaoChange = (moduloId) => {
     setFormData(prev => {
       const permissoes = prev.permissoes.includes(moduloId)
@@ -104,39 +92,23 @@ export default function UsuarioModal({ usuario, onClose }) {
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
-        onMouseDown={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200 bg-white/90 backdrop-blur-sm shrink-0">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cadastro</p>
-            <h2 className="text-2xl font-bold text-slate-900">
-              {usuario ? 'Editar Usuário' : 'Novo Usuário'}
-            </h2>
-          </div>
+        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+          <h2 className="text-2xl font-bold text-slate-800">
+            {usuario ? 'Editar Usuário' : 'Novo Usuário'}
+          </h2>
           <button
-            type="button"
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-2xl transition-colors"
-            aria-label="Fechar modal"
+            className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
           >
-            <X size={22} className="text-slate-500" />
+            <X size={24} />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nome */}
             <div className="md:col-span-2">
@@ -306,14 +278,21 @@ export default function UsuarioModal({ usuario, onClose }) {
             </div>
           </div>
 
-          </div>
-
           {/* Actions */}
-          <div className="flex gap-3 px-6 py-5 border-t border-slate-200 bg-white shrink-0">
-            <button type="button" onClick={onClose} className="btn btn-secondary flex-1" disabled={loading}>
+          <div className="flex gap-3 pt-4 border-t border-slate-200">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-secondary flex-1"
+              disabled={loading}
+            >
               Cancelar
             </button>
-            <button type="submit" className="btn btn-primary flex-1" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary flex-1"
+              disabled={loading}
+            >
               {loading ? 'Salvando...' : 'Salvar'}
             </button>
           </div>

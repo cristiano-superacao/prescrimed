@@ -25,7 +25,24 @@ export default function Login() {
       toast.success('Login realizado com sucesso!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('login', 'usuário')));
+      console.error('Erro no login:', error);
+      
+      // Verifica se é erro de rede (backend offline)
+      if (error.isNetworkError || !error.response) {
+        toast.error('Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente mais tarde.');
+      } 
+      // Verifica se é erro 401 (credenciais inválidas)
+      else if (error.response?.status === 401) {
+        toast.error('Email ou senha incorretos. Verifique suas credenciais e tente novamente.');
+      }
+      // Verifica se é erro 403 (usuário inativo)
+      else if (error.response?.status === 403) {
+        toast.error('Usuário inativo. Entre em contato com o administrador.');
+      }
+      // Outros erros
+      else {
+        toast.error(apiErrorMessage(error, 'Erro ao fazer login. Tente novamente.'));
+      }
     } finally {
       setLoading(false);
     }

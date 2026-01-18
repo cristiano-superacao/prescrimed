@@ -1,53 +1,60 @@
 import express from 'express';
+import { Op } from 'sequelize';
+import { FinanceiroTransacao, Paciente } from '../models/index.js';
 
 const router = express.Router();
+
+function getEmpresaId(req) {
+  return req.query?.empresaId || req.body?.empresaId || req.tenantEmpresaId || req.user?.empresaId || null;
+}
+
+function transacaoToClient(instance) {
+  const json = instance?.toJSON ? instance.toJSON() : instance;
+  if (!json) return json;
+  const paciente = json.paciente || null;
+  return {
+    ...json,
+    _id: json.id,
+    paciente: paciente ? { id: paciente.id, nome: paciente.nome } : null
+  };
+}
 
 // GET /api/financeiro - Listar movimentações financeiras
 router.get('/', async (req, res) => {
   try {
-    const movimentacoes = [
-      {
-        id: 1,
-        tipo: 'receita',
-        descricao: 'Consulta - João Silva',
-        valor: 150.00,
-        categoria: 'Consultas',
-        data: '2026-01-15',
-        status: 'pago',
-        formaPagamento: 'Cartão'
-      },
-      {
-        id: 2,
-        tipo: 'despesa',
-        descricao: 'Compra de medicamentos',
-        valor: 320.50,
-        categoria: 'Estoque',
-        data: '2026-01-14',
-        status: 'pago',
-        formaPagamento: 'Boleto'
-      },
-      {
-        id: 3,
-        tipo: 'receita',
-        descricao: 'Fisioterapia - Maria Santos',
-        valor: 200.00,
-        categoria: 'Fisioterapia',
-        data: '2026-01-13',
-        status: 'pendente',
-        formaPagamento: 'Dinheiro'
-      }
-    ];
+    const empresaId = getEmpresaId(req);
+    const where = {};
+    if (empresaId) where.empresaId = empresaId;
 
-    res.json({
-      success: true,
-      data: movimentacoes,
-      total: movimentacoes.length
+    if (req.query?.tipo) where.tipo = req.query.tipo;
+    if (req.query?.status) where.status = req.query.status;
+
+    if (req.query?.dataInicio || req.query?.dataFim) {
+      where.data = {};
+      if (req.query.dataInicio) where.data[Op.gte] = req.query.dataInicio;
+      if (req.query.dataFim) where.data[Op.lte] = req.query.dataFim;
+    }
+
+    const transacoes = await FinanceiroTransacao.findAll({
+      where,
+      order: [['data', 'DESC'], ['createdAt', 'DESC']]
     });
+
+    res.json(transacoes.map(transacaoToClient));
   } catch (error) {
-    console.error('Erro ao buscar movimentações financeiras:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erro ao buscar movimentações financeiras'
+    console.error('❌ Erro ao buscar movimentações financeiras:', error);
+    
+    // Erro de tabela não existe
+    if (error.name === 'SequelizeDatabaseError' && error.message.includes('does not exist')) {
+      return res.status(503).json({ 
+        error: 'Tabela financeira não encontrada. Sistema em configuração.',
+        details: 'Database table missing'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Erro ao buscar movimentações financeiras',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -55,72 +62,62 @@ router.get('/', async (req, res) => {
 // GET /api/financeiro/stats - Estatísticas financeiras
 router.get('/stats', async (req, res) => {
   try {
+    const empresaId = getEmpresaId(req);
+    const where = {};
+    if (empresaId) where.empresaId = empresaId;
+
+    const transacoes = await FinanceiroTransacao.findAll({ where, attributes: ['tipo', 'status', 'valor'] });
+
+    const sum = (arr) => arr.reduce((acc, v) => acc + (Number(v) || 0), 0);
+
+    const receitas = sum(transacoes.filter((t) => t.tipo === 'receita' && t.status === 'pago').map((t) => t.valor));
+    const despesas = sum(transacoes.filter((t) => t.tipo === 'despesa' && t.status === 'pago').map((t) => t.valor));
+    const receitasPendentes = sum(transacoes.filter((t) => t.tipo === 'receita' && t.status === 'pendente').map((t) => t.valor));
+    const despesasPendentes = sum(transacoes.filter((t) => t.tipo === 'despesa' && t.status === 'pendente').map((t) => t.valor));
+
     const stats = {
-      receitas: 2350.00,
-      despesas: 1420.50,
-      saldo: 929.50,
-      receitasPendentes: 450.00,
-      despesasPendentes: 120.00,
-      fluxoCaixa: {
-        receitas: [
-          { mes: 'Jan', valor: 2350 },
-          { mes: 'Dez', valor: 2100 },
-          { mes: 'Nov', valor: 1950 }
-        ],
-        despesas: [
-          { mes: 'Jan', valor: 1420 },
-          { mes: 'Dez', valor: 1300 },
-          { mes: 'Nov', valor: 1150 }
-        ]
-      },
-      categorias: [
-        { nome: 'Consultas', valor: 1200, percentual: 51 },
-        { nome: 'Fisioterapia', valor: 800, percentual: 34 },
-        { nome: 'Outros', valor: 350, percentual: 15 }
-      ]
+      receitas,
+      despesas,
+      saldo: receitas - despesas,
+      receitasPendentes,
+      despesasPendentes
     };
 
-    res.json({
-      success: true,
-      data: stats
-    });
+    res.json(stats);
   } catch (error) {
     console.error('Erro ao buscar estatísticas financeiras:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erro ao buscar estatísticas financeiras'
-    });
+    res.status(500).json({ error: 'Erro ao buscar estatísticas financeiras' });
   }
 });
 
 // POST /api/financeiro - Adicionar movimentação
 router.post('/', async (req, res) => {
   try {
-    const { tipo, descricao, valor, categoria, data, formaPagamento } = req.body;
+    const empresaId = getEmpresaId(req);
+    if (!empresaId) return res.status(400).json({ error: 'empresaId é obrigatório' });
 
-    const novaMovimentacao = {
-      id: Date.now(),
-      tipo,
-      descricao,
-      valor,
-      categoria,
-      data,
-      status: 'pago',
-      formaPagamento,
-      criadoEm: new Date().toISOString()
+    const payload = {
+      empresaId,
+      pacienteId: req.body.pacienteId || null,
+      tipo: req.body.tipo,
+      descricao: req.body.descricao,
+      valor: req.body.valor,
+      categoria: req.body.categoria,
+      data: req.body.data,
+      status: req.body.status,
+      formaPagamento: req.body.formaPagamento,
+      observacoes: req.body.observacoes
     };
 
-    res.status(201).json({
-      success: true,
-      data: novaMovimentacao,
-      message: 'Movimentação registrada com sucesso'
+    const created = await FinanceiroTransacao.create(payload);
+    const full = await FinanceiroTransacao.findByPk(created.id, {
+      include: [{ model: Paciente, as: 'paciente', attributes: ['id', 'nome'] }]
     });
+
+    res.status(201).json(transacaoToClient(full));
   } catch (error) {
     console.error('Erro ao adicionar movimentação:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erro ao adicionar movimentação'
-    });
+    res.status(500).json({ error: 'Erro ao adicionar movimentação' });
   }
 });
 
@@ -128,19 +125,25 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const empresaId = getEmpresaId(req);
+    const where = { id };
+    if (empresaId) where.empresaId = empresaId;
 
-    res.json({
-      success: true,
-      data: { id, ...updates },
-      message: 'Movimentação atualizada com sucesso'
+    const transacao = await FinanceiroTransacao.findOne({ where });
+    if (!transacao) return res.status(404).json({ error: 'Movimentação não encontrada' });
+
+    // Evitar sobrescrever empresaId via update
+    const { empresaId: _ignored, id: _ignored2, _id: _ignored3, ...safeUpdates } = req.body || {};
+
+    await transacao.update(safeUpdates);
+    const full = await FinanceiroTransacao.findByPk(transacao.id, {
+      include: [{ model: Paciente, as: 'paciente', attributes: ['id', 'nome'] }]
     });
+
+    res.json(transacaoToClient(full));
   } catch (error) {
     console.error('Erro ao atualizar movimentação:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erro ao atualizar movimentação'
-    });
+    res.status(500).json({ error: 'Erro ao atualizar movimentação' });
   }
 });
 
@@ -148,17 +151,17 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const empresaId = getEmpresaId(req);
+    const where = { id };
+    if (empresaId) where.empresaId = empresaId;
 
-    res.json({
-      success: true,
-      message: 'Movimentação removida com sucesso'
-    });
+    const deleted = await FinanceiroTransacao.destroy({ where });
+    if (!deleted) return res.status(404).json({ error: 'Movimentação não encontrada' });
+
+    res.json({ ok: true });
   } catch (error) {
     console.error('Erro ao remover movimentação:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erro ao remover movimentação'
-    });
+    res.status(500).json({ error: 'Erro ao remover movimentação' });
   }
 });
 

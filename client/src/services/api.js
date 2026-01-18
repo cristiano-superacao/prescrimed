@@ -42,7 +42,7 @@ export const getApiUrl = () => {
   }
 
   // Em desenvolvimento local
-  return 'http://localhost:8000/api';
+  return 'http://localhost:3000/api';
 };
 
 // Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
@@ -120,19 +120,47 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
+        // Pega o token atual para tentar renovar
+        const currentToken = localStorage.getItem('token');
         const refreshToken = localStorage.getItem('refreshToken');
-        const response = await api.post('/auth/refresh', { refreshToken });
+        
+        // Se não houver token, redireciona para login imediatamente
+        if (!currentToken && !refreshToken) {
+          localStorage.clear();
+          if (window && window.location) {
+            window.location.hash = '#/login';
+          }
+          return Promise.reject({ message: 'Sessão expirada. Faça login novamente.' });
+        }
+        
+        // Tenta renovar o token usando o token atual ou refreshToken
+        const response = await api.post('/auth/refresh', { 
+          refreshToken: refreshToken || currentToken 
+        });
         
         const { token } = response.data;
         localStorage.setItem('token', token);
         
+        // Se houver dados de usuário na resposta, atualiza
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Se falhar ao renovar, redireciona para login
+        // Se falhar ao renovar, limpa storage e redireciona para login
+        console.error('🔴 Falha ao renovar token:', refreshError);
         localStorage.clear();
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+        
+        // Em apps SPA com HashRouter (ex.: GitHub Pages), garanta redirecionamento correto
+        if (window && window.location) {
+          window.location.hash = '#/login';
+        }
+        return Promise.reject({ 
+          message: 'Sessão expirada. Faça login novamente.',
+          originalError: refreshError 
+        });
       }
     }
 

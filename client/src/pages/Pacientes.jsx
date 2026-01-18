@@ -23,7 +23,16 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
-import useLockBodyScroll from '../utils/useLockBodyScroll';
+import { 
+  TableContainer, 
+  MobileGrid, 
+  MobileCard, 
+  TableWrapper, 
+  TableHeader, 
+  TBody, 
+  Tr, 
+  Td 
+} from '../components/common/Table';
 
 export default function Pacientes() {
   const [pacientes, setPacientes] = useState([]);
@@ -35,22 +44,9 @@ export default function Pacientes() {
   const [viewHistorico, setViewHistorico] = useState(null);
   const [historicoPrescricoes, setHistoricoPrescricoes] = useState([]);
 
-  useLockBodyScroll(Boolean(modalOpen || viewHistorico));
-
   useEffect(() => {
     loadPacientes();
   }, []);
-
-  useEffect(() => {
-    if (!viewHistorico) return;
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') closeHistorico();
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [viewHistorico]);
 
   const loadPacientes = async (search = '') => {
     try {
@@ -109,24 +105,30 @@ export default function Pacientes() {
     loadPacientes(searchTerm);
   };
 
-  const filteredPacientes = pacientes.filter(p => 
-    p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.cpf && p.cpf.includes(searchTerm))
-  );
+  const filteredPacientes = pacientes.filter(p => {
+    const matchesSearch = p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.cpf && p.cpf.includes(searchTerm));
+    const matchesStatus = statusFilter ? p.status === statusFilter : true;
+    return matchesSearch && matchesStatus;
+  });
 
+  const novosMes = pacientes.filter(p => {
+    if (!p.createdAt) return false;
+    const date = new Date(p.createdAt);
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }).length;
+  const pacientesComNascimento = pacientes.filter(p => p.dataNascimento);
+  const idadeMedia = pacientesComNascimento.length > 0
+    ? Math.round(pacientesComNascimento.reduce((acc, p) => {
+        const age = new Date().getFullYear() - new Date(p.dataNascimento).getFullYear();
+        return acc + age;
+      }, 0) / pacientesComNascimento.length)
+    : 0;
   const stats = {
     total: pacientes.length,
-    novosMes: pacientes.filter(p => {
-      if (!p.createdAt) return false;
-      const date = new Date(p.createdAt);
-      const now = new Date();
-      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-    }).length,
-    idadeMedia: pacientes.length > 0 ? Math.round(pacientes.reduce((acc, p) => {
-      if (!p.dataNascimento) return acc;
-      const age = new Date().getFullYear() - new Date(p.dataNascimento).getFullYear();
-      return acc + age;
-    }, 0) / pacientes.length) : 0
+    novosMes,
+    idadeMedia
   };
 
   return (
@@ -191,96 +193,98 @@ export default function Pacientes() {
         </button>
       </SearchFilterBar>
 
-      <div className="card overflow-hidden">
+      <TableContainer title="Residentes">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredPacientes.length > 0 ? (
           <>
-            {/* Mobile: cards */}
-            <div className="md:hidden p-4 sm:p-6 space-y-3">
+            {/* Mobile */}
+            <MobileGrid>
               {filteredPacientes.map((paciente) => (
-                <div
-                  key={paciente.id || paciente._id}
-                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm shrink-0">
-                      {paciente.nome.charAt(0)}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-900 truncate">{paciente.nome}</p>
-                      <div className="mt-1 text-sm text-slate-600 space-y-1">
-                        <p className="truncate">CPF: {paciente.cpf || '-'}</p>
-                        <p>
-                          Nascimento:{' '}
-                          {paciente.dataNascimento
-                            ? new Date(paciente.dataNascimento).toLocaleDateString('pt-BR')
-                            : '-'}
-                        </p>
-                        <p className="truncate">Telefone: {paciente.telefone || '-'}</p>
+                <MobileCard key={paciente.id || paciente._id}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm">
+                        {paciente.nome.charAt(0)}
                       </div>
-
-                      <div className="mt-4 flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleViewHistorico(paciente)}
-                          className="px-3 py-2 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors text-sm font-semibold"
-                        >
-                          Histórico
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(paciente)}
-                          className="px-3 py-2 text-slate-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors text-sm font-semibold"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(paciente.id || paciente._id)}
-                          className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
-                        >
-                          Excluir
-                        </button>
+                      <div>
+                        <p className="font-medium text-slate-900 dark:text-gray-100">{paciente.nome}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">CPF: {paciente.cpf || '-'}</p>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-gray-400 mt-1">
+                          <Calendar size={12} />
+                          {paciente.dataNascimento ? new Date(paciente.dataNascimento).toLocaleDateString('pt-BR') : '-'}
+                        </div>
                       </div>
                     </div>
+                    <span className="text-xs text-slate-500 dark:text-gray-400">
+                      {paciente.status === 'inativo' ? 'Inativo' : 'Ativo'}
+                    </span>
                   </div>
-                </div>
+                  <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-slate-600 dark:text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <Phone size={12} />
+                      <span>{paciente.telefone || '-'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail size={12} />
+                      <span>{paciente.email || '-'}</span>
+                    </div>
+                    {paciente.endereco && (
+                      <div className="flex items-center gap-2 col-span-2">
+                        <MapPin size={12} />
+                        <span className="line-clamp-1">{paciente.endereco}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-end gap-2 mt-3">
+                    <button
+                      onClick={() => handleViewHistorico(paciente)}
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                      title="Ver Histórico"
+                    >
+                      <FileText size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleEdit(paciente)}
+                      className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                      title="Editar"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(paciente.id || paciente._id)}
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Excluir"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </MobileCard>
               ))}
-            </div>
+            </MobileGrid>
 
-            {/* Desktop: table */}
-            <div className="hidden md:block overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-              <table className="w-full min-w-[760px]">
-              <thead className="bg-slate-50 border-b border-slate-100 whitespace-nowrap">
-                <tr>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">CPF</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nascimento</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Telefone</th>
-                  <th className="px-4 sm:px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+            {/* Desktop */}
+            <TableWrapper>
+              <TableHeader columns={["Nome","CPF","Nascimento","Telefone","Ações"]} />
+              <TBody>
                 {filteredPacientes.map((paciente) => (
-                  <tr key={paciente.id || paciente._id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                  <Tr key={paciente.id || paciente._id}>
+                    <Td>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
                           {paciente.nome.charAt(0)}
                         </div>
-                        <span className="font-medium text-slate-900">{paciente.nome}</span>
+                        <span className="font-medium text-slate-900 dark:text-gray-100">{paciente.nome}</span>
                       </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{paciente.cpf}</td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
-                      {new Date(paciente.dataNascimento).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{paciente.telefone}</td>
-                    <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
+                    </Td>
+                    <Td className="text-sm text-slate-600 dark:text-gray-300">{paciente.cpf || '-'}</Td>
+                    <Td className="text-sm text-slate-600 dark:text-gray-300">
+                      {paciente.dataNascimento ? new Date(paciente.dataNascimento).toLocaleDateString('pt-BR') : '-'}
+                    </Td>
+                    <Td className="text-sm text-slate-600 dark:text-gray-300">{paciente.telefone || '-'}</Td>
+                    <Td className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleViewHistorico(paciente)}
@@ -304,12 +308,11 @@ export default function Pacientes() {
                           <Trash2 size={16} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-              </table>
-            </div>
+              </TBody>
+            </TableWrapper>
           </>
         ) : (
           <EmptyState
@@ -320,7 +323,7 @@ export default function Pacientes() {
             onAction={() => setModalOpen(true)}
           />
         )}
-      </div>
+      </TableContainer>
 
       {modalOpen && (
         <PacienteModal
@@ -331,18 +334,8 @@ export default function Pacientes() {
 
       {/* Modal Histórico de Prescrições */}
       {viewHistorico && (
-        <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) closeHistorico();
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -356,8 +349,6 @@ export default function Pacientes() {
               <button
                 onClick={closeHistorico}
                 className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                type="button"
-                aria-label="Fechar modal"
               >
                 <X size={20} className="text-slate-400" />
               </button>

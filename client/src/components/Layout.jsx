@@ -6,11 +6,11 @@
  * Implementa design responsivo que adapta a sidebar para mobile (hambúrguer) e desktop (fixa).
  */
 
-// Importa hooks do React para gerenciar estado local e efeitos
-import { useEffect, useState } from 'react';
+// Importa hook useState do React para gerenciar estado local
+import { useState } from 'react';
 
-// Importa hooks/elementos do React Router
-import { Outlet, useLocation } from 'react-router-dom';
+// Importa Outlet do React Router - renderiza componentes filhos das rotas
+import { Outlet } from 'react-router-dom';
 
 // Importa componentes de layout
 import Sidebar from './Sidebar'; // Menu lateral de navegação
@@ -23,27 +23,10 @@ import Header from './Header'; // Cabeçalho com informações do usuário
 export default function Layout() {
   // Estado para controlar se a sidebar está aberta (usado em mobile)
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
-
-  useEffect(() => {
-    // Garante que, ao trocar de página (ex.: navegação), a sidebar feche no mobile.
-    setSidebarOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (!isSidebarOpen) return;
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') setSidebarOpen(false);
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isSidebarOpen]);
 
   return (
     // Container principal - altura mínima da tela, fundo cinza claro, layout flex
-    <div className="min-h-screen bg-slate-100 flex overflow-x-hidden">
+    <div className="min-h-screen bg-slate-100 flex">
       
       {/* Sidebar - Menu lateral de navegação */}
       <div
@@ -89,13 +72,13 @@ export default function Layout() {
         />
         
         {/* Conteúdo principal - área onde as páginas são renderizadas */}
-        <main className="flex-1 overflow-y-auto py-4 lg:py-8">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           {/* flex-1: ocupa espaço restante após header */}
           {/* overflow-y-auto: permite rolagem vertical */}
           {/* p-4 lg:p-8: padding 1rem em mobile, 2rem em desktop */}
           
           {/* Container centralizado com largura máxima e espaçamento entre elementos */}
-          <div className="container-responsive space-y-6">
+          <div className="max-w-6xl mx-auto space-y-6">
             {/* max-w-6xl: largura máxima de 72rem (1152px) */}
             {/* mx-auto: centraliza horizontalmente */}
             {/* space-y-6: espaçamento vertical de 1.5rem entre filhos */}

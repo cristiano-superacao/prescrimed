@@ -14,6 +14,15 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
+    // Verifica se o JWT_SECRET está configurado
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET não configurado!');
+      return res.status(500).json({ 
+        error: 'Servidor mal configurado. Contate o administrador.',
+        details: 'JWT_SECRET não definido'
+      });
+    }
+
     const usuario = await Usuario.findOne({ 
       where: { email },
       include: [{ model: Empresa, as: 'empresa' }]
@@ -55,8 +64,30 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Erro no login:', error);
-    res.status(500).json({ error: 'Erro ao fazer login' });
+    console.error('❌ Erro no login:', error);
+    
+    // Erro de conexão com banco de dados
+    if (error.name === 'SequelizeConnectionError' || error.name === 'SequelizeConnectionRefusedError') {
+      return res.status(503).json({ 
+        error: 'Banco de dados temporariamente indisponível. Tente novamente em alguns instantes.',
+        details: 'Database connection error'
+      });
+    }
+    
+    // Erro de tabela não encontrada
+    if (error.name === 'SequelizeDatabaseError' && error.message.includes('relation') && error.message.includes('does not exist')) {
+      console.error('❌ Tabela não existe no banco! Execute as migrações primeiro.');
+      return res.status(503).json({ 
+        error: 'Sistema em manutenção. Aguarde a configuração inicial.',
+        details: 'Database tables not created'
+      });
+    }
+    
+    // Outros erros
+    return res.status(500).json({ 
+      error: 'Erro ao fazer login. Tente novamente.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -154,6 +185,63 @@ router.post('/register', async (req, res) => {
   } catch (error) {
     console.error('Erro no registro:', error);
     res.status(500).json({ error: 'Erro ao registrar usuário' });
+  }
+});
+
+// Renovar token (refresh)
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    // Se não houver refreshToken, tenta usar o token atual
+    const token = refreshToken || req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Token não fornecido' });
+    }
+
+    try {
+      // Verifica o token (mesmo que expirado, decode para pegar o ID)
+      const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+      
+      // Busca o usuário
+      const usuario = await Usuario.findByPk(decoded.id, {
+        include: [{ model: Empresa, as: 'empresa' }]
+      });
+
+      if (!usuario || !usuario.ativo) {
+        return res.status(401).json({ error: 'Usuário inválido ou inativo' });
+      }
+
+      // Gera novo token
+      const newToken = jwt.sign(
+        { id: usuario.id, email: usuario.email, role: usuario.role, empresaId: usuario.empresaId },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.SESSION_TIMEOUT || '8h' }
+      );
+
+      res.json({
+        token: newToken,
+        user: {
+          id: usuario.id,
+          nome: usuario.nome,
+          email: usuario.email,
+          telefone: usuario.contato || null,
+          especialidade: usuario.especialidade || null,
+          crm: usuario.crm || null,
+          crmUf: usuario.crmUf || null,
+          permissoes: usuario.permissoes || [],
+          role: usuario.role,
+          empresaId: usuario.empresaId,
+          empresa: usuario.empresa
+        }
+      });
+    } catch (jwtError) {
+      return res.status(401).json({ error: 'Token inválido ou expirado' });
+    }
+  } catch (error) {
+    console.error('Erro ao renovar token:', error);
+    res.status(500).json({ error: 'Erro ao renovar token' });
   }
 });
 

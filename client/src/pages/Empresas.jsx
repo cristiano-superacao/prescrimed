@@ -9,6 +9,16 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import EmptyState from '../components/common/EmptyState';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
+import { 
+  TableContainer, 
+  MobileGrid, 
+  MobileCard, 
+  TableWrapper, 
+  TableHeader, 
+  TBody, 
+  Tr, 
+  Td 
+} from '../components/common/Table';
 
 export default function Empresas() {
   const { user } = useAuthStore();
@@ -95,9 +105,9 @@ export default function Empresas() {
         <div className="hidden md:block"></div>
       </div>
 
-      <div className="card overflow-hidden border border-slate-200 shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <h3 className="font-semibold text-slate-800">Lista de Empresas</h3>
+      <TableContainer
+        title="Lista de Empresas"
+        actions={
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <span>Densidade:</span>
             <button
@@ -112,81 +122,103 @@ export default function Empresas() {
               {density === 'comfortable' ? 'Confortável' : 'Compacta'}
             </button>
           </div>
-        </div>
-
+        }
+      >
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : empresas.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Nome
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    CNPJ
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Plano
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {empresas.map((empresa) => (
-                  <tr key={empresa.id} className="hover:bg-slate-50">
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
-                      <div className="font-medium text-slate-900">{empresa.nome}</div>
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap text-slate-600`}>
-                      {empresa.cnpj || '-'}
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap text-slate-600`}>
-                      {empresa.email}
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
-                      <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-primary-50 text-primary-700 border border-primary-100 uppercase">
-                        {empresa.plano}
-                      </span>
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
+          <>
+            {/* Mobile */}
+            <MobileGrid>
+              {empresas.map((empresa) => {
+                const isActive = typeof empresa.ativo === 'boolean' ? empresa.ativo : empresa.status === 'ativo';
+                return (
+                  <MobileCard key={empresa.id}>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-semibold text-slate-900 dark:text-gray-100">{empresa.nome}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">CNPJ: {empresa.cnpj || '-'}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">{empresa.email || '-'}</p>
+                      </div>
                       <span
                         className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
-                          empresa.status === 'ativo'
+                          isActive
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                             : 'bg-red-50 text-red-700 border-red-100'
                         }`}
                       >
-                        {empresa.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                        {isActive ? 'Ativo' : 'Inativo'}
                       </span>
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleDelete(empresa.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-xl"
-                          title="Excluir Empresa"
+                    </div>
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-primary-50 text-primary-700 border border-primary-100 uppercase">
+                        {empresa.plano || 'basico'}
+                      </span>
+                      <button
+                        onClick={() => handleDelete(empresa.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-xl"
+                        title="Excluir Empresa"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </MobileCard>
+                );
+              })}
+            </MobileGrid>
+
+            {/* Desktop */}
+            <TableWrapper>
+              <TableHeader columns={["Nome","CNPJ","Email","Plano","Status","Ações"]} />
+              <TBody>
+                {empresas.map((empresa) => {
+                  const isActive = typeof empresa.ativo === 'boolean' ? empresa.ativo : empresa.status === 'ativo';
+                  return (
+                    <Tr key={empresa.id}>
+                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
+                        <div className="font-medium text-slate-900 dark:text-gray-100">{empresa.nome}</div>
+                      </Td>
+                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
+                        <span className="text-slate-600 dark:text-gray-300">{empresa.cnpj || '-'}</span>
+                      </Td>
+                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
+                        <span className="text-slate-600 dark:text-gray-300">{empresa.email || '-'}</span>
+                      </Td>
+                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
+                        <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-primary-50 text-primary-700 border border-primary-100 uppercase">
+                          {empresa.plano || 'basico'}
+                        </span>
+                      </Td>
+                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
+                        <span
+                          className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
+                            isActive
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                              : 'bg-red-50 text-red-700 border-red-100'
+                          }`}
                         >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          {isActive ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </Td>
+                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleDelete(empresa.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-xl"
+                            title="Excluir Empresa"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </Td>
+                    </Tr>
+                  );
+                })}
+              </TBody>
+            </TableWrapper>
+          </>
         ) : (
           <EmptyState
             icon={Building2}
@@ -196,7 +228,7 @@ export default function Empresas() {
             onAction={() => setIsModalOpen(true)}
           />
         )}
-      </div>
+      </TableContainer>
 
       {isModalOpen && (
         <EmpresaModal

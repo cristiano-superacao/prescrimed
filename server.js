@@ -75,6 +75,13 @@ if (process.env.NODE_ENV !== 'production') {
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
   process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-me';
   process.env.SESSION_TIMEOUT = process.env.SESSION_TIMEOUT || '8h';
+} else {
+  // Em produção, garante que JWT_SECRET tenha um valor válido
+  if (!process.env.JWT_SECRET) {
+    console.warn('⚠️  JWT_SECRET não definido. Usando valor padrão (NÃO RECOMENDADO EM PRODUÇÃO!)');
+    process.env.JWT_SECRET = 'production-default-secret-CHANGE-ME-IMMEDIATELY';
+  }
+  process.env.SESSION_TIMEOUT = process.env.SESSION_TIMEOUT || '8h';
 }
 
 /**

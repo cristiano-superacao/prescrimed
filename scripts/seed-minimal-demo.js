@@ -1,5 +1,14 @@
 import bcrypt from 'bcryptjs';
-import { sequelize, Empresa, Usuario, Paciente, Prescricao } from '../models/index.js';
+import {
+  sequelize,
+  Empresa,
+  Usuario,
+  Paciente,
+  Prescricao,
+  EstoqueItem,
+  EstoqueMovimentacao,
+  FinanceiroTransacao,
+} from '../models/index.js';
 import { pathToFileURL } from 'url';
 
 async function upsertUsuario({ nome, email, role, empresaId, senhaHash }) {
@@ -53,7 +62,9 @@ export async function seedMinimal({ closeConnection = true } = {}) {
     console.log('🌱 Seed mínimo (1 empresa, 1 usuário por role, 3 pacientes)...');
 
     await sequelize.authenticate();
-    await sequelize.sync({ force: false, alter: process.env.NODE_ENV !== 'production' });
+    const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : '';
+    const allowAlter = dialect !== 'sqlite' && process.env.NODE_ENV !== 'production';
+    await sequelize.sync({ force: false, alter: allowAlter });
 
     const [empresa] = await Empresa.findOrCreate({
       where: { cnpj: '99.999.999/0001-99' },
@@ -130,6 +141,106 @@ export async function seedMinimal({ closeConnection = true } = {}) {
           { nome: 'Omeprazol', dosagem: '20mg', frequencia: '1x ao dia', duracao: '14 dias', observacoes: '', controlado: false },
         ],
         status: 'ativa',
+      },
+    });
+
+    // Estoque (2 itens + movimentações)
+    const [dipirona] = await EstoqueItem.findOrCreate({
+      where: { empresaId: empresa.id, categoria: 'medicamento', nome: 'Dipirona' },
+      defaults: {
+        empresaId: empresa.id,
+        nome: 'Dipirona',
+        unidade: 'comprimido',
+        categoria: 'medicamento',
+        descricao: 'Analgésico',
+        quantidade: 50,
+        quantidadeMinima: 10,
+        valorUnitario: 0.35,
+      },
+    });
+
+    const [suplemento] = await EstoqueItem.findOrCreate({
+      where: { empresaId: empresa.id, categoria: 'alimento', nome: 'Suplemento Nutricional' },
+      defaults: {
+        empresaId: empresa.id,
+        nome: 'Suplemento Nutricional',
+        unidade: 'unidade',
+        categoria: 'alimento',
+        descricao: 'Nutrição',
+        quantidade: 20,
+        quantidadeMinima: 5,
+        valorUnitario: 8.9,
+      },
+    });
+
+    const now = new Date();
+    await EstoqueMovimentacao.findOrCreate({
+      where: { empresaId: empresa.id, estoqueItemId: dipirona.id, tipo: 'entrada', quantidade: 50, motivo: 'Seed demo' },
+      defaults: {
+        empresaId: empresa.id,
+        estoqueItemId: dipirona.id,
+        usuarioId: nutricionista.id,
+        tipo: 'entrada',
+        quantidade: 50,
+        quantidadeAnterior: 0,
+        quantidadeNova: 50,
+        valorUnitario: 0.35,
+        valorTotal: 17.5,
+        motivo: 'Seed demo',
+        observacoes: 'Entrada inicial (demo).',
+        dataMovimentacao: now,
+      },
+    });
+
+    await EstoqueMovimentacao.findOrCreate({
+      where: { empresaId: empresa.id, estoqueItemId: suplemento.id, tipo: 'entrada', quantidade: 20, motivo: 'Seed demo' },
+      defaults: {
+        empresaId: empresa.id,
+        estoqueItemId: suplemento.id,
+        usuarioId: nutricionista.id,
+        tipo: 'entrada',
+        quantidade: 20,
+        quantidadeAnterior: 0,
+        quantidadeNova: 20,
+        valorUnitario: 8.9,
+        valorTotal: 178,
+        motivo: 'Seed demo',
+        observacoes: 'Entrada inicial (demo).',
+        dataMovimentacao: now,
+      },
+    });
+
+    // Financeiro (1 receita + 1 despesa)
+    await FinanceiroTransacao.findOrCreate({
+      where: { empresaId: empresa.id, tipo: 'receita', descricao: 'Mensalidade (demo)' },
+      defaults: {
+        empresaId: empresa.id,
+        pacienteId: pacientes[0].id,
+        tipo: 'receita',
+        descricao: 'Mensalidade (demo)',
+        valor: 1500,
+        categoria: 'Mensalidade',
+        dataVencimento: now,
+        dataPagamento: now,
+        status: 'pago',
+        formaPagamento: 'pix',
+        observacoes: 'Lançamento gerado automaticamente (demo).',
+      },
+    });
+
+    await FinanceiroTransacao.findOrCreate({
+      where: { empresaId: empresa.id, tipo: 'despesa', descricao: 'Compra de insumos (demo)' },
+      defaults: {
+        empresaId: empresa.id,
+        tipo: 'despesa',
+        descricao: 'Compra de insumos (demo)',
+        valor: 320,
+        categoria: 'Insumos',
+        dataVencimento: now,
+        dataPagamento: now,
+        status: 'pago',
+        formaPagamento: 'cartao',
+        observacoes: 'Lançamento gerado automaticamente (demo).',
       },
     });
 

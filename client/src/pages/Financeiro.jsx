@@ -21,6 +21,16 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import { 
+  TableContainer, 
+  MobileGrid, 
+  MobileCard, 
+  TableWrapper, 
+  TableHeader, 
+  TBody, 
+  Tr, 
+  Td 
+} from '../components/common/Table';
 
 export default function Financeiro() {
   const [transacoes, setTransacoes] = useState([]);
@@ -186,55 +196,113 @@ export default function Financeiro() {
         </div>
       </SearchFilterBar>
 
-      <div className="card overflow-hidden">
+      <TableContainer
+        title="Transações"
+        actions={
+          <button
+            onClick={() => setModalOpen(true)}
+            className="btn btn-primary flex items-center gap-2"
+          >
+            <Plus size={18} /> Nova
+          </button>
+        }
+      >
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredTransacoes.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-100">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descrição</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoria</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+          <>
+            {/* Mobile */}
+            <MobileGrid>
+              {filteredTransacoes.map((t) => (
+                <MobileCard key={t._id}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${t.tipo === 'receita' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                        {t.tipo === 'receita' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900 dark:text-gray-100">{t.descricao}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-300">
+                            {t.categoria}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-gray-300">
+                            <Calendar size={12} /> {new Date(t.data).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className={`text-sm font-semibold ${t.tipo === 'receita' ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {t.tipo === 'despesa' ? '-' : '+'}{formatCurrency(t.valor)}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                      t.status === 'pago' 
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                        : 'bg-amber-50 text-amber-700 border border-amber-100'
+                    }`}>
+                      {t.status === 'pago' ? (
+                        <><CheckCircle2 size={12} /> Pago</>
+                      ) : (
+                        <><Clock size={12} /> Pendente</>
+                      )}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleEdit(t)}
+                        className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(t._id)}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </MobileCard>
+              ))}
+            </MobileGrid>
+
+            {/* Desktop */}
+            <TableWrapper>
+              <TableHeader columns={["Descrição","Categoria","Data","Valor","Status","Ações"]} />
+              <TBody>
                 {filteredTransacoes.map((transacao) => (
-                  <tr key={transacao._id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-6 py-4">
+                  <Tr key={transacao._id}>
+                    <Td>
                       <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-lg ${transacao.tipo === 'receita' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
                           {transacao.tipo === 'receita' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{transacao.descricao}</p>
+                          <p className="font-medium text-slate-900 dark:text-gray-100">{transacao.descricao}</p>
                           {transacao.pacienteId && (
-                            <p className="text-xs text-slate-500">{transacao.pacienteId.nome}</p>
+                            <p className="text-xs text-slate-500 dark:text-gray-300">{transacao.pacienteId.nome}</p>
                           )}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                    </Td>
+                    <Td>
+                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-300">
                         {transacao.categoria}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    </Td>
+                    <Td className="text-sm text-slate-600 dark:text-gray-300">
                       <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-slate-400" />
                         {new Date(transacao.data).toLocaleDateString('pt-BR')}
                       </div>
-                    </td>
-                    <td className={`px-6 py-4 font-semibold ${transacao.tipo === 'receita' ? 'text-emerald-600' : 'text-red-600'}`}>
+                    </Td>
+                    <Td className={`font-semibold ${transacao.tipo === 'receita' ? 'text-emerald-600' : 'text-red-600'}`}>
                       {transacao.tipo === 'despesa' ? '-' : '+'}{formatCurrency(transacao.valor)}
-                    </td>
-                    <td className="px-6 py-4">
+                    </Td>
+                    <Td>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                         transacao.status === 'pago' 
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
@@ -246,8 +314,8 @@ export default function Financeiro() {
                           <><Clock size={12} /> Pendente</>
                         )}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
+                    </Td>
+                    <Td className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => handleEdit(transacao)}
@@ -262,12 +330,12 @@ export default function Financeiro() {
                           <Trash2 size={16} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TBody>
+            </TableWrapper>
+          </>
         ) : (
           <div className="p-8">
             <EmptyState
@@ -282,7 +350,7 @@ export default function Financeiro() {
             />
           </div>
         )}
-      </div>
+      </TableContainer>
 
       {modalOpen && (
         <TransacaoModal 
