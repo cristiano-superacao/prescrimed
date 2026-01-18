@@ -27,9 +27,14 @@ async function createTables() {
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
 
-    await sequelize.sync({ 
+    const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : '';
+    const canAlterSafely = dialect !== 'sqlite';
+
+    await sequelize.sync({
       force: forceRecreate,
-      alter: !forceRecreate  // Se não for force, usar alter para atualizar estrutura
+      // Em SQLite, alter costuma precisar recriar tabelas e pode falhar com FK.
+      // Para atualizar schema no SQLite, prefira FORCE_RECREATE=true em ambiente local.
+      alter: !forceRecreate && canAlterSafely,
     });
 
     console.log('✅ Tabelas criadas/sincronizadas com sucesso!');
@@ -38,6 +43,13 @@ async function createTables() {
     console.log('  - usuarios');
     console.log('  - pacientes');
     console.log('  - prescricoes');
+    console.log('  - agendamentos');
+    console.log('  - casa_repouso_leitos');
+    console.log('  - pets');
+    console.log('  - sessoes_fisio');
+    console.log('  - estoque_itens');
+    console.log('  - estoque_movimentacoes');
+    console.log('  - financeiro_transacoes');
 
     console.log('\n🔍 Verificando tabelas...');
     const [results] = await sequelize.query(`

@@ -7,6 +7,9 @@ import Agendamento from './Agendamento.js';
 import CasaRepousoLeito from './CasaRepousoLeito.js';
 import Pet from './Pet.js';
 import SessaoFisio from './SessaoFisio.js';
+import EstoqueItem from './EstoqueItem.js';
+import EstoqueMovimentacao from './EstoqueMovimentacao.js';
+import FinanceiroTransacao from './FinanceiroTransacao.js';
 
 // Relacionamentos
 Empresa.hasMany(Usuario, { foreignKey: 'empresaId', as: 'usuarios' });
@@ -47,4 +50,21 @@ Pet.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
 Empresa.hasMany(SessaoFisio, { foreignKey: 'empresaId', as: 'sessoesFisio' });
 SessaoFisio.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
 
-export { sequelize, Usuario, Empresa, Paciente, Prescricao, Agendamento, CasaRepousoLeito, Pet, SessaoFisio };
+// Estoque
+Empresa.hasMany(EstoqueItem, { foreignKey: 'empresaId', as: 'estoqueItens' });
+EstoqueItem.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+EstoqueItem.hasMany(EstoqueMovimentacao, { foreignKey: 'estoqueItemId', as: 'movimentacoes' });
+EstoqueMovimentacao.belongsTo(EstoqueItem, { foreignKey: 'estoqueItemId', as: 'item' });
+
+Empresa.hasMany(EstoqueMovimentacao, { foreignKey: 'empresaId', as: 'estoqueMovimentacoes' });
+EstoqueMovimentacao.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+// Financeiro
+Empresa.hasMany(FinanceiroTransacao, { foreignKey: 'empresaId', as: 'financeiroTransacoes' });
+FinanceiroTransacao.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+Paciente.hasMany(FinanceiroTransacao, { foreignKey: 'pacienteId', as: 'transacoesFinanceiras' });
+FinanceiroTransacao.belongsTo(Paciente, { foreignKey: 'pacienteId', as: 'paciente' });
+
+export { sequelize, Usuario, Empresa, Paciente, Prescricao, Agendamento, CasaRepousoLeito, Pet, SessaoFisio, EstoqueItem, EstoqueMovimentacao, FinanceiroTransacao };
