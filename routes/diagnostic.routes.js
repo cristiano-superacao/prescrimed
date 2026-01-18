@@ -51,4 +51,56 @@ router.get('/db-check', async (req, res) => {
   }
 });
 
+// Verificação de ambiente e configuração
+router.get('/env-check', async (req, res) => {
+  try {
+    const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : 'unknown';
+    
+    res.json({
+      ok: true,
+      environment: {
+        NODE_ENV: process.env.NODE_ENV || 'development',
+        TZ: process.env.TZ || 'not set',
+        PORT: process.env.PORT || 'not set',
+      },
+      database: {
+        dialect: dialect,
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
+        isConnected: false, // Will be updated below
+      },
+      jwt: {
+        hasJwtSecret: !!process.env.JWT_SECRET,
+        sessionTimeout: process.env.SESSION_TIMEOUT || '8h',
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Erro verificação ambiente:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Verificação rápida de conexão com banco
+router.get('/db-ping', async (req, res) => {
+  try {
+    await sequelize.authenticate();
+    const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : 'unknown';
+    
+    res.json({
+      ok: true,
+      dialect: dialect,
+      message: 'Banco de dados conectado com sucesso',
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Erro ping DB:', err);
+    res.status(503).json({ 
+      ok: false,
+      error: 'Falha ao conectar com o banco de dados',
+      details: err.message,
+      hint: 'Verifique se DATABASE_URL está configurado corretamente no Railway'
+    });
+  }
+});
+
 export default router;

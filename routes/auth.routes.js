@@ -14,6 +14,15 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
+    // Verifica se o JWT_SECRET está configurado
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET não configurado!');
+      return res.status(500).json({ 
+        error: 'Servidor mal configurado. Contate o administrador.',
+        details: 'JWT_SECRET não definido'
+      });
+    }
+
     const usuario = await Usuario.findOne({ 
       where: { email },
       include: [{ model: Empresa, as: 'empresa' }]
@@ -55,8 +64,30 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Erro no login:', error);
-    res.status(500).json({ error: 'Erro ao fazer login' });
+    console.error('❌ Erro no login:', error);
+    
+    // Erro de conexão com banco de dados
+    if (error.name === 'SequelizeConnectionError' || error.name === 'SequelizeConnectionRefusedError') {
+      return res.status(503).json({ 
+        error: 'Banco de dados temporariamente indisponível. Tente novamente em alguns instantes.',
+        details: 'Database connection error'
+      });
+    }
+    
+    // Erro de tabela não encontrada
+    if (error.name === 'SequelizeDatabaseError' && error.message.includes('relation') && error.message.includes('does not exist')) {
+      console.error('❌ Tabela não existe no banco! Execute as migrações primeiro.');
+      return res.status(503).json({ 
+        error: 'Sistema em manutenção. Aguarde a configuração inicial.',
+        details: 'Database tables not created'
+      });
+    }
+    
+    // Outros erros
+    return res.status(500).json({ 
+      error: 'Erro ao fazer login. Tente novamente.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
