@@ -9,6 +9,7 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import EmptyState from '../components/common/EmptyState';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
+import { TableContainer, TableWrapper, TableHeader, Th, TBody, Tr, Td, MobileGrid, MobileCard } from '../components/common/Table';
 
 export default function Empresas() {
   const { user } = useAuthStore();
@@ -97,7 +98,7 @@ export default function Empresas() {
         <div className="hidden md:block"></div>
       </div>
 
-      <div className="card overflow-hidden border border-slate-200 shadow-sm">
+      <TableContainer className="border border-slate-200 shadow-sm">
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h3 className="font-semibold text-slate-800">Lista de Empresas</h3>
           <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -123,13 +124,11 @@ export default function Empresas() {
         ) : empresas.length > 0 ? (
           <>
             {/* Mobile: cards */}
-            <div className="md:hidden p-4 sm:p-6 space-y-3">
+            <MobileGrid>
               {empresas.map((empresa) => (
-                <div
+                <MobileCard
                   key={getEmpresaId(empresa)}
-                  className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
-                    density === 'compact' ? 'p-3' : 'p-4'
-                  }`}
+                  density={density}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -164,53 +163,38 @@ export default function Empresas() {
                       Excluir
                     </button>
                   </div>
-                </div>
+                </MobileCard>
               ))}
-            </div>
+            </MobileGrid>
 
             {/* Desktop: table */}
-            <div className="hidden md:block overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-              <table className="w-full min-w-[920px]">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Nome
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    CNPJ
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Plano
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
+            <TableWrapper>
+              <TableHeader>
+                <Th>Nome</Th>
+                <Th>CNPJ</Th>
+                <Th>Email</Th>
+                <Th>Plano</Th>
+                <Th>Status</Th>
+                <Th>Ações</Th>
+              </TableHeader>
+              <TBody>
                 {empresas.map((empresa) => (
-                  <tr key={getEmpresaId(empresa)} className="hover:bg-slate-50">
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
+                  <Tr key={getEmpresaId(empresa)}>
+                    <Td density={density}>
                       <div className="font-medium text-slate-900">{empresa.nome}</div>
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap text-slate-600`}>
+                    </Td>
+                    <Td density={density} className="text-slate-600">
                       {empresa.cnpj || '-'}
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap text-slate-600`}>
+                    </Td>
+                    <Td density={density} className="text-slate-600">
                       {empresa.email}
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
+                    </Td>
+                    <Td density={density}>
                       <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-primary-50 text-primary-700 border border-primary-100 uppercase">
                         {empresa.plano}
                       </span>
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
+                    </Td>
+                    <Td density={density}>
                       <span
                         className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
                           empresa.status === 'ativo'
@@ -220,8 +204,8 @@ export default function Empresas() {
                       >
                         {empresa.status === 'ativo' ? 'Ativo' : 'Inativo'}
                       </span>
-                    </td>
-                    <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
+                    </Td>
+                    <Td density={density}>
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleDelete(getEmpresaId(empresa))}
@@ -231,12 +215,11 @@ export default function Empresas() {
                           <Trash2 size={18} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-              </table>
-            </div>
+              </TBody>
+            </TableWrapper>
           </>
         ) : (
           <EmptyState
@@ -247,7 +230,7 @@ export default function Empresas() {
             onAction={() => setIsModalOpen(true)}
           />
         )}
-      </div>
+      </TableContainer>
 
       {isModalOpen && (
         <EmpresaModal

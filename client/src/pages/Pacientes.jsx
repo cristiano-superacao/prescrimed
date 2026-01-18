@@ -15,6 +15,17 @@ import {
   Mail,
   MapPin
 } from 'lucide-react';
+import {
+  TableContainer,
+  TableWrapper,
+  TableHeader,
+  TBody,
+  Tr,
+  Th,
+  Td,
+  MobileGrid,
+  MobileCard
+} from '../components/common/Table';
 import { pacienteService } from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage } from '../utils/toastMessages';
@@ -191,7 +202,7 @@ export default function Pacientes() {
         </button>
       </SearchFilterBar>
 
-      <div className="card overflow-hidden">
+      <TableContainer>
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -199,12 +210,9 @@ export default function Pacientes() {
         ) : filteredPacientes.length > 0 ? (
           <>
             {/* Mobile: cards */}
-            <div className="md:hidden p-4 sm:p-6 space-y-3">
+            <MobileGrid>
               {filteredPacientes.map((paciente) => (
-                <div
-                  key={paciente.id || paciente._id}
-                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
-                >
+                <MobileCard key={paciente.id || paciente._id}>
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm shrink-0">
                       {paciente.nome.charAt(0)}
@@ -248,39 +256,36 @@ export default function Pacientes() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </MobileCard>
               ))}
-            </div>
+            </MobileGrid>
 
             {/* Desktop: table */}
-            <div className="hidden md:block overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-              <table className="w-full min-w-[760px]">
-              <thead className="bg-slate-50 border-b border-slate-100 whitespace-nowrap">
-                <tr>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">CPF</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nascimento</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Telefone</th>
-                  <th className="px-4 sm:px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+            <TableWrapper>
+              <TableHeader>
+                <Th>Nome</Th>
+                <Th>CPF</Th>
+                <Th>Nascimento</Th>
+                <Th>Telefone</Th>
+                <Th className="text-right">Ações</Th>
+              </TableHeader>
+              <TBody>
                 {filteredPacientes.map((paciente) => (
-                  <tr key={paciente.id || paciente._id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                  <Tr key={paciente.id || paciente._id}>
+                    <Td>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
                           {paciente.nome.charAt(0)}
                         </div>
                         <span className="font-medium text-slate-900">{paciente.nome}</span>
                       </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{paciente.cpf}</td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
+                    </Td>
+                    <Td className="text-slate-600">{paciente.cpf}</Td>
+                    <Td className="text-slate-600">
                       {new Date(paciente.dataNascimento).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{paciente.telefone}</td>
-                    <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
+                    </Td>
+                    <Td className="text-slate-600">{paciente.telefone}</Td>
+                    <Td className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleViewHistorico(paciente)}
@@ -304,12 +309,11 @@ export default function Pacientes() {
                           <Trash2 size={16} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-              </table>
-            </div>
+              </TBody>
+            </TableWrapper>
           </>
         ) : (
           <EmptyState
@@ -320,7 +324,7 @@ export default function Pacientes() {
             onAction={() => setModalOpen(true)}
           />
         )}
-      </div>
+      </TableContainer>
 
       {modalOpen && (
         <PacienteModal

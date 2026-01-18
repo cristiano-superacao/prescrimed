@@ -10,6 +10,7 @@ import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
+import { TableContainer, TableWrapper, TableHeader, Th, TBody, Tr, Td, MobileGrid, MobileCard } from '../components/common/Table';
 
 export default function Usuarios() {
   const { user } = useAuthStore();
@@ -177,7 +178,7 @@ export default function Usuarios() {
         </div>
       )}
 
-      <div className="card overflow-hidden border border-slate-200 shadow-sm">
+      <TableContainer className="border border-slate-200 shadow-sm">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -185,13 +186,11 @@ export default function Usuarios() {
         ) : filteredUsuarios.length > 0 ? (
           <>
             {/* Mobile: cards */}
-            <div className="md:hidden p-4 sm:p-6 space-y-3">
+            <MobileGrid>
               {filteredUsuarios.map((usuario) => (
-                <div
+                <MobileCard
                   key={getUsuarioId(usuario)}
-                  className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
-                    density === 'compact' ? 'p-3' : 'p-4'
-                  }`}
+                  density={density}
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm shrink-0">
@@ -258,57 +257,42 @@ export default function Usuarios() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </MobileCard>
               ))}
-            </div>
+            </MobileGrid>
 
             {/* Desktop: table */}
-            <div className="hidden md:block overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-              <table className="w-full min-w-[960px]">
-              <thead className="bg-slate-50 border-b border-slate-200 whitespace-nowrap">
-                <tr>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Profissional
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Contato
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    CRM
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Função
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+            <TableWrapper>
+              <TableHeader>
+                <Th>Profissional</Th>
+                <Th>Contato</Th>
+                <Th>CRM</Th>
+                <Th>Função</Th>
+                <Th>Status</Th>
+                <Th align="right">Ações</Th>
+              </TableHeader>
+              <TBody>
                 {filteredUsuarios.map((usuario) => (
-                  <tr key={getUsuarioId(usuario)} className="hover:bg-slate-50 transition-colors">
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
+                  <Tr key={getUsuarioId(usuario)}>
+                    <Td density={density}>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xs">
                           {usuario.nome.charAt(0).toUpperCase()}
                         </div>
                         <div className="font-medium text-slate-900">{usuario.nome}</div>
                       </div>
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap text-sm text-slate-600`}>
+                    </Td>
+                    <Td density={density} className="text-sm text-slate-600">
                       {usuario.email}
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap text-sm text-slate-600`}>
+                    </Td>
+                    <Td density={density} className="text-sm text-slate-600">
                       {usuario.crm ? (
                         <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">{usuario.crm}</span>
                       ) : (
                         <span className="text-slate-400">-</span>
                       )}
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
+                    </Td>
+                    <Td density={density}>
                       <span
                         className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
                           usuario.role === 'admin' || usuario.role === 'superadmin'
@@ -318,8 +302,8 @@ export default function Usuarios() {
                       >
                         {roleLabel(usuario.role)}
                       </span>
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
+                    </Td>
+                    <Td density={density}>
                       <span
                         className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
                           usuario.ativo
@@ -329,8 +313,8 @@ export default function Usuarios() {
                       >
                         {usuario.ativo ? 'Ativo' : 'Inativo'}
                       </span>
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap text-right`}>
+                    </Td>
+                    <Td density={density} align="right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEdit(usuario)}
@@ -349,12 +333,11 @@ export default function Usuarios() {
                           </button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-              </table>
-            </div>
+              </TBody>
+            </TableWrapper>
           </>
         ) : (
           <EmptyState
@@ -365,7 +348,7 @@ export default function Usuarios() {
             onAction={!searchTerm ? () => setModalOpen(true) : null}
           />
         )}
-      </div>
+      </TableContainer>
 
       {modalOpen && (
         <UsuarioModal
