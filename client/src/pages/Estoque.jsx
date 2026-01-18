@@ -19,6 +19,16 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import { 
+  TableContainer, 
+  MobileGrid, 
+  MobileCard, 
+  TableWrapper, 
+  TableHeader, 
+  TBody, 
+  Tr, 
+  Td 
+} from '../components/common/Table';
 
 export default function Estoque() {
   const [activeTab, setActiveTab] = useState('medicamentos'); // medicamentos, alimentos
@@ -481,72 +491,104 @@ export default function Estoque() {
       </SearchFilterBar>
 
       {/* Main Content Table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-100">
-              <tr>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Item</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Quantidade</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unidade</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Validade</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
-                    <div className="flex justify-center mb-2">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+      <TableContainer title={`Estoque de ${activeTab === 'medicamentos' ? 'Medicamentos' : 'Alimentos'}`}>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
+        ) : filteredItems.length > 0 ? (
+          <>
+            {/* Mobile */}
+            <MobileGrid>
+              {filteredItems.map((item) => {
+                const isLow = item.quantidade <= item.quantidadeMinima;
+                return (
+                  <MobileCard key={item._id}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${activeTab === 'medicamentos' ? 'bg-primary-50 text-primary-600' : 'bg-green-50 text-green-600'}`}>
+                          {activeTab === 'medicamentos' ? <Pill size={18} /> : <Utensils size={18} />}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-800 dark:text-gray-100">{item.nome}</p>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 dark:text-gray-400">
+                            {item.lote && <span>Lote: {item.lote}</span>}
+                            {item.categoria && <span>Cat: {item.categoria}</span>}
+                          </div>
+                        </div>
+                      </div>
+                      {isLow ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold border border-red-100">
+                          <AlertTriangle size={12} /> Baixo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                          <CheckCircle2 size={12} /> OK
+                        </span>
+                      )}
                     </div>
-                    Carregando estoque...
-                  </td>
-                </tr>
-              ) : filteredItems.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
-                    <EmptyState
-                      icon={Package}
-                      title="Nenhum item encontrado"
-                      description="Nenhum item encontrado no estoque."
-                    />
-                  </td>
-                </tr>
-              ) : (
-                filteredItems.map((item) => {
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <span className="text-slate-500 dark:text-gray-400 text-xs block">Qtd.</span>
+                        <span className={`font-bold ${isLow ? 'text-red-600' : 'text-slate-700 dark:text-gray-200'}`}>
+                          {item.quantidade}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 dark:text-gray-400 text-xs block">Unidade</span>
+                        <span className="text-slate-600 dark:text-gray-300 font-medium">{item.unidade}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 dark:text-gray-400 text-xs block">Validade</span>
+                        <span className="text-slate-600 dark:text-gray-300 font-medium">
+                          {item.validade ? new Date(item.validade).toLocaleDateString('pt-BR') : '-'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <button className="text-slate-400 hover:text-primary-600 font-medium text-sm transition">
+                        Detalhes
+                      </button>
+                    </div>
+                  </MobileCard>
+                );
+              })}
+            </MobileGrid>
+
+            {/* Desktop */}
+            <TableWrapper>
+              <TableHeader columns={["Item","Quantidade","Unidade","Validade","Status","Ações"]} />
+              <TBody>
+                {filteredItems.map((item) => {
                   const isLow = item.quantidade <= item.quantidadeMinima;
                   return (
-                    <tr key={item._id} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <Tr key={item._id}>
+                      <Td>
                         <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-lg ${activeTab === 'medicamentos' ? 'bg-primary-50 text-primary-600' : 'bg-green-50 text-green-600'}`}>
                             {activeTab === 'medicamentos' ? <Pill size={18} /> : <Utensils size={18} />}
                           </div>
                           <div>
-                            <span className="font-bold text-slate-800 block">{item.nome}</span>
-                            {item.lote && <span className="text-xs text-slate-500">Lote: {item.lote}</span>}
-                            {item.categoria && <span className="text-xs text-slate-500">Cat: {item.categoria}</span>}
+                            <span className="font-bold text-slate-800 dark:text-gray-100 block">{item.nome}</span>
+                            {item.lote && <span className="text-xs text-slate-500 dark:text-gray-400">Lote: {item.lote}</span>}
+                            {item.categoria && <span className="text-xs text-slate-500 dark:text-gray-400">Cat: {item.categoria}</span>}
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`font-bold text-lg ${isLow ? 'text-red-600' : 'text-slate-700'}`}>
+                      </Td>
+                      <Td>
+                        <span className={`font-bold text-lg ${isLow ? 'text-red-600' : 'text-slate-700 dark:text-gray-200'}`}>
                           {item.quantidade}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded-md font-medium">
+                      </Td>
+                      <Td>
+                        <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded-md font-medium">
                           {item.unidade}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-600">
-                          {item.validade ? new Date(item.validade).toLocaleDateString('pt-BR') : '-'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      </Td>
+                      <Td className="text-sm text-slate-600 dark:text-gray-300">
+                        {item.validade ? new Date(item.validade).toLocaleDateString('pt-BR') : '-'}
+                      </Td>
+                      <Td>
                         {isLow ? (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold border border-red-100">
                             <AlertTriangle size={12} /> Baixo Estoque
@@ -556,20 +598,28 @@ export default function Estoque() {
                             <CheckCircle2 size={12} /> Normal
                           </span>
                         )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <button className="text-slate-400 hover:text-primary-600 font-medium text-sm transition-colors">
+                      </Td>
+                      <Td className="text-right">
+                        <button className="text-slate-400 hover:text-primary-600 font-medium text-sm transition">
                           Detalhes
                         </button>
-                      </td>
-                    </tr>
+                      </Td>
+                    </Tr>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                })}
+              </TBody>
+            </TableWrapper>
+          </>
+        ) : (
+          <div className="p-8">
+            <EmptyState
+              icon={Package}
+              title="Nenhum item encontrado"
+              description="Nenhum item encontrado no estoque."
+            />
+          </div>
+        )}
+      </TableContainer>
 
       {renderModal()}
 
