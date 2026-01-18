@@ -1,90 +1,471 @@
-# Prescrimed – Guia Atualizado
+# 🏥 Prescrimed - Sistema de Gestão de Saúde
 
-Este documento consolida a configuração, execução e deploy automático no Railway, mantendo o layout responsivo e profissional do frontend.
+Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e clínicas veterinárias (petshop). Oferece prescrições médicas, prontuários eletrônicos, agendamentos, controle de estoque e gestão financeira em uma plataforma multi-tenant moderna e responsiva.
 
-## Visão Geral
-- Backend: Node.js/Express (servidor em `server.js`), Sequelize (PostgreSQL)
-- Frontend: React + Vite (build servido pelo backend a partir de `client/dist`)
-- Deploy: Railway (Nixpacks) com auto‑deploy via GitHub; GitHub Pages opcional para frontend estático.
-
-## Pré‑requisitos
-- Node 18+ e npm 9+
-- Conta no Railway e GitHub
-
-## Variáveis de Ambiente (Backend)
-Defina no serviço do Railway:
-- `NODE_ENV=production`
-- `DATABASE_URL` (provisionado pelo serviço PostgreSQL do Railway)
-- `JWT_SECRET` (32+ chars)
-- `JWT_REFRESH_SECRET` (32+ chars)
-- `SESSION_TIMEOUT=8h`
-- `FORCE_SYNC=true` (apenas primeiro deploy; mude para `false` depois)
-- `FRONTEND_URL=https://cristiano-superacao.github.io/prescrimed`
-- `ALLOWED_ORIGINS=https://cristiano-superacao.github.io,https://cristiano-superacao.github.io/prescrimed,https://prescrimed-backend.up.railway.app,https://prescrimed-backend-production.up.railway.app`
-
-Opcional (frontend build em Pages):
-- `VITE_BACKEND_ROOT=https://prescrimed-backend.up.railway.app`
-- `VITE_API_URL=https://prescrimed-backend.up.railway.app/api`
-
-## Executar Localmente
-```bash
-npm install
-npm run build:full   # instala client e gera dist
-npm start            # inicia backend (serve client/dist)
-# abrir http://localhost:3000
-```
-
-## Deploy Automático no Railway
-1. Railway → New Project → Deploy from GitHub → selecione este repositório.
-2. Adicione um serviço PostgreSQL.
-3. No serviço backend (Settings → Variables), defina as variáveis acima.
-4. Configuração de build/start (Railway usa Nixpacks):
-   - Root Directory: `/`
-   - Build Command: `npm install --production=false && npm run build:full`
-   - Start Command: `npm start`
-   - Healthcheck Path: `/health`
-5. Ative Auto‑deploy on push.
-6. Primeiro deploy com `FORCE_SYNC=true` (cria/atualiza tabelas). Depois mude para `FORCE_SYNC=false`.
-
-## Health & Diagnóstico
-- `GET /health` → status do servidor
-- `GET /api/health` → status (compatível com clientes que esperam sob `/api`)
-- `GET /api/diagnostic/db-check` → verificação de tabelas/colunas
-
-## Estrutura Relevante
-- `server.js` → servidor Express, CORS, rotas, health, SPA fallback
-- `routes/*` → endpoints REST (auth, financeiro, estoque, etc.)
-- `models/*` → Sequelize models
-- `client/` → app React; build via Vite
-- `nixpacks.toml` → fases de build/start para Railway
-- `railway.toml` → healthcheck e builder
-- `.github/workflows/deploy.yml` → Pages (opcional)
-- `scripts/check-health.js` → utilitário para checar saúde do backend
-
-## Comandos Úteis
-```bash
-# verificar endpoints essenciais do backend
-npm run check:health                # usa domínio padrão
-node scripts/check-health.js https://SEU_DOMINIO_RAILWAY
-
-# rebuild apenas do client
-cd client && npm ci && npm run build
-```
-
-## Dashboard Streamlit (Opcional)
-Este dashboard é complementar para status rápido, sem alterar o layout do frontend.
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-streamlit.ps1
-```
-
-- Porta padrão: 8501 (http://localhost:8501)
-- Variável opcional: `BACKEND_URL` para apontar para outra instância.
-
-## Troubleshooting
-- 404 em assets no GitHub Pages: garanta `base: '/prescrimed/'` no `client/vite.config.js`.
-- Banner "Backend Offline": confirme `VITE_BACKEND_ROOT`/`VITE_API_URL` ou aguarde publicação.
-- Tabelas ausentes: use `FORCE_SYNC=true` no primeiro deploy e depois mude para `false`.
+[![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org/)
+[![Railway](https://img.shields.io/badge/Deploy-Railway-purple.svg)](https://railway.app/)
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-blue.svg)](https://www.postgresql.org/)
 
 ---
-Mantendo o layout responsivo e profissional: todas as alterações focam infraestrutura; a UI e componentes permanecem inalterados.
+
+## 🎯 Funcionalidades
+
+### 👥 Gestão de Usuários e Permissões
+- **9 Funções Clínicas/Administrativas:**
+  - Super Administrador (multi-empresa)
+  - Administrador
+  - Nutricionista
+  - Enfermeiro
+  - Técnico de Enfermagem
+  - Fisioterapeuta
+  - Assistente Social
+  - Auxiliar Administrativo
+  - Atendente
+- Sistema de permissões granulares por módulo
+- Multi-tenant com isolamento por empresa
+
+### 📋 Módulos Principais
+- **Dashboard:** Visão geral com métricas e indicadores
+- **Pacientes:** Cadastro completo com prontuário eletrônico
+- **Prescrições:** Medicamentosas, nutricionais e mistas
+- **Agenda:** Agendamentos e controle de consultas
+- **Censo MP:** Mapa de leitos para casas de repouso
+- **Evolução:** Acompanhamento longitudinal de pacientes
+- **Estoque:** Controle de medicamentos e materiais
+- **Financeiro:** Gestão de receitas e despesas
+- **Cronograma:** Planejamento de atividades
+
+### 🎨 Interface
+- **Layout responsivo e profissional** em todas as telas
+- Design moderno com Tailwind CSS
+- Tema escuro com gradientes e glassmorphism
+- Componentes acessíveis e otimizados para mobile
+
+---
+
+## 🏗️ Arquitetura
+
+### Backend
+- **Node.js 20+** com Express
+- **PostgreSQL** via Sequelize ORM (SQLite para dev)
+- **JWT** para autenticação
+- **Helmet** e CORS configurados para segurança
+- Multi-tenant com isolamento por `empresaId`
+
+### Frontend
+- **React 18** com Vite
+- **React Router** para SPA
+- **Zustand** para state management
+- **Axios** para requisições HTTP
+- **Tailwind CSS** para estilização
+
+### Deploy
+- **Railway** (backend + PostgreSQL + frontend estático)
+- **Nixpacks** para build automático
+- **Healthcheck** em `/health`
+- Auto-deploy via GitHub
+
+---
+
+## 🚀 Início Rápido
+
+### Pré-requisitos
+- Node.js 20+
+- npm 10+
+- PostgreSQL (produção) ou SQLite (desenvolvimento)
+
+### Instalação Local
+
+```bash
+# Clone o repositório
+git clone https://github.com/cristiano-superacao/prescrimed.git
+cd prescrimed
+
+# Instale dependências do backend
+npm install
+
+# Instale dependências do frontend e faça build
+npm run build:client
+
+# Configure variáveis de ambiente (copie .env.example para .env)
+cp .env.example .env
+
+# Inicie o servidor (serve backend + frontend)
+npm start
+```
+
+Abra [http://localhost:3000](http://localhost:3000)
+
+### Desenvolvimento Local
+
+```bash
+# Terminal 1: Backend (watch mode)
+npm run dev
+
+# Terminal 2: Frontend (Vite dev server)
+npm run client
+```
+
+Frontend estará em [http://localhost:5173](http://localhost:5173)
+
+---
+
+## 🔧 Configuração
+
+### Variáveis de Ambiente (Backend)
+
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+# Ambiente
+NODE_ENV=production
+
+# Servidor
+PORT=3000
+
+# Banco de Dados (Railway PostgreSQL)
+DATABASE_URL=postgresql://usuario:senha@host:5432/database
+
+# Autenticação JWT (gere secrets seguros!)
+JWT_SECRET=seu-secret-jwt-aqui-minimo-32-caracteres
+JWT_REFRESH_SECRET=seu-refresh-secret-aqui-minimo-32-caracteres
+SESSION_TIMEOUT=8h
+
+# CORS / Frontend
+FRONTEND_URL=https://prescrimed.netlify.app
+CORS_ORIGIN=https://prescrimed.netlify.app
+ALLOWED_ORIGINS=https://outro-dominio.com,https://mais-um.com
+
+# Seed / Deploy Inicial (TEMPORÁRIO - remova após primeiro deploy)
+FORCE_SYNC=true
+SEED_MINIMAL=true
+SEED_SLUG=empresa-teste
+SEED_PASSWORD=Prescri@2026
+
+# Opcional: Fail-Fast (derruba servidor se DATABASE_URL ausente)
+# FAIL_FAST_DB=true
+```
+
+**Gere secrets seguros:**
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+### Variáveis de Ambiente (Frontend)
+
+Arquivo `client/.env.production`:
+
+```env
+# Produção - aponta para backend público Railway
+VITE_BACKEND_ROOT=https://prescrimed-backend-production.up.railway.app
+
+# Ou use proxy relativo se frontend e backend no mesmo domínio:
+# VITE_API_URL=/api
+```
+
+---
+
+## 📦 Scripts Disponíveis
+
+### Desenvolvimento
+```bash
+npm run dev              # Backend em watch mode (nodemon)
+npm run client           # Frontend dev server (Vite)
+npm run dev:full         # Backend + Frontend simultâneos
+```
+
+### Build
+```bash
+npm run build:client     # Build do frontend
+npm run build:full       # Instala deps + build do frontend
+npm run build            # Alias para build:client
+```
+
+### Deploy
+```bash
+npm start                # Inicia servidor (produção)
+npm run railway:build    # Build para Railway
+npm run railway:start    # Start no Railway
+```
+
+### Utilitários
+```bash
+npm run seed:minimal     # Seed mínimo (1 empresa + 4 usuários + 3 pacientes)
+npm run seed:demo        # Seed completo com dados demo
+npm run create:superadmin # Criar/atualizar super admin
+npm run smoke:api        # Smoke test completo da API
+npm run check:railway    # Validar configuração do Railway
+npm run check:health     # Verificar status do backend
+```
+
+---
+
+## 🐳 Deploy no Railway
+
+### Guia Completo
+Consulte [RAILWAY_SETUP.md](RAILWAY_SETUP.md) para instruções detalhadas passo a passo.
+
+### Resumo Rápido
+
+1. **Criar Projeto no Railway**
+   - Conecte seu repositório GitHub
+   - Adicione PostgreSQL ao projeto
+
+2. **Configurar Variáveis Obrigatórias**
+   ```
+   DATABASE_URL=<copie do PostgreSQL Railway>
+   JWT_SECRET=<gere com crypto.randomBytes>
+   JWT_REFRESH_SECRET=<gere com crypto.randomBytes>
+   NODE_ENV=production
+   ```
+
+3. **Primeiro Deploy (criar tabelas + seed)**
+   ```
+   FORCE_SYNC=true
+   SEED_MINIMAL=true
+   SEED_PASSWORD=Prescri@2026
+   ```
+
+4. **Deploy Subsequentes (remova as temporárias)**
+   - Remova `FORCE_SYNC` e `SEED_MINIMAL`
+   - Mantenha `DATABASE_URL`, `JWT_SECRET`, etc.
+
+5. **Validar Deploy**
+   - Acesse `https://seu-servico.up.railway.app/health`
+   - Deve retornar: `{"status":"ok","database":"connected",...}`
+
+---
+
+## 🔐 Criar Super Administrador
+
+### Método 1: Via Seed (primeiro deploy)
+```bash
+# No Railway, configure:
+SEED_MINIMAL=true
+SEED_PASSWORD=Prescri@2026
+SEED_SLUG=empresa-teste
+
+# Credenciais geradas:
+# Email: superadmin+empresa-teste@prescrimed.com
+# Senha: Prescri@2026
+```
+
+### Método 2: Script Dedicado (qualquer momento)
+```bash
+# No Railway, configure:
+SUPERADMIN_EMAIL=superadmin@prescrimed.com
+SUPERADMIN_PASSWORD=SuaSenhaSegura123
+SUPERADMIN_NOME=Super Admin
+
+# Execute no Railway (Run Command):
+npm run create:superadmin
+```
+
+### Método 3: Local
+```bash
+# No terminal:
+export SUPERADMIN_EMAIL=superadmin@prescrimed.com
+export SUPERADMIN_PASSWORD=Prescri@2026
+npm run create:superadmin
+```
+
+---
+
+## 🧪 Testes e Validação
+
+### Smoke Test (valida fluxo completo)
+```bash
+# Local (requer backend rodando em localhost:3000)
+npm run smoke:api
+
+# Railway
+BASE_URL=https://seu-backend.up.railway.app npm run smoke:api
+```
+
+O smoke test valida:
+- ✅ Health check
+- ✅ Cadastro de empresa + usuário
+- ✅ Login e autenticação
+- ✅ Criação de paciente
+- ✅ Criação de prescrição
+- ✅ Persistência no banco (Postgres)
+
+### Verificar Configuração do Railway
+```bash
+npm run check:railway
+```
+
+Valida:
+- ❌ Variáveis obrigatórias faltando
+- ⚠️ Secrets inseguros ou curtos
+- ✅ Configuração completa
+
+---
+
+## 🔧 Troubleshooting
+
+### Backend não conecta ao PostgreSQL
+**Sintoma:** `database unavailable` ou `DATABASE_URL ausente`
+
+**Solução:**
+1. Confirme que `DATABASE_URL` está configurada no Railway
+2. Verifique se PostgreSQL foi adicionado ao projeto
+3. Copie a URL do serviço Postgres (Variables → `DATABASE_URL`)
+
+### Frontend retorna HTML em vez de JSON
+**Sintoma:** `Failed to load module script: Expected JavaScript-or-Wasm module script but server responded with MIME type 'text/html'`
+
+**Causa:** Frontend buildado com `base: '/prescrimed/'` mas servido em `/`
+
+**Solução:** Build com base correto:
+```bash
+# Para Railway/Netlify (raiz):
+cd client && npm run build:railway
+
+# Para GitHub Pages (/prescrimed/):
+cd client && VITE_BASE=/prescrimed/ npm run build
+```
+
+### Erro 405 em /api/auth/register ou /api/auth/login
+**Sintoma:** `405 Method Not Allowed` ou `Origem não permitida pelo CORS`
+
+**Causa:** CORS bloqueando requisições do frontend
+
+**Solução:**
+1. Adicione o domínio do frontend em `ALLOWED_ORIGINS` no backend
+2. Se frontend em `prescrimed.up.railway.app`, adicione:
+   ```
+   ALLOWED_ORIGINS=https://prescrimed.up.railway.app
+   ```
+3. Redeploy do backend
+
+### Tabelas não foram criadas
+**Sintoma:** `relation "usuarios" does not exist`
+
+**Solução:**
+1. No primeiro deploy, configure: `FORCE_SYNC=true`
+2. Aguarde deploy completar e verifique logs
+3. Após confirmação, remova `FORCE_SYNC` (ou mude para `false`)
+
+### Login retorna "Credenciais inválidas"
+**Causa:** Usuário não existe no banco
+
+**Solução:** Crie super admin:
+```bash
+# No Railway (Variables):
+SUPERADMIN_EMAIL=superadmin@prescrimed.com
+SUPERADMIN_PASSWORD=Prescri@2026
+
+# Rode no Railway (Run Command):
+npm run create:superadmin
+```
+
+---
+
+## 📊 API Endpoints
+
+### Autenticação
+```
+POST   /api/auth/register    # Cadastro (empresa + usuário)
+POST   /api/auth/login       # Login (retorna JWT)
+GET    /api/auth/me          # Dados do usuário autenticado
+```
+
+### Usuários
+```
+GET    /api/usuarios         # Listar usuários da empresa
+POST   /api/usuarios         # Criar usuário
+GET    /api/usuarios/:id     # Detalhes do usuário
+PUT    /api/usuarios/:id     # Atualizar usuário
+DELETE /api/usuarios/:id     # Remover usuário
+GET    /api/usuarios/me      # Perfil do usuário logado
+PUT    /api/usuarios/:id/permissoes  # Atualizar permissões
+```
+
+### Empresas
+```
+GET    /api/empresas         # Listar empresas (superadmin)
+POST   /api/empresas         # Criar empresa
+GET    /api/empresas/:id     # Detalhes da empresa
+PUT    /api/empresas/:id     # Atualizar empresa
+GET    /api/empresas/me      # Dados da empresa do usuário
+PUT    /api/empresas/me      # Atualizar empresa atual
+```
+
+### Pacientes
+```
+GET    /api/pacientes        # Listar pacientes
+POST   /api/pacientes        # Criar paciente
+GET    /api/pacientes/:id    # Detalhes do paciente
+PUT    /api/pacientes/:id    # Atualizar paciente
+DELETE /api/pacientes/:id    # Remover paciente
+```
+
+### Prescrições
+```
+GET    /api/prescricoes      # Listar prescrições
+POST   /api/prescricoes      # Criar prescrição
+GET    /api/prescricoes/:id  # Detalhes da prescrição
+PUT    /api/prescricoes/:id  # Atualizar prescrição
+DELETE /api/prescricoes/:id  # Remover prescrição
+```
+
+### Health & Diagnóstico
+```
+GET    /health               # Health check
+GET    /api/health           # Health check (alternativo)
+GET    /api/test             # Teste de conectividade
+GET    /api/diagnostic/db-check  # Verificar tabelas/colunas
+```
+
+---
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Por favor:
+
+1. Faça fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
+3. Commit suas mudanças (`git commit -m 'feat: adicionar MinhaFeature'`)
+4. Push para a branch (`git push origin feature/MinhaFeature`)
+5. Abra um Pull Request
+
+### Padrão de Commits
+Seguimos [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` nova funcionalidade
+- `fix:` correção de bug
+- `docs:` documentação
+- `style:` formatação (sem mudança de lógica)
+- `refactor:` refatoração (sem mudança de comportamento)
+- `perf:` melhoria de performance
+- `test:` testes
+- `chore:` manutenção
+
+---
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+## 🌟 Agradecimentos
+
+- [React](https://reactjs.org/)
+- [Vite](https://vitejs.dev/)
+- [Express](https://expressjs.com/)
+- [Sequelize](https://sequelize.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Railway](https://railway.app/)
+
+---
+
+## 📞 Suporte
+
+- **GitHub Issues:** [https://github.com/cristiano-superacao/prescrimed/issues](https://github.com/cristiano-superacao/prescrimed/issues)
+- **Documentação Railway:** [RAILWAY_SETUP.md](RAILWAY_SETUP.md)
+
+---
+
+**Desenvolvido com ❤️ mantendo o layout responsivo e profissional em todas as telas**
