@@ -19,18 +19,13 @@ cd client
 call npm cache clean --force >nul 2>&1
 cd ..
 
-REM Iniciar MongoDB Memory Server
-echo [3/4] 🗄️  Iniciando MongoDB Memory Server...
-start "MongoDB Memory Server" cmd /k "node start-mongo-memory.js"
-timeout /t 8 /nobreak >nul
-
 REM Iniciar Backend API
-echo [4/4] ⚙️  Iniciando Backend API (porta 8000)...
+echo [3/4] ⚙️  Iniciando Backend API (porta 8000)...
 start "Backend API - Porta 8000" cmd /k "npm run dev"
 timeout /t 5 /nobreak >nul
 
 REM Iniciar Frontend React
-echo [5/5] 🎨 Iniciando Frontend React (porta 5173)...
+echo [4/4] 🎨 Iniciando Frontend React (porta 5173)...
 start "Frontend React - Porta 5173" cmd /k "cd client && npm run dev"
 timeout /t 5 /nobreak >nul
 
@@ -39,7 +34,7 @@ echo ╔════════════════════════
 echo ║           ✅ SISTEMA INICIADO COM SUCESSO         ║
 echo ╚═══════════════════════════════════════════════════╝
 echo.
-echo 📊 MongoDB Memory: rodando
+echo 🗄️  Banco: SQLite local (arquivo database.sqlite)
 echo 🔧 Backend API:    http://localhost:8000
 echo 🎨 Frontend App:   http://localhost:5173
 echo.

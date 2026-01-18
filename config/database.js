@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Configuração de timezone para região do Brasil (Horário de Brasília)
+process.env.TZ = process.env.TZ || 'America/Sao_Paulo';
+
 // Configuração do banco de dados compatível com Railway e desenvolvimento local
 let sequelize;
 
@@ -31,6 +34,7 @@ if (process.env.DATABASE_URL) {
         rejectUnauthorized: false
       }
     },
+    timezone: '+00:00', // Armazena em UTC, converte para America/Sao_Paulo na aplicação
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
       max: 5,
@@ -50,6 +54,7 @@ if (process.env.DATABASE_URL) {
       host: process.env.PGHOST,
       port: parseInt(process.env.PGPORT || '5432', 10),
       dialect: 'postgres',
+      timezone: '+00:00', // Armazena em UTC, converte para America/Sao_Paulo na aplicação
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
       pool: {
         max: 5,

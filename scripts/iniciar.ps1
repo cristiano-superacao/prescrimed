@@ -20,7 +20,7 @@ Write-Host "║                   Sistema de Prescrições Médicas             
 Write-Host "║                                                                   ║" -ForegroundColor $cor_titulo
 Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor $cor_titulo
 Write-Host ""
-Write-Host "   ⚡ Iniciando sistema com MongoDB em memória..." -ForegroundColor $cor_info
+Write-Host "   ⚡ Iniciando sistema (Backend + Frontend)..." -ForegroundColor $cor_info
 Write-Host "   ⏳ Aguarde alguns segundos..." -ForegroundColor $cor_info
 Write-Host ""
 
@@ -52,18 +52,13 @@ if (-not (Test-Path "client\node_modules")) {
 Write-Host "   ✅ Dependências verificadas!" -ForegroundColor $cor_sucesso
 Write-Host ""
 
-# Inicia MongoDB em memória
-Write-Host "   ✅ [1/3] Iniciando MongoDB em memória..." -ForegroundColor $cor_sucesso
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$scriptDir'; `$Host.UI.RawUI.WindowTitle = '📦 MongoDB Memory Server'; node start-mongo-memory.js"
-Start-Sleep -Seconds 8
-
 # Inicia Backend
-Write-Host "   ✅ [2/3] Iniciando Backend (porta 5000)..." -ForegroundColor $cor_sucesso
+Write-Host "   ✅ [1/2] Iniciando Backend (porta 8000)..." -ForegroundColor $cor_sucesso
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$scriptDir'; `$Host.UI.RawUI.WindowTitle = '🔧 PrescrIMed Backend'; npm run dev"
 Start-Sleep -Seconds 5
 
 # Inicia Frontend
-Write-Host "   ✅ [3/3] Iniciando Frontend (porta 5173)..." -ForegroundColor $cor_sucesso
+Write-Host "   ✅ [2/2] Iniciando Frontend (porta 5173)..." -ForegroundColor $cor_sucesso
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$scriptDir\client'; `$Host.UI.RawUI.WindowTitle = '🌐 PrescrIMed Frontend'; npm run dev"
 Start-Sleep -Seconds 5
 
@@ -78,11 +73,11 @@ Write-Host ""
 Write-Host "   🎉 Tudo pronto para usar!" -ForegroundColor $cor_sucesso
 Write-Host ""
 Write-Host "   📊 Backend:  " -NoNewline -ForegroundColor $cor_info
-Write-Host "http://localhost:5000" -ForegroundColor White
+Write-Host "http://localhost:8000" -ForegroundColor White
 Write-Host "   🌐 Frontend: " -NoNewline -ForegroundColor $cor_info
 Write-Host "http://localhost:5173" -ForegroundColor White
-Write-Host "   📦 MongoDB:  " -NoNewline -ForegroundColor $cor_info
-Write-Host "Rodando em memória (porta 27017)" -ForegroundColor White
+Write-Host "   🗄️  Banco:    " -NoNewline -ForegroundColor $cor_info
+Write-Host "SQLite local (arquivo database.sqlite)" -ForegroundColor White
 Write-Host ""
 Write-Host "═══════════════════════════════════════════════════════════════════" -ForegroundColor $cor_titulo
 Write-Host "   🚪 PRIMEIRO ACESSO" -ForegroundColor $cor_titulo
@@ -99,7 +94,7 @@ Write-Host "   📚 RECURSOS" -ForegroundColor $cor_titulo
 Write-Host "═══════════════════════════════════════════════════════════════════" -ForegroundColor $cor_titulo
 Write-Host ""
 Write-Host "   📖 README.md              - Documentação completa" -ForegroundColor White
-Write-Host "   🔧 MONGODB_ATLAS_GUIA.md  - Configurar nuvem (produção)" -ForegroundColor White
+Write-Host "   🔧 Railway/Deploy         - Configure DATABASE_URL no provedor" -ForegroundColor White
 Write-Host "   ⚙️  configurar.bat         - Opções avançadas" -ForegroundColor White
 Write-Host "   🛠️  COMO_INICIAR.md        - Guia de inicialização" -ForegroundColor White
 Write-Host ""
@@ -118,10 +113,8 @@ Write-Host "══════════════════════�
 Write-Host "   ⚠️  IMPORTANTE" -ForegroundColor $cor_aviso
 Write-Host "═══════════════════════════════════════════════════════════════════" -ForegroundColor $cor_aviso
 Write-Host ""
-Write-Host "   • Os dados são armazenados em memória" -ForegroundColor White
-Write-Host "   • Ao fechar os terminais, os dados são perdidos" -ForegroundColor White
-Write-Host "   • Para dados permanentes: configure MongoDB Atlas" -ForegroundColor White
-Write-Host "     (execute configurar.bat e escolha opção 1)" -ForegroundColor White
+Write-Host "   • Por padrão, os dados ficam em SQLite (arquivo local)" -ForegroundColor White
+Write-Host "   • Para produção/multiusuário, use PostgreSQL (DATABASE_URL)" -ForegroundColor White
 Write-Host ""
 Write-Host "   • Para PARAR o sistema: Feche as 3 janelas do PowerShell" -ForegroundColor White
 Write-Host "   • Para REINICIAR: Execute este arquivo novamente" -ForegroundColor White

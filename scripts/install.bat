@@ -45,24 +45,24 @@ cd ..
 echo ✓ Frontend instalado com sucesso!
 echo.
 
-echo [4/4] 🗄️  Configurando MongoDB Atlas...
+echo [4/4] 🗄️  Configurando ambiente local (SQLite)...
 if not exist .env (
     echo ⚠️  Criando arquivo .env...
     (
-        echo PORT=5000
-        echo MONGODB_URI=mongodb+srv://prescrimed_demo:Demo2024Prescrimed@cluster0.hkpqy.mongodb.net/prescrimed_demo?retryWrites=true^&w=majority^&appName=Cluster0
-        echo JWT_SECRET=prescrimed_secret_key_2024_super_seguro_demo_db
         echo NODE_ENV=development
+        echo PORT=8000
+        echo # Para usar PostgreSQL local, defina PGHOST/PGUSER/PGPASSWORD/PGDATABASE (opcional)
+        echo # Para usar PostgreSQL do Railway/Cloud, defina DATABASE_URL (opcional)
     ) > .env
 )
 
 if not exist client\.env (
     echo ⚠️  Criando arquivo .env do frontend...
     (
-        echo VITE_API_URL=http://localhost:5000/api
+        echo VITE_API_URL=http://localhost:8000/api
     ) > client\.env
 )
-echo ✓ MongoDB Atlas configurado (Banco Demo)!
+echo ✓ Ambiente local configurado (SQLite)!
 echo.
 
 echo.
@@ -72,7 +72,7 @@ echo ╚════════════════════════
 echo.
 echo 🎉 Sistema PrescrIMed instalado com sucesso!
 echo.
-echo 🗄️  Banco de Dados: MongoDB Atlas (Demo - Pronto para usar)
+echo 🗄️  Banco de Dados: SQLite (local - pronto para usar)
 echo 🚀 Para iniciar o sistema: start.bat
 echo.
 echo 📖 Ou inicie manualmente:

@@ -45,6 +45,7 @@ Este guia contém o passo a passo completo para configurar e fazer deploy do Pre
 
 | Variável | Valor | Descrição |
 |----------|-------|-----------|
+| `TZ` | `America/Sao_Paulo` | Timezone do Brasil (Horário de Brasília) |
 | `FRONTEND_URL` | `https://prescrimed.netlify.app` | URL do seu frontend no Netlify |
 | `CORS_ORIGIN` | `https://prescrimed.netlify.app` | Mesma URL (para CORS) |
 | `SESSION_TIMEOUT` | `8h` | Tempo de sessão do usuário |

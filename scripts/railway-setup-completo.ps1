@@ -37,14 +37,14 @@ $jwtSecret = (New-Guid).Guid
 $jwtRefreshSecret = (New-Guid).Guid
 
 railway variables set NODE_ENV=production
-railway variables set PORT=3000
+railway variables set TZ=America/Sao_Paulo
 railway variables set JWT_SECRET=$jwtSecret
 railway variables set JWT_REFRESH_SECRET=$jwtRefreshSecret
 railway variables set SESSION_TIMEOUT=8h
 railway variables set FORCE_SYNC=false
 railway variables set ALLOWED_ORIGINS=https://cristiano-superacao.github.io,https://cristiano-superacao.github.io/prescrimed
 
-Write-Host "✅ Variáveis configuradas`n" -ForegroundColor Green
+Write-Host "✅ Variáveis configuradas (incluindo TZ=America/Sao_Paulo para timezone brasileiro)`n" -ForegroundColor Green
 
 # 6. Deploy
 Write-Host "PASSO 5: Deploy da Aplicação" -ForegroundColor Cyan

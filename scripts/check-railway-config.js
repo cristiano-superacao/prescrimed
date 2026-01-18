@@ -19,7 +19,7 @@ const requiredVars = [
 const optionalVars = [
   { key: 'FRONTEND_URL', description: 'URL do frontend para CORS' },
   { key: 'CORS_ORIGIN', description: 'Origem CORS adicional' },
-  { key: 'PORT', description: 'Porta do servidor (Railway define automaticamente)' },
+  { key: 'PORT', description: 'Porta do servidor (Railway/Nixpacks define automaticamente; evite configurar manualmente)' },
   { key: 'FORCE_SYNC', description: 'Sincronizar schema no boot (apenas primeiro deploy)' },
   { key: 'SEED_MINIMAL', description: 'Criar dados demo no boot (apenas primeiro deploy)' },
 ];
@@ -73,6 +73,17 @@ for (const v of optionalVars) {
   
   console.log(`  ${status} ${v.key}: ${value || 'não configurada'}`);
   console.log(`     ${v.description}`);
+
+  if (v.key === 'PORT' && value) {
+    const raw = String(value).trim();
+    const parsed = Number.parseInt(raw, 10);
+    const valid = Number.isFinite(parsed) && !Number.isNaN(parsed) && parsed >= 0 && parsed <= 65535 && String(parsed) === raw;
+    if (!valid) {
+      console.log('     ❌ PORT inválida: deve ser um inteiro entre 0 e 65535 (ex.: 8080)');
+      console.log('     💡 Dica: em Railway/Nixpacks, remova a variável PORT e deixe a plataforma definir automaticamente');
+      hasErrors = true;
+    }
+  }
   console.log();
 }
 
