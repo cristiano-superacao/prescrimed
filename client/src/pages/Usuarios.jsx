@@ -10,6 +10,16 @@ import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
+import { 
+  TableContainer, 
+  MobileGrid, 
+  MobileCard, 
+  TableWrapper, 
+  TableHeader, 
+  TBody, 
+  Tr, 
+  Td 
+} from '../components/common/Table';
 
 export default function Usuarios() {
   const { user } = useAuthStore();
@@ -174,58 +184,98 @@ export default function Usuarios() {
         </div>
       )}
 
-      <div className="card overflow-hidden border border-slate-200 shadow-sm">
+      <TableContainer title="Usuários">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredUsuarios.length > 0 ? (
-          <div className="overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-            <table className="w-full min-w-[960px]">
-              <thead className="bg-slate-50 border-b border-slate-200 whitespace-nowrap">
-                <tr>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Profissional
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Contato
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    CRM
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Função
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+          <>
+            {/* Mobile */}
+            <MobileGrid>
+              {filteredUsuarios.map((usuario) => (
+                <MobileCard key={usuario.id}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm">
+                        {usuario.nome.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900 dark:text-gray-100">{usuario.nome}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">{usuario.email}</p>
+                        {usuario.crm && (
+                          <span className="text-xs text-slate-500 dark:text-gray-400">CRM: {usuario.crm}</span>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
+                        usuario.ativo
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-red-50 text-red-700 border-red-100'
+                      }`}
+                    >
+                      {usuario.ativo ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <span
+                      className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
+                        usuario.role === 'admin' || usuario.role === 'superadmin'
+                          ? 'bg-purple-50 text-purple-700 border-purple-100'
+                          : 'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      {roleLabel(usuario.role)}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEdit(usuario)}
+                        className="p-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                        title="Editar"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      {usuario.id !== user.id && (
+                        <button
+                          onClick={() => handleDelete(usuario.id)}
+                          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </MobileCard>
+              ))}
+            </MobileGrid>
+
+            {/* Desktop */}
+            <TableWrapper>
+              <TableHeader columns={["Profissional","Contato","CRM","Função","Status","Ações"]} />
+              <TBody>
                 {filteredUsuarios.map((usuario) => (
-                  <tr key={usuario.id} className="hover:bg-slate-50 transition-colors">
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
+                  <Tr key={usuario.id}>
+                    <Td className={density === 'compact' ? 'py-3' : 'py-4'}>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xs">
                           {usuario.nome.charAt(0).toUpperCase()}
                         </div>
-                        <div className="font-medium text-slate-900">{usuario.nome}</div>
+                        <div className="font-medium text-slate-900 dark:text-gray-100">{usuario.nome}</div>
                       </div>
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap text-sm text-slate-600`}>
+                    </Td>
+                    <Td className={`${density === 'compact' ? 'py-3' : 'py-4'} text-sm text-slate-600 dark:text-gray-300`}>
                       {usuario.email}
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap text-sm text-slate-600`}>
+                    </Td>
+                    <Td className={`${density === 'compact' ? 'py-3' : 'py-4'} text-sm text-slate-600 dark:text-gray-300`}>
                       {usuario.crm ? (
-                        <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">{usuario.crm}</span>
+                        <span className="font-mono bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded text-xs">{usuario.crm}</span>
                       ) : (
                         <span className="text-slate-400">-</span>
                       )}
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
+                    </Td>
+                    <Td className={density === 'compact' ? 'py-3' : 'py-4'}>
                       <span
                         className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
                           usuario.role === 'admin' || usuario.role === 'superadmin'
@@ -235,8 +285,8 @@ export default function Usuarios() {
                       >
                         {roleLabel(usuario.role)}
                       </span>
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
+                    </Td>
+                    <Td className={density === 'compact' ? 'py-3' : 'py-4'}>
                       <span
                         className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
                           usuario.ativo
@@ -246,12 +296,12 @@ export default function Usuarios() {
                       >
                         {usuario.ativo ? 'Ativo' : 'Inativo'}
                       </span>
-                    </td>
-                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap text-right`}>
+                    </Td>
+                    <Td className={`${density === 'compact' ? 'py-3' : 'py-4'} text-right`}>
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEdit(usuario)}
-                          className="p-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
                           title="Editar"
                         >
                           <Edit2 size={16} />
@@ -259,19 +309,19 @@ export default function Usuarios() {
                         {usuario.id !== user.id && (
                           <button
                             onClick={() => handleDelete(usuario.id)}
-                            className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                             title="Excluir"
                           >
                             <Trash2 size={16} />
                           </button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TBody>
+            </TableWrapper>
+          </>
         ) : (
           <EmptyState
             icon={Search}
@@ -281,7 +331,7 @@ export default function Usuarios() {
             onAction={!searchTerm ? () => setModalOpen(true) : null}
           />
         )}
-      </div>
+      </TableContainer>
 
       {modalOpen && (
         <UsuarioModal
