@@ -1,4 +1,5 @@
 import express from 'express';
+import { body, validationResult } from 'express-validator';
 import { Empresa, Usuario } from '../models/index.js';
 
 const router = express.Router();
@@ -96,15 +97,47 @@ router.get('/:id', async (req, res) => {
 });
 
 // Criar nova empresa
-router.post('/', async (req, res) => {
-  try {
-    const empresa = await Empresa.create(req.body);
-    res.status(201).json(empresa);
-  } catch (error) {
-    console.error('Erro ao criar empresa:', error);
-    res.status(500).json({ error: 'Erro ao criar empresa' });
+// Criar nova empresa com validação robusta
+router.post(
+  '/',
+  [
+    body('nome').isString().trim().notEmpty().withMessage('Nome é obrigatório'),
+    body('tipoSistema').isIn(['casa-repouso', 'fisioterapia', 'petshop']).withMessage('tipoSistema inválido'),
+    body('cnpj').optional().isString().isLength({ min: 5 }).withMessage('CNPJ inválido'),
+    body('email').optional().isEmail().withMessage('Email inválido'),
+    body('telefone').optional().isString(),
+    body('endereco').optional().isString(),
+    body('plano').optional().isIn(['basico', 'profissional', 'empresa']).withMessage('plano inválido')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: 'Dados inválidos', details: errors.array() });
+      }
+
+      const { nome, tipoSistema, cnpj, email, telefone, endereco, plano } = req.body;
+
+      // Evita duplicidade por CNPJ
+      if (cnpj) {
+        const existente = await Empresa.findOne({ where: { cnpj } });
+        if (existente) {
+          return res.status(409).json({ error: 'CNPJ já cadastrado', empresaId: existente.id });
+        }
+      }
+
+      const empresa = await Empresa.create({ nome, tipoSistema, cnpj, email, telefone, endereco, plano });
+      return res.status(201).json(empresa);
+    } catch (error) {
+      console.error('Erro ao criar empresa:', error);
+      // Trata erro de unicidade
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({ error: 'Valor único já existente', details: error.errors });
+      }
+      res.status(500).json({ error: 'Erro ao criar empresa' });
+    }
   }
-});
+);
 
 // Atualizar empresa
 router.put('/:id', async (req, res) => {

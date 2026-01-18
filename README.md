@@ -147,6 +147,7 @@ SEED_SLUG=empresa-teste
 SEED_PASSWORD=Prescri@2026
 
 # Opcional: Fail-Fast (derruba servidor se DATABASE_URL ausente)
+# Recomendado em produção para garantir uso do banco na nuvem (Railway PostgreSQL)
 # FAIL_FAST_DB=true
 ```
 
@@ -463,6 +464,31 @@ PUT    /api/usuarios/:id     # Atualizar usuário
 DELETE /api/usuarios/:id     # Remover usuário
 GET    /api/usuarios/me      # Perfil do usuário logado
 PUT    /api/usuarios/:id/permissoes  # Atualizar permissões
+
+### Empresas
+```
+POST   /api/empresas         # Criar empresa com validação
+GET    /api/empresas         # Listar empresas
+GET    /api/empresas/me      # Dados da empresa atual do usuário
+PUT    /api/empresas/me      # Atualizar dados da empresa atual
+GET    /api/empresas/:id     # Detalhes por ID
+PUT    /api/empresas/:id     # Atualizar por ID
+DELETE /api/empresas/:id     # Remover empresa
+```
+
+**Exemplo de criação de empresa:**
+```bash
+curl -X POST https://seu-backend.up.railway.app/api/empresas \
+   -H "Content-Type: application/json" \
+   -d '{
+      "nome":"Clínica Exemplo",
+      "tipoSistema":"casa-repouso",
+      "cnpj":"11.222.333/0001-44",
+      "email":"contato@clinicaexemplo.com",
+      "telefone":"(11) 90000-0000",
+      "endereco":"Rua Exemplo, 123"
+   }'
+```
 ```
 
 ### Empresas

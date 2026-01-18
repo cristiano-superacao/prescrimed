@@ -1,4 +1,4 @@
-import { sequelize } from './models/index.js';
+import { sequelize } from '../models/index.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
