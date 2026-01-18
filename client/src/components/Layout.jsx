@@ -75,11 +75,11 @@ export default function Layout() {
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
           {/* flex-1: ocupa espaço restante após header */}
           {/* overflow-y-auto: permite rolagem vertical */}
-          {/* p-4 lg:p-8: padding 1rem em mobile, 2rem em desktop */}
+          {/* padding responsivo: 1rem (mobile), 1.5rem (sm), 2rem x 1.5rem (lg) */}
           
           {/* Container centralizado com largura máxima e espaçamento entre elementos */}
           <div className="max-w-screen-2xl w-full mx-auto space-y-6 lg:space-y-8">
-            {/* max-w-screen-2xl: aproveita mais largura mantendo limite confortável */}
+            {/* max-w-screen-2xl: até 1536px mantendo limite confortável */}
             {/* mx-auto: centraliza horizontalmente */}
             {/* space-y-6: espaçamento vertical de 1.5rem entre filhos */}
             
