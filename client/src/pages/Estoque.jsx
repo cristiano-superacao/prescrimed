@@ -725,59 +725,115 @@ export default function Estoque() {
 
             <div className="p-6 overflow-y-auto flex-1">
               {movimentacoes.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-slate-50 border-b border-slate-100">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Data</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tipo</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Item</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Qtd</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Motivo</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Usuário</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {movimentacoes.map((mov) => (
-                        <tr key={mov._id} className="hover:bg-slate-50/50 transition">
-                          <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
-                            {new Date(mov.data).toLocaleString('pt-BR')}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                                mov.tipo === 'entrada'
-                                  ? 'bg-emerald-50 text-emerald-700'
-                                  : 'bg-red-50 text-red-700'
-                              }`}
-                            >
-                              {mov.tipo === 'entrada' ? (
-                                <><ArrowDownCircle size={12} /> Entrada</>
-                              ) : (
-                                <><ArrowUpCircle size={12} /> Saída</>
-                              )}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                            {mov.itemNome}
-                            <span className="ml-2 text-xs text-slate-500">
-                              ({mov.itemTipo})
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-sm font-bold text-slate-700">
+                <>
+                  {/* Mobile: cards */}
+                  <div className="md:hidden space-y-3">
+                    {movimentacoes.map((mov) => (
+                      <div
+                        key={mov._id}
+                        className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900 truncate">
+                              {mov.itemNome}{' '}
+                              <span className="text-xs text-slate-500 font-medium">({mov.itemTipo})</span>
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {new Date(mov.data).toLocaleString('pt-BR')}
+                            </p>
+                          </div>
+
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 ${
+                              mov.tipo === 'entrada'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-red-50 text-red-700'
+                            }`}
+                          >
+                            {mov.tipo === 'entrada' ? (
+                              <><ArrowDownCircle size={12} /> Entrada</>
+                            ) : (
+                              <><ArrowUpCircle size={12} /> Saída</>
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="text-sm text-slate-500">Quantidade</span>
+                          <span className="text-sm font-bold text-slate-700">
                             {mov.tipo === 'entrada' ? '+' : '-'}{mov.quantidade}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-slate-600">
-                            {mov.motivo}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-slate-600">
-                            {mov.usuarioNome}
-                          </td>
+                          </span>
+                        </div>
+
+                        <div className="mt-2">
+                          <p className="text-sm text-slate-500">Motivo</p>
+                          <p className="text-sm text-slate-700 break-words">{mov.motivo || '-'}</p>
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-sm text-slate-500">Usuário</span>
+                          <span className="text-sm text-slate-700">{mov.usuarioNome || '-'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop: table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Data</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tipo</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Item</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Qtd</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Motivo</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Usuário</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {movimentacoes.map((mov) => (
+                          <tr key={mov._id} className="hover:bg-slate-50/50 transition">
+                            <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                              {new Date(mov.data).toLocaleString('pt-BR')}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                                  mov.tipo === 'entrada'
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'bg-red-50 text-red-700'
+                                }`}
+                              >
+                                {mov.tipo === 'entrada' ? (
+                                  <><ArrowDownCircle size={12} /> Entrada</>
+                                ) : (
+                                  <><ArrowUpCircle size={12} /> Saída</>
+                                )}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                              {mov.itemNome}
+                              <span className="ml-2 text-xs text-slate-500">
+                                ({mov.itemTipo})
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-bold text-slate-700">
+                              {mov.tipo === 'entrada' ? '+' : '-'}{mov.quantidade}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600">
+                              {mov.motivo}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600">
+                              {mov.usuarioNome}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               ) : (
                 <div className="text-center py-12">
                   <Layers size={48} className="mx-auto text-slate-300 mb-3" />
