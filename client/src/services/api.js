@@ -131,7 +131,8 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Se falhar ao renovar, redireciona para login
         localStorage.clear();
-        window.location.href = '/login';
+        const baseUrl = (import.meta?.env?.BASE_URL || '/').replace(/\/?$/, '/');
+        window.location.href = `${baseUrl}login`;
         return Promise.reject(refreshError);
       }
     }
