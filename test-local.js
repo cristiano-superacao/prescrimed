@@ -1,5 +1,6 @@
 // Node 18+ possui fetch nativo
-const PORT = process.env.PORT || 3000;
+
+const PORT = process.env.PORT || 8000;
 const CANDIDATE_BASE_URLS = [
   process.env.TEST_BASE_URL,
   `http://localhost:${PORT}`,

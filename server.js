@@ -207,6 +207,7 @@ const healthCors = cors({ origin: true, methods: ['GET', 'OPTIONS'] });
  */
 app.options('/health', healthCors);
 app.get('/health', healthCors, (req, res) => {
+  console.log('🔎 [HEALTH] Requisição recebida em /health');
   res.status(200).json({ 
     status: 'ok',                              // Status do servidor
     uptime: process.uptime(),                  // Tempo ativo em segundos
@@ -218,6 +219,7 @@ app.get('/health', healthCors, (req, res) => {
 // Alternativa: health sob namespace da API, útil para plataformas que esperam /api/health
 app.options('/api/health', healthCors);
 app.get('/api/health', healthCors, (req, res) => {
+  console.log('🔎 [HEALTH] Requisição recebida em /api/health');
   res.status(200).json({ 
     status: 'ok',
     uptime: process.uptime(),
@@ -496,8 +498,8 @@ function startServer(initialPort, maxAttempts = 10) {
   // Tenta iniciar servidor na porta especificada
   const srv = app.listen(PORT, '0.0.0.0', () => {
     // Callback executado quando servidor inicia com sucesso
-    console.log(`🚀 Servidor ativo na porta ${PORT}`);
-    console.log(`📍 Acesse: http://localhost:${PORT}`);
+    console.log(`🚀 Servidor ativo na porta ${srv.address().port}`);
+    console.log(`📍 Acesse: http://localhost:${srv.address().port}`);
   });
 
   // Handler de erros do servidor
@@ -516,8 +518,10 @@ function startServer(initialPort, maxAttempts = 10) {
   return srv; // Retorna instância do servidor
 }
 
+console.log(`🚦 Iniciando servidor na porta ${PORT}...`);
 // Inicia servidor com a porta configurada
 const server = startServer(PORT);
+console.log('✅ Servidor Express inicializado!');
 
 // Exporta app para testes e uso externo
 export default app;
