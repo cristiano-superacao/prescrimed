@@ -98,7 +98,7 @@ cp .env.example .env
 npm start
 ```
 
-Abra [http://localhost:3000](http://localhost:3000)
+Abra [http://localhost:8000](http://localhost:8000)
 
 ### Desenvolvimento Local
 

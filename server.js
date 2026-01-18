@@ -43,8 +43,8 @@ const __dirname = path.dirname(__filename);         // Diretório do arquivo atu
 // Carrega variáveis de ambiente do arquivo .env
 dotenv.config();
 
-// Define porta inicial do servidor (padrão 3000 se não especificada)
-let PORT = parseInt(process.env.PORT || '3000', 10);
+// Define porta inicial do servidor (padrão 8000 se não especificada)
+let PORT = parseInt(process.env.PORT || '8000', 10);
 
 // Cria instância do aplicativo Express
 const app = express();
