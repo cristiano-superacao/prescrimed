@@ -75,7 +75,7 @@ export default function Layout() {
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
           {/* flex-1: ocupa espaço restante após header */}
           {/* overflow-y-auto: permite rolagem vertical */}
-          {/* padding responsivo: 1rem (mobile), 1.5rem (sm), 2rem horizontal e 1.5rem vertical (lg) */}
+          {/* padding responsivo: horizontal 1rem (base), 1.5rem (sm), 2rem (lg); vertical 1rem (base/sm) e 1.5rem (lg) */}
           
           {/* Container centralizado com largura máxima e espaçamento entre elementos */}
           <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
