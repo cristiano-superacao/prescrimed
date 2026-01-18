@@ -37,7 +37,6 @@ router.get('/', async (req, res) => {
 
     const transacoes = await FinanceiroTransacao.findAll({
       where,
-      include: [{ model: Paciente, as: 'paciente', attributes: ['id', 'nome'], required: false }],
       order: [['data', 'DESC'], ['createdAt', 'DESC']]
     });
 
