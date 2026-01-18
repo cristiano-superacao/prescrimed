@@ -23,6 +23,7 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import useLockBodyScroll from '../utils/useLockBodyScroll';
 
 export default function Pacientes() {
   const [pacientes, setPacientes] = useState([]);
@@ -33,6 +34,8 @@ export default function Pacientes() {
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [viewHistorico, setViewHistorico] = useState(null);
   const [historicoPrescricoes, setHistoricoPrescricoes] = useState([]);
+
+  useLockBodyScroll(Boolean(modalOpen || viewHistorico));
 
   useEffect(() => {
     loadPacientes();

@@ -15,6 +15,7 @@ import { successMessage, errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import EmptyState from '../components/common/EmptyState';
+import useLockBodyScroll from '../utils/useLockBodyScroll';
 
 export default function Prescricoes() {
   const [prescricoes, setPrescricoes] = useState([]);
@@ -29,6 +30,8 @@ export default function Prescricoes() {
   const [statusFilter, setStatusFilter] = useState('todas');
   const [tipoFilter, setTipoFilter] = useState('todas');
   const [feedback, setFeedback] = useState(null);
+
+  useLockBodyScroll(modalOpen);
 
   useEffect(() => {
     loadData();

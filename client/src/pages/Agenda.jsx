@@ -21,6 +21,7 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import useLockBodyScroll from '../utils/useLockBodyScroll';
 
 export default function Agenda() {
   const [agendamentos, setAgendamentos] = useState([]);
@@ -28,6 +29,8 @@ export default function Agenda() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [filterTerm, setFilterTerm] = useState('');
+
+  useLockBodyScroll(modalOpen);
   
   // Form State
   const [formData, setFormData] = useState({

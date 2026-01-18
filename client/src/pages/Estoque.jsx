@@ -19,6 +19,7 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import useLockBodyScroll from '../utils/useLockBodyScroll';
 
 export default function Estoque() {
   const [activeTab, setActiveTab] = useState('medicamentos'); // medicamentos, alimentos
@@ -29,6 +30,8 @@ export default function Estoque() {
   const [showHistorico, setShowHistorico] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useLockBodyScroll(Boolean(modalOpen || showHistorico));
 
   // Form States
   const [formData, setFormData] = useState({});

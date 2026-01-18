@@ -3,8 +3,11 @@ import { X } from 'lucide-react';
 import { usuarioService } from '../services/usuario.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, customErrorMessage, apiErrorMessage } from '../utils/toastMessages';
+import useLockBodyScroll from '../utils/useLockBodyScroll';
 
 export default function UsuarioModal({ usuario, onClose }) {
+  useLockBodyScroll(true);
+
   const [formData, setFormData] = useState({
     nome: '',
     email: '',

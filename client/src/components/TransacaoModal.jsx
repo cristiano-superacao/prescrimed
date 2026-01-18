@@ -3,8 +3,11 @@ import { X, Save, DollarSign } from 'lucide-react';
 import { financeiroService } from '../services/financeiro.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage } from '../utils/toastMessages';
+import useLockBodyScroll from '../utils/useLockBodyScroll';
 
 export default function TransacaoModal({ transacao, onClose }) {
+  useLockBodyScroll(true);
+
   const [formData, setFormData] = useState({
     descricao: '',
     valor: '',

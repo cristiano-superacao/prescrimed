@@ -3,8 +3,11 @@ import { X } from 'lucide-react';
 import { empresaService } from '../services/empresa.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
+import useLockBodyScroll from '../utils/useLockBodyScroll';
 
 export default function EmpresaModal({ empresa, onClose, onSave }) {
+  useLockBodyScroll(true);
+
   const [formData, setFormData] = useState({
     nome: '',
     cnpj: '',
