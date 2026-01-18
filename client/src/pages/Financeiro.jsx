@@ -253,8 +253,10 @@ export default function Financeiro() {
                     </span>
                   </div>
 
-                  {transacao.pacienteId && (
-                    <p className="mt-2 text-xs text-slate-500 truncate">Paciente: {transacao.pacienteId.nome}</p>
+                  {(transacao.paciente?.nome || transacao.pacienteId?.nome) && (
+                    <p className="mt-2 text-xs text-slate-500 truncate">
+                      Paciente: {transacao.paciente?.nome || transacao.pacienteId?.nome}
+                    </p>
                   )}
 
                   <div className="mt-4 flex items-center justify-end gap-2">
@@ -300,8 +302,8 @@ export default function Financeiro() {
                         </div>
                         <div>
                           <p className="font-medium text-slate-900">{transacao.descricao}</p>
-                          {transacao.pacienteId && (
-                            <p className="text-xs text-slate-500">{transacao.pacienteId.nome}</p>
+                          {(transacao.paciente?.nome || transacao.pacienteId?.nome) && (
+                            <p className="text-xs text-slate-500">{transacao.paciente?.nome || transacao.pacienteId?.nome}</p>
                           )}
                         </div>
                       </div>

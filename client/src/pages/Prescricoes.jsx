@@ -461,7 +461,7 @@ export default function Prescricoes() {
                   >
                     <option value="">Selecione um paciente</option>
                     {pacientes.map((p) => (
-                      <option key={p.id} value={p.id}>
+                      <option key={p.id || p._id} value={p.id || p._id}>
                         {p.nome}
                       </option>
                     ))}

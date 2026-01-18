@@ -245,7 +245,7 @@ export default function CensoMP() {
                       {item.hasPrescription ? (
                         <div className="flex flex-col gap-1">
                           {item.prescriptions.map(p => (
-                            <span key={p.id} className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded inline-block w-fit">
+                            <span key={p.id || p._id} className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded inline-block w-fit">
                               {p.medicamentos?.[0]?.nome} 
                               {p.medicamentos?.length > 1 && ` +${p.medicamentos.length - 1}`}
                             </span>

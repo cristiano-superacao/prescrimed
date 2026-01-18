@@ -18,6 +18,8 @@ export default function Empresas() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const isSuperAdmin = user?.role === 'superadmin';
 
+  const getEmpresaId = (empresa) => empresa?.id || empresa?._id;
+
   useEffect(() => {
     if (isSuperAdmin) {
       loadEmpresas();
@@ -124,7 +126,7 @@ export default function Empresas() {
             <div className="md:hidden p-4 sm:p-6 space-y-3">
               {empresas.map((empresa) => (
                 <div
-                  key={empresa.id}
+                  key={getEmpresaId(empresa)}
                   className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
                     density === 'compact' ? 'p-3' : 'p-4'
                   }`}
@@ -156,7 +158,7 @@ export default function Empresas() {
                   <div className="mt-4 flex items-center justify-end">
                     <button
                       type="button"
-                      onClick={() => handleDelete(empresa.id)}
+                      onClick={() => handleDelete(getEmpresaId(empresa))}
                       className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
                     >
                       Excluir
@@ -167,8 +169,8 @@ export default function Empresas() {
             </div>
 
             {/* Desktop: table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full">
+            <div className="hidden md:block overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
+              <table className="w-full min-w-[920px]">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
@@ -193,7 +195,7 @@ export default function Empresas() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {empresas.map((empresa) => (
-                  <tr key={empresa.id} className="hover:bg-slate-50">
+                  <tr key={getEmpresaId(empresa)} className="hover:bg-slate-50">
                     <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
                       <div className="font-medium text-slate-900">{empresa.nome}</div>
                     </td>
@@ -222,7 +224,7 @@ export default function Empresas() {
                     <td className={`px-6 ${density === 'compact' ? 'py-3 text-sm' : 'py-4'} whitespace-nowrap`}>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleDelete(empresa.id)}
+                          onClick={() => handleDelete(getEmpresaId(empresa))}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-xl"
                           title="Excluir Empresa"
                         >

@@ -19,6 +19,9 @@ export default function Usuarios() {
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [density, setDensity] = useState('comfortable');
   const [feedback, setFeedback] = useState(null);
+
+  const getUsuarioId = (usuario) => usuario?.id || usuario?._id;
+  const currentUserId = user?.id || user?._id;
   const [searchTerm, setSearchTerm] = useState('');
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
@@ -185,7 +188,7 @@ export default function Usuarios() {
             <div className="md:hidden p-4 sm:p-6 space-y-3">
               {filteredUsuarios.map((usuario) => (
                 <div
-                  key={usuario.id}
+                  key={getUsuarioId(usuario)}
                   className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
                     density === 'compact' ? 'p-3' : 'p-4'
                   }`}
@@ -243,10 +246,10 @@ export default function Usuarios() {
                         >
                           Editar
                         </button>
-                        {usuario.id !== user.id && (
+                        {getUsuarioId(usuario) !== currentUserId && (
                           <button
                             type="button"
-                            onClick={() => handleDelete(usuario.id)}
+                            onClick={() => handleDelete(getUsuarioId(usuario))}
                             className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
                           >
                             Excluir
@@ -286,7 +289,7 @@ export default function Usuarios() {
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {filteredUsuarios.map((usuario) => (
-                  <tr key={usuario.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={getUsuarioId(usuario)} className="hover:bg-slate-50 transition-colors">
                     <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xs">
@@ -336,9 +339,9 @@ export default function Usuarios() {
                         >
                           <Edit2 size={16} />
                         </button>
-                        {usuario.id !== user.id && (
+                        {getUsuarioId(usuario) !== currentUserId && (
                           <button
-                            onClick={() => handleDelete(usuario.id)}
+                            onClick={() => handleDelete(getUsuarioId(usuario))}
                             className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Excluir"
                           >
