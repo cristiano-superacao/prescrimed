@@ -186,7 +186,7 @@ npm run build:full       # Instala deps + build do frontend
 npm run build            # Alias para build:client
 ```
 
-### Deploy
+### Deploy (Produção)
 ```bash
 npm start                # Inicia servidor (produção)
 npm run railway:build    # Build para Railway
@@ -389,19 +389,6 @@ git commit -m "fix: rebuild frontend with correct API configuration"
 git push origin master
 ```
 
-### Erro 405 em /api/auth/register ou /api/auth/login
-**Sintoma:** `405 Method Not Allowed` ou `Origem não permitida pelo CORS`
-
-**Causa:** CORS bloqueando requisições do frontend
-
-**Solução:**
-1. Adicione o domínio do frontend em `ALLOWED_ORIGINS` no backend
-2. Se frontend em `prescrimed.up.railway.app`, adicione:
-   ```
-   ALLOWED_ORIGINS=https://prescrimed.up.railway.app
-   ```
-3. Redeploy do backend
-
 ### Tabelas não foram criadas
 **Sintoma:** `relation "usuarios" does not exist`
 
@@ -591,10 +578,11 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ---
 
+
 ## 📞 Suporte
 
 - **GitHub Issues:** [https://github.com/cristiano-superacao/prescrimed/issues](https://github.com/cristiano-superacao/prescrimed/issues)
-- **Documentação Railway:** [RAILWAY_SETUP.md](RAILWAY_SETUP.md)
+- Consulte [RAILWAY_SETUP.md](RAILWAY_SETUP.md) para deploy detalhado.
 
 ---
 

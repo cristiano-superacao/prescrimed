@@ -78,8 +78,8 @@ Write-Host ""
 
 # Configurar variáveis corretas do cliente
 Write-Host "✅ Configurando variáveis CORRETAS do cliente..." -ForegroundColor Green
-railway variables --set "VITE_API_URL=https://prescrimed.up.railway.app/api" --skip-deploys | Out-Null
-railway variables --set "VITE_BACKEND_ROOT=https://prescrimed.up.railway.app" --skip-deploys | Out-Null
+railway variables --set "VITE_API_URL=https://prescrimed-backend-production.up.railway.app/api" --skip-deploys | Out-Null
+railway variables --set "VITE_BACKEND_ROOT=https://prescrimed-backend-production.up.railway.app" --skip-deploys | Out-Null
 
 Write-Host "   ✓ VITE_API_URL configurada" -ForegroundColor DarkGreen
 Write-Host "   ✓ VITE_BACKEND_ROOT configurada" -ForegroundColor DarkGreen
