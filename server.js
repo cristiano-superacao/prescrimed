@@ -379,6 +379,16 @@ import fs from 'fs';
 // Verifica se o diretório dist existe antes de tentar servir
 if (fs.existsSync(clientDistPath)) {
   // Configura Express para servir arquivos estáticos da pasta dist
+  // Rota explícita para assets com cache agressivo
+  app.use('/assets', (req, res, next) => {
+    console.log(`[STATIC] ${req.method} ${req.originalUrl}`);
+    next();
+  }, express.static(path.join(clientDistPath, 'assets'), {
+    immutable: true,
+    maxAge: '1y'
+  }));
+
+  // Servir demais arquivos estáticos (index.html, favicon, etc.)
   app.use(express.static(clientDistPath));
   console.log('✅ Frontend estático disponível');
 } else {
