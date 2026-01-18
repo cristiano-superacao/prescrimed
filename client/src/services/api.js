@@ -115,8 +115,17 @@ api.interceptors.response.use(
       });
     }
 
-    // Se o token expirou, tenta renovar
+    // Se o token expirou, tenta renovar (mas NÃO se já estiver tentando renovar!)
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // IMPORTANTE: Não tentar renovar se a requisição já é para /auth/refresh ou /auth/login
+      if (originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/login')) {
+        localStorage.clear();
+        if (window && window.location && !window.location.hash.includes('#/login')) {
+          window.location.hash = '#/login';
+        }
+        return Promise.reject({ message: 'Sessão expirada. Faça login novamente.' });
+      }
+
       originalRequest._retry = true;
 
       try {
@@ -124,10 +133,10 @@ api.interceptors.response.use(
         const currentToken = localStorage.getItem('token');
         const refreshToken = localStorage.getItem('refreshToken');
         
-        // Se não houver token, redireciona para login imediatamente
+        // Se não houver token, redireciona para login imediatamente SEM tentar renovar
         if (!currentToken && !refreshToken) {
           localStorage.clear();
-          if (window && window.location) {
+          if (window && window.location && !window.location.hash.includes('#/login')) {
             window.location.hash = '#/login';
           }
           return Promise.reject({ message: 'Sessão expirada. Faça login novamente.' });
@@ -154,7 +163,7 @@ api.interceptors.response.use(
         localStorage.clear();
         
         // Em apps SPA com HashRouter (ex.: GitHub Pages), garanta redirecionamento correto
-        if (window && window.location) {
+        if (window && window.location && !window.location.hash.includes('#/login')) {
           window.location.hash = '#/login';
         }
         return Promise.reject({ 
