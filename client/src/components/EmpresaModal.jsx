@@ -7,25 +7,35 @@ import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMes
 export default function EmpresaModal({ empresa, onClose, onSave }) {
   const [formData, setFormData] = useState({
     nome: '',
+    tipoSistema: 'casa-repouso',
     cnpj: '',
     email: '',
     telefone: '',
     endereco: '',
-    plano: 'basic',
-    status: 'ativo'
+    plano: 'basico',
+    ativo: true
   });
   const [loading, setLoading] = useState(false);
+
+  const normalizePlano = (value) => {
+    if (!value) return 'basico';
+    if (value === 'basic') return 'basico';
+    if (value === 'pro') return 'profissional';
+    if (value === 'enterprise') return 'empresa';
+    return value;
+  };
 
   useEffect(() => {
     if (empresa) {
       setFormData({
         nome: empresa.nome || '',
+        tipoSistema: empresa.tipoSistema || 'casa-repouso',
         cnpj: empresa.cnpj || '',
         email: empresa.email || '',
         telefone: empresa.telefone || '',
         endereco: empresa.endereco || '',
-        plano: empresa.plano || 'basic',
-        status: empresa.status || 'ativo'
+        plano: normalizePlano(empresa.plano),
+        ativo: typeof empresa.ativo === 'boolean' ? empresa.ativo : (empresa.status ? empresa.status === 'ativo' : true)
       });
     }
   }, [empresa]);
@@ -40,10 +50,27 @@ export default function EmpresaModal({ empresa, onClose, onSave }) {
       let response;
       if (isEditMode) {
         // O endpoint de edição no backend é /api/empresas/me
-        response = await empresaService.updateMyCompany(formData);
+        const payload = {
+          nome: formData.nome,
+          cnpj: formData.cnpj,
+          email: formData.email,
+          telefone: formData.telefone,
+          endereco: formData.endereco
+        };
+        response = await empresaService.updateMyCompany(payload);
         toast.success(successMessage('update', 'Empresa', { gender: 'f', suffix: '!' }));
       } else {
-        response = await empresaService.create(formData);
+        const payload = {
+          nome: formData.nome,
+          tipoSistema: formData.tipoSistema,
+          cnpj: formData.cnpj,
+          email: formData.email,
+          telefone: formData.telefone,
+          endereco: formData.endereco,
+          plano: normalizePlano(formData.plano),
+          ativo: Boolean(formData.ativo)
+        };
+        response = await empresaService.create(payload);
         toast.success(successMessage('create', 'Empresa', { gender: 'f', suffix: '!' }));
       }
       onSave(response); // Passa a resposta para o componente pai
@@ -86,6 +113,23 @@ export default function EmpresaModal({ empresa, onClose, onSave }) {
                 value={formData.nome}
                 onChange={(e) => setFormData({...formData, nome: e.target.value})}
               />
+            </div>
+
+            {/* Tipo de Sistema */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Tipo de Sistema *
+              </label>
+              <select
+                className="input"
+                value={formData.tipoSistema}
+                onChange={(e) => setFormData({ ...formData, tipoSistema: e.target.value })}
+                required
+              >
+                <option value="casa-repouso">Casa de Repouso</option>
+                <option value="fisioterapia">Fisioterapia</option>
+                <option value="petshop">Petshop</option>
+              </select>
             </div>
 
             {/* CNPJ */}
@@ -139,9 +183,9 @@ export default function EmpresaModal({ empresa, onClose, onSave }) {
                 value={formData.plano}
                 onChange={(e) => setFormData({...formData, plano: e.target.value})}
               >
-                <option value="basic">Básico</option>
-                <option value="pro">Profissional</option>
-                <option value="enterprise">Enterprise</option>
+                <option value="basico">Básico</option>
+                <option value="profissional">Profissional</option>
+                <option value="empresa">Empresa</option>
               </select>
             </div>
 
@@ -165,12 +209,11 @@ export default function EmpresaModal({ empresa, onClose, onSave }) {
               </label>
               <select
                 className="input"
-                value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value})}
+                value={formData.ativo ? 'ativo' : 'inativo'}
+                onChange={(e) => setFormData({...formData, ativo: e.target.value === 'ativo'})}
               >
                 <option value="ativo">Ativo</option>
                 <option value="inativo">Inativo</option>
-                <option value="bloqueado">Bloqueado</option>
               </select>
             </div>
           </div>
