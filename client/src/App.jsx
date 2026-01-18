@@ -7,7 +7,7 @@
  */
 
 // Importações do React Router para gerenciamento de rotas
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 // Biblioteca para notificações toast (alertas visuais)
 import { Toaster } from 'react-hot-toast';
 
