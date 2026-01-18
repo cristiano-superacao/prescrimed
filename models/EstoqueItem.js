@@ -23,6 +23,14 @@ const EstoqueItem = sequelize.define('EstoqueItem', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  tipo: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    defaultValue: 'medicamento',
+    validate: {
+      isIn: [['medicamento', 'alimento', 'material', 'outros']]
+    }
+  },
   categoria: {
     type: DataTypes.STRING(100),
     allowNull: false,
@@ -69,6 +77,7 @@ const EstoqueItem = sequelize.define('EstoqueItem', {
   timestamps: true,
   indexes: [
     { fields: ['empresaId'] },
+    { fields: ['tipo'] },
     { fields: ['categoria'] },
     { fields: ['ativo'] }
   ]

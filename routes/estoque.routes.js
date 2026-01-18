@@ -45,8 +45,20 @@ router.get('/medicamentos', async (req, res) => {
 
     res.json(itens.map(itemToClient));
   } catch (error) {
-    console.error('Erro ao buscar medicamentos:', error);
-    res.status(500).json({ error: 'Erro ao buscar medicamentos do estoque' });
+    console.error('❌ Erro ao buscar medicamentos:', error);
+    
+    // Erro de tabela não existe
+    if (error.name === 'SequelizeDatabaseError' && error.message.includes('does not exist')) {
+      return res.status(503).json({ 
+        error: 'Tabela de estoque não encontrada. Sistema em configuração.',
+        details: 'Database table missing'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Erro ao buscar medicamentos do estoque',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

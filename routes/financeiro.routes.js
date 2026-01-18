@@ -37,14 +37,26 @@ router.get('/', async (req, res) => {
 
     const transacoes = await FinanceiroTransacao.findAll({
       where,
-      include: [{ model: Paciente, as: 'paciente', attributes: ['id', 'nome'] }],
+      include: [{ model: Paciente, as: 'paciente', attributes: ['id', 'nome'], required: false }],
       order: [['data', 'DESC'], ['createdAt', 'DESC']]
     });
 
     res.json(transacoes.map(transacaoToClient));
   } catch (error) {
-    console.error('Erro ao buscar movimentações financeiras:', error);
-    res.status(500).json({ error: 'Erro ao buscar movimentações financeiras' });
+    console.error('❌ Erro ao buscar movimentações financeiras:', error);
+    
+    // Erro de tabela não existe
+    if (error.name === 'SequelizeDatabaseError' && error.message.includes('does not exist')) {
+      return res.status(503).json({ 
+        error: 'Tabela financeira não encontrada. Sistema em configuração.',
+        details: 'Database table missing'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Erro ao buscar movimentações financeiras',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
