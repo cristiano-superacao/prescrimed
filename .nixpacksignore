@@ -1,0 +1,7 @@
+# Force Nixpacks Node.js builder
+# Prevent Railpack frontend detection
+client/dist
+client/build
+dist
+build
+*.html

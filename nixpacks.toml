@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+aptPkgs = []
+
+[phases.install]
+cmds = [
+  "npm ci --production=false",
+  "cd client && npm ci --production=false && npm run build && cd .."
+]
+
+[phases.build]
+cmds = ["echo 'Build completed - Backend serves frontend from client/dist'"]
+
+[start]
+cmd = "node server.js"
