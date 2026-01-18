@@ -261,6 +261,8 @@ const baseOrigins = [
   'https://prescrimed.netlify.app',  // Frontend em produção (Netlify)
   'https://precrimed.netlify.app',   // Variação de URL
   'https://prescrimer.netlify.app',  // Variação de URL
+  // Railway frontend (quando o React estiver hospedado em um serviço separado)
+  'https://prescrimed.up.railway.app',
   // GitHub Pages (hospedagem alternativa)
   'https://cristiano-superacao.github.io',
   'https://cristiano-superacao.github.io/prescrimed',

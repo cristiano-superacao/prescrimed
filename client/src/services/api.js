@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Fallback padrão para produção em GitHub Pages quando variáveis não estão presentes
 const DEFAULT_RAILWAY_ROOT = 'https://prescrimed-backend-production.up.railway.app';
+const DEFAULT_RAILWAY_API = `${DEFAULT_RAILWAY_ROOT}/api`;
 
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
@@ -11,6 +12,11 @@ export const getApiUrl = () => {
     window.location.hostname.includes('netlify.app') ||
     window.location.hostname.includes('github.io')
   );
+
+  // Detecta se este host é o próprio backend padrão do Railway
+  // (quando backend e frontend estiverem servidos pelo mesmo serviço)
+  const defaultBackendHost = new URL(DEFAULT_RAILWAY_ROOT).hostname;
+  const isOnDefaultBackendHost = window.location.hostname === defaultBackendHost;
 
   // Se VITE_API_URL estiver definida, usa ela (prioridade máxima)
   if (import.meta.env.VITE_API_URL) {
@@ -25,14 +31,14 @@ export const getApiUrl = () => {
 
   // Em produção hospedada SEM variáveis configuradas
   if (isHostedProd) {
-    // Em GitHub Pages, apontar para o backend público no Railway
-    if (window.location.hostname.includes('github.io')) {
-      console.warn('⚠️ Variáveis VITE_* não configuradas. Usando fallback para Railway backend.');
-      return `${DEFAULT_RAILWAY_ROOT}/api`;
+    // Se estivermos no host do backend (mesmo domínio), use proxy relativo
+    if (isOnDefaultBackendHost) {
+      return '/api';
     }
-    // Outros provedores: usar proxy relativo
-    console.warn('⚠️ VITE_API_URL não configurada. Usando proxy relativo /api.');
-    return '/api';
+
+    // Caso contrário, use o backend público padrão no Railway
+    console.warn('⚠️ VITE_* não configurada. Usando fallback para Railway backend público.');
+    return DEFAULT_RAILWAY_API;
   }
 
   // Em desenvolvimento local
@@ -53,15 +59,7 @@ export const getApiRootUrl = () => {
 
   // Fallback: tentar derivar do getApiUrl
   const base = getApiUrl();
-  if (base === '/api') {
-    // Se estiver em GitHub Pages, usar fallback do Railway
-    if (window.location.hostname.includes('github.io')) {
-      return DEFAULT_RAILWAY_ROOT;
-    }
-    // Proxy relativo - healthcheck não funcionará sem BACKEND_ROOT
-    console.warn('⚠️ VITE_BACKEND_ROOT não configurado. Banner de status offline não funcionará.');
-    return '';
-  }
+  if (base === '/api') return '';
   
   return base.replace(/\/api$/, '');
 };
