@@ -68,11 +68,11 @@ if (process.env.NODE_ENV !== 'production') {
  */
 async function connectDB() {
   try {
-    console.log('📡 Conectando ao PostgreSQL...');
+    console.log('📡 Conectando ao banco de dados...');
     
     // Testa conexão com o banco
     await sequelize.authenticate();
-    console.log('✅ PostgreSQL conectado com sucesso');
+    console.log('✅ Banco de dados conectado com sucesso');
 
     // Em PostgreSQL, ENUM não aceita novos valores sem ALTER TYPE.
     // Para manter compatibilidade com bancos já existentes no Railway,
@@ -125,7 +125,7 @@ async function connectDB() {
     if (process.env.NODE_ENV !== 'production') {
       // DESENVOLVIMENTO: force: false evita recriar tabelas a cada restart
       // Isso previne perda de dados durante desenvolvimento
-      await sequelize.sync({ force: false, alter: true });
+      await sequelize.sync({ force: false, alter: false });
       console.log('✅ Tabelas sincronizadas (modo desenvolvimento)');
     } else {
       // PRODUÇÃO: usa alter apenas se FORCE_SYNC=true
