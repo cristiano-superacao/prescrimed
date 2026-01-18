@@ -38,6 +38,17 @@ export default function Pacientes() {
     loadPacientes();
   }, []);
 
+  useEffect(() => {
+    if (!viewHistorico) return;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') closeHistorico();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [viewHistorico]);
+
   const loadPacientes = async (search = '') => {
     try {
       setLoading(true);
@@ -260,8 +271,18 @@ export default function Pacientes() {
 
       {/* Modal Histórico de Prescrições */}
       {viewHistorico && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeHistorico();
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -275,6 +296,8 @@ export default function Pacientes() {
               <button
                 onClick={closeHistorico}
                 className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                type="button"
+                aria-label="Fechar modal"
               >
                 <X size={20} className="text-slate-400" />
               </button>

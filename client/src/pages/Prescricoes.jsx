@@ -34,6 +34,17 @@ export default function Prescricoes() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (!modalOpen) return;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setModalOpen(false);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [modalOpen]);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -331,9 +342,19 @@ export default function Prescricoes() {
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex justify-between items-center p-6 border-b border-slate-100">
+        <div
+          className="fixed inset-0 bg-slate-900/70 flex items-center justify-center p-4 z-50"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white rounded-2xl sm:rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100 bg-white/90 backdrop-blur-sm shrink-0">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cadastro</p>
                 <h2 className="text-2xl font-bold">Nova Prescrição</h2>
@@ -341,12 +362,15 @@ export default function Prescricoes() {
               <button
                 onClick={() => setModalOpen(false)}
                 className="p-2 hover:bg-slate-50 rounded-2xl"
+                type="button"
+                aria-label="Fechar modal"
               >
                 <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Paciente *</label>
@@ -470,12 +494,10 @@ export default function Prescricoes() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-4 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="btn btn-secondary"
-                >
+              </div>
+
+              <div className="flex justify-end gap-4 px-6 py-5 border-t border-slate-100 bg-white shrink-0">
+                <button type="button" onClick={() => setModalOpen(false)} className="btn btn-secondary">
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">
