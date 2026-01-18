@@ -2,9 +2,6 @@
 # Let Git auto-detect text files and normalize to LF in repo
 * text=auto
 
-# Ensure .gitignore stays textual
-.gitignore text eol=lf
-
 # Ensure Windows scripts keep CRLF in working directory
 *.bat text eol=crlf
 *.ps1 text eol=crlf

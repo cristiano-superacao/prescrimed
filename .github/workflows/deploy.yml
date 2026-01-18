@@ -22,8 +22,6 @@ jobs:
       # Secrets são opcionais; fallback é aplicado no step de build.
       VITE_BACKEND_ROOT: ${{ secrets.VITE_BACKEND_ROOT }}
       VITE_API_URL: ${{ secrets.VITE_API_URL }}
-      # GitHub Pages (project pages) publica em /<repo>/
-      VITE_BASE: /prescrimed/
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,13 +46,7 @@ jobs:
           if [ -z "$VITE_API_URL" ]; then
             export VITE_API_URL="${VITE_BACKEND_ROOT%/}/api"
           fi
-          if [ -z "$VITE_BASE" ]; then
-            export VITE_BASE="/prescrimed/"
-          fi
           npm run build
-
-          # SPA fallback para rotas do React Router
-          cp dist/index.html dist/404.html
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

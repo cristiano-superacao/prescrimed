@@ -19,7 +19,6 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
-import useLockBodyScroll from '../utils/useLockBodyScroll';
 
 export default function Estoque() {
   const [activeTab, setActiveTab] = useState('medicamentos'); // medicamentos, alimentos
@@ -31,8 +30,6 @@ export default function Estoque() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useLockBodyScroll(Boolean(modalOpen || showHistorico));
-
   // Form States
   const [formData, setFormData] = useState({});
   const [movimentacaoData, setMovimentacaoData] = useState({ quantidade: '', motivo: '', observacao: '' });
@@ -41,22 +38,6 @@ export default function Estoque() {
     loadItems();
     loadStats();
   }, [activeTab]);
-
-  useEffect(() => {
-    if (!modalOpen && !showHistorico) return;
-
-    const onKeyDown = (event) => {
-      if (event.key !== 'Escape') return;
-      if (showHistorico) {
-        setShowHistorico(false);
-        return;
-      }
-      closeModal();
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [modalOpen, showHistorico]);
 
   const loadItems = async () => {
     setLoading(true);
@@ -163,22 +144,11 @@ export default function Estoque() {
 
     const isMed = activeTab === 'medicamentos';
     const isMovimentacao = modalOpen === 'entrada' || modalOpen === 'saida';
-    const formId = isMovimentacao ? 'estoque-movimentacao-form' : 'estoque-cadastro-form';
 
     return (
-      <div
-        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        onMouseDown={(e) => {
-          if (e.target === e.currentTarget) closeModal();
-        }}
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0 bg-white/80 backdrop-blur">
+      <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-[51]">
             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
               {modalOpen === 'cadastrar' && <Plus className="text-primary-600" />}
               {modalOpen === 'entrada' && <ArrowDownCircle className="text-emerald-600" />}
@@ -187,19 +157,14 @@ export default function Estoque() {
               {modalOpen === 'cadastrar' ? `Novo ${isMed ? 'Medicamento' : 'Alimento'}` :
                modalOpen === 'entrada' ? 'Registrar Entrada' : 'Registrar Saída'}
             </h3>
-            <button
-              type="button"
-              aria-label="Fechar modal"
-              onClick={closeModal}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-            >
+            <button onClick={closeModal} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
               <X size={20} className="text-slate-400" />
             </button>
           </div>
           
-          <div className="p-6 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
+          <div className="p-6">
             {isMovimentacao ? (
-              <form id={formId} onSubmit={handleMovimentacao} className="space-y-4">
+              <form onSubmit={handleMovimentacao} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Selecione o Item</label>
                   <select 
@@ -265,9 +230,22 @@ export default function Estoque() {
                   ></textarea>
                 </div>
 
+                <div className="pt-4 flex justify-end gap-3">
+                  <button type="button" onClick={closeModal} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancelar</button>
+                  <button 
+                    type="submit" 
+                    className={`px-6 py-2 rounded-lg font-bold text-white shadow-lg transition-all transform hover:-translate-y-0.5 ${
+                      modalOpen === 'entrada' 
+                        ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' 
+                        : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'
+                    }`}
+                  >
+                    Confirmar {modalOpen === 'entrada' ? 'Entrada' : 'Saída'}
+                  </button>
+                </div>
               </form>
             ) : (
-              <form id={formId} onSubmit={handleCadastrar} className="space-y-4">
+              <form onSubmit={handleCadastrar} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Item</label>
                   <input 
@@ -360,38 +338,13 @@ export default function Estoque() {
                   </div>
                 )}
 
+                <div className="pt-4 flex justify-end gap-3">
+                  <button type="button" onClick={closeModal} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancelar</button>
+                  <button type="submit" className="px-6 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all transform hover:-translate-y-0.5">
+                    Salvar Cadastro
+                  </button>
+                </div>
               </form>
-            )}
-          </div>
-
-          <div className="p-6 border-t border-slate-100 flex justify-end gap-3 shrink-0 bg-white">
-            <button
-              type="button"
-              onClick={closeModal}
-              className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium"
-            >
-              Cancelar
-            </button>
-            {isMovimentacao ? (
-              <button
-                type="submit"
-                form={formId}
-                className={`px-6 py-2 rounded-lg font-bold text-white shadow-lg transition-all transform hover:-translate-y-0.5 ${
-                  modalOpen === 'entrada'
-                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
-                    : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'
-                }`}
-              >
-                Confirmar {modalOpen === 'entrada' ? 'Entrada' : 'Saída'}
-              </button>
-            ) : (
-              <button
-                type="submit"
-                form={formId}
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all transform hover:-translate-y-0.5"
-              >
-                Salvar Cadastro
-              </button>
             )}
           </div>
         </div>
@@ -529,111 +482,43 @@ export default function Estoque() {
 
       {/* Main Content Table */}
       <div className="card overflow-hidden">
-        {loading ? (
-          <div className="px-6 py-12 text-center text-slate-400">
-            <div className="flex justify-center mb-2">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-            </div>
-            Carregando estoque...
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="px-6 py-12 text-center text-slate-400">
-            <EmptyState
-              icon={Package}
-              title="Nenhum item encontrado"
-              description="Nenhum item encontrado no estoque."
-            />
-          </div>
-        ) : (
-          <>
-            {/* Mobile: cards */}
-            <div className="md:hidden p-4 sm:p-6 space-y-3">
-              {filteredItems.map((item) => {
-                const isLow = item.quantidade <= item.quantidadeMinima;
-                return (
-                  <div
-                    key={item._id}
-                    className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`p-2 rounded-lg shrink-0 ${
-                            activeTab === 'medicamentos'
-                              ? 'bg-primary-50 text-primary-600'
-                              : 'bg-green-50 text-green-600'
-                          }`}
-                        >
-                          {activeTab === 'medicamentos' ? <Pill size={18} /> : <Utensils size={18} />}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-slate-900 truncate">{item.nome}</p>
-                          <p className="text-xs text-slate-500 truncate">
-                            {item.lote ? `Lote: ${item.lote}` : 'Sem lote'}
-                            {item.categoria ? ` • Cat: ${item.categoria}` : ''}
-                          </p>
-                        </div>
-                      </div>
-
-                      {isLow ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold border border-red-100 shrink-0">
-                          <AlertTriangle size={12} /> Baixo
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100 shrink-0">
-                          <CheckCircle2 size={12} /> Normal
-                        </span>
-                      )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Item</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Quantidade</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unidade</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Validade</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
+                    <div className="flex justify-center mb-2">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
                     </div>
-
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-sm text-slate-500">Quantidade</span>
-                      <span className={`font-bold text-lg ${isLow ? 'text-red-600' : 'text-slate-700'}`}>
-                        {item.quantidade}
-                        <span className="ml-2 text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-md font-medium">
-                          {item.unidade}
-                        </span>
-                      </span>
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-sm text-slate-500">Validade</span>
-                      <span className="text-sm text-slate-600">
-                        {item.validade ? new Date(item.validade).toLocaleDateString('pt-BR') : '-'}
-                      </span>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-end">
-                      <button
-                        type="button"
-                        className="text-slate-500 hover:text-primary-600 font-semibold text-sm transition-colors"
-                      >
-                        Detalhes
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Desktop: table */}
-            <div className="hidden md:block overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 border-b border-slate-100">
-                  <tr>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Item</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Quantidade</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unidade</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Validade</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredItems.map((item) => {
-                    const isLow = item.quantidade <= item.quantidadeMinima;
-                    return (
-                      <tr key={item._id} className="hover:bg-slate-50/50 transition-colors group">
+                    Carregando estoque...
+                  </td>
+                </tr>
+              ) : filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
+                    <EmptyState
+                      icon={Package}
+                      title="Nenhum item encontrado"
+                      description="Nenhum item encontrado no estoque."
+                    />
+                  </td>
+                </tr>
+              ) : (
+                filteredItems.map((item) => {
+                  const isLow = item.quantidade <= item.quantidadeMinima;
+                  return (
+                    <tr key={item._id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-lg ${activeTab === 'medicamentos' ? 'bg-primary-50 text-primary-600' : 'bg-green-50 text-green-600'}`}>
@@ -678,31 +563,20 @@ export default function Estoque() {
                         </button>
                       </td>
                     </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {renderModal()}
 
       {/* Modal Histórico de Movimentações */}
       {showHistorico && (
-        <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setShowHistorico(false);
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -716,8 +590,6 @@ export default function Estoque() {
               <button
                 onClick={() => setShowHistorico(false)}
                 className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                type="button"
-                aria-label="Fechar modal"
               >
                 <X size={20} className="text-slate-400" />
               </button>
@@ -725,115 +597,59 @@ export default function Estoque() {
 
             <div className="p-6 overflow-y-auto flex-1">
               {movimentacoes.length > 0 ? (
-                <>
-                  {/* Mobile: cards */}
-                  <div className="md:hidden space-y-3">
-                    {movimentacoes.map((mov) => (
-                      <div
-                        key={mov._id}
-                        className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 truncate">
-                              {mov.itemNome}{' '}
-                              <span className="text-xs text-slate-500 font-medium">({mov.itemTipo})</span>
-                            </p>
-                            <p className="text-xs text-slate-500 mt-1">
-                              {new Date(mov.data).toLocaleString('pt-BR')}
-                            </p>
-                          </div>
-
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 ${
-                              mov.tipo === 'entrada'
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : 'bg-red-50 text-red-700'
-                            }`}
-                          >
-                            {mov.tipo === 'entrada' ? (
-                              <><ArrowDownCircle size={12} /> Entrada</>
-                            ) : (
-                              <><ArrowUpCircle size={12} /> Saída</>
-                            )}
-                          </span>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between">
-                          <span className="text-sm text-slate-500">Quantidade</span>
-                          <span className="text-sm font-bold text-slate-700">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b border-slate-100">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Data</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tipo</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Item</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Qtd</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Motivo</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Usuário</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {movimentacoes.map((mov) => (
+                        <tr key={mov._id} className="hover:bg-slate-50/50 transition">
+                          <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                            {new Date(mov.data).toLocaleString('pt-BR')}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                                mov.tipo === 'entrada'
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : 'bg-red-50 text-red-700'
+                              }`}
+                            >
+                              {mov.tipo === 'entrada' ? (
+                                <><ArrowDownCircle size={12} /> Entrada</>
+                              ) : (
+                                <><ArrowUpCircle size={12} /> Saída</>
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                            {mov.itemNome}
+                            <span className="ml-2 text-xs text-slate-500">
+                              ({mov.itemTipo})
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-bold text-slate-700">
                             {mov.tipo === 'entrada' ? '+' : '-'}{mov.quantidade}
-                          </span>
-                        </div>
-
-                        <div className="mt-2">
-                          <p className="text-sm text-slate-500">Motivo</p>
-                          <p className="text-sm text-slate-700 break-words">{mov.motivo || '-'}</p>
-                        </div>
-
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="text-sm text-slate-500">Usuário</span>
-                          <span className="text-sm text-slate-700">{mov.usuarioNome || '-'}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Desktop: table */}
-                  <div className="hidden md:block overflow-x-auto custom-scrollbar">
-                    <table className="w-full">
-                      <thead className="bg-slate-50 border-b border-slate-100">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Data</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tipo</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Item</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Qtd</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Motivo</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Usuário</th>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600">
+                            {mov.motivo}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600">
+                            {mov.usuarioNome}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {movimentacoes.map((mov) => (
-                          <tr key={mov._id} className="hover:bg-slate-50/50 transition">
-                            <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
-                              {new Date(mov.data).toLocaleString('pt-BR')}
-                            </td>
-                            <td className="px-4 py-3">
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                                  mov.tipo === 'entrada'
-                                    ? 'bg-emerald-50 text-emerald-700'
-                                    : 'bg-red-50 text-red-700'
-                                }`}
-                              >
-                                {mov.tipo === 'entrada' ? (
-                                  <><ArrowDownCircle size={12} /> Entrada</>
-                                ) : (
-                                  <><ArrowUpCircle size={12} /> Saída</>
-                                )}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                              {mov.itemNome}
-                              <span className="ml-2 text-xs text-slate-500">
-                                ({mov.itemTipo})
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm font-bold text-slate-700">
-                              {mov.tipo === 'entrada' ? '+' : '-'}{mov.quantidade}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-slate-600">
-                              {mov.motivo}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-slate-600">
-                              {mov.usuarioNome}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <div className="text-center py-12">
                   <Layers size={48} className="mx-auto text-slate-300 mb-3" />

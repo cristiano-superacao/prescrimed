@@ -116,59 +116,8 @@ export default function Evolucao() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredPacientes.length > 0 ? (
-          <>
-            {/* Mobile: cards */}
-            <div className="md:hidden p-4 sm:p-6 space-y-3">
-              {filteredPacientes.map((paciente) => (
-                <div
-                  key={paciente.id || paciente._id}
-                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm shrink-0">
-                        {paciente.nome.charAt(0)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 truncate">{paciente.nome}</p>
-                        <p className="text-xs text-slate-500 truncate">CPF: {paciente.cpf || 'N/A'}</p>
-                      </div>
-                    </div>
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100 shrink-0">
-                      Ativo
-                    </span>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <span className="text-sm text-slate-600">
-                      <span className="text-slate-500">Quarto:</span> {paciente.quarto || '-'}
-                    </span>
-
-                    {paciente.alergias && paciente.alergias.length > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
-                        <AlertCircle size={12} /> Alergias
-                      </span>
-                    ) : (
-                      <span className="text-sm text-slate-400">Sem alertas</span>
-                    )}
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={() => toast.success(`Abrindo prontuário de ${paciente.nome}`)}
-                      className="btn btn-secondary flex items-center justify-center gap-2"
-                    >
-                      <Eye size={16} /> Prontuário
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop: table */}
-            <div className="hidden md:block overflow-x-auto custom-scrollbar">
-              <table className="w-full">
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Residente</th>
@@ -220,9 +169,8 @@ export default function Evolucao() {
                   </tr>
                 ))}
               </tbody>
-              </table>
-            </div>
-          </>
+            </table>
+          </div>
         ) : (
           <div className="p-12">
             <EmptyState

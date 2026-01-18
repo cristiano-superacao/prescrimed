@@ -10,7 +10,6 @@ import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
-import { TableContainer, TableWrapper, TableHeader, Th, TBody, Tr, Td, MobileGrid, MobileCard } from '../components/common/Table';
 
 export default function Usuarios() {
   const { user } = useAuthStore();
@@ -20,9 +19,6 @@ export default function Usuarios() {
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [density, setDensity] = useState('comfortable');
   const [feedback, setFeedback] = useState(null);
-
-  const getUsuarioId = (usuario) => usuario?.id || usuario?._id;
-  const currentUserId = user?.id || user?._id;
   const [searchTerm, setSearchTerm] = useState('');
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
@@ -178,121 +174,58 @@ export default function Usuarios() {
         </div>
       )}
 
-      <TableContainer className="border border-slate-200 shadow-sm">
+      <div className="card overflow-hidden border border-slate-200 shadow-sm">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredUsuarios.length > 0 ? (
-          <>
-            {/* Mobile: cards */}
-            <MobileGrid>
-              {filteredUsuarios.map((usuario) => (
-                <MobileCard
-                  key={getUsuarioId(usuario)}
-                  density={density}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm shrink-0">
-                      {usuario.nome.charAt(0).toUpperCase()}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-900 truncate">{usuario.nome}</p>
-                          <p className="text-sm text-slate-600 truncate">{usuario.email}</p>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span
-                            className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
-                              usuario.role === 'admin' || usuario.role === 'superadmin'
-                                ? 'bg-purple-50 text-purple-700 border-purple-100'
-                                : 'bg-slate-100 text-slate-700 border-slate-200'
-                            }`}
-                          >
-                            {roleLabel(usuario.role)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <span
-                          className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
-                            usuario.ativo
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                              : 'bg-red-50 text-red-700 border-red-100'
-                          }`}
-                        >
-                          {usuario.ativo ? 'Ativo' : 'Inativo'}
-                        </span>
-
-                        {usuario.crm ? (
-                          <span className="font-mono bg-slate-100 px-2.5 py-1 rounded-full text-xs text-slate-700 border border-slate-200">
-                            CRM: {usuario.crm}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-slate-400">CRM: -</span>
-                        )}
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(usuario)}
-                          className="px-3 py-2 text-slate-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors text-sm font-semibold"
-                        >
-                          Editar
-                        </button>
-                        {getUsuarioId(usuario) !== currentUserId && (
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(getUsuarioId(usuario))}
-                            className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
-                          >
-                            Excluir
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </MobileCard>
-              ))}
-            </MobileGrid>
-
-            {/* Desktop: table */}
-            <TableWrapper>
-              <TableHeader>
-                <Th>Profissional</Th>
-                <Th>Contato</Th>
-                <Th>CRM</Th>
-                <Th>Função</Th>
-                <Th>Status</Th>
-                <Th align="right">Ações</Th>
-              </TableHeader>
-              <TBody>
+          <div className="overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
+            <table className="w-full min-w-[960px]">
+              <thead className="bg-slate-50 border-b border-slate-200 whitespace-nowrap">
+                <tr>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Profissional
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Contato
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    CRM
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Função
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {filteredUsuarios.map((usuario) => (
-                  <Tr key={getUsuarioId(usuario)}>
-                    <Td density={density}>
+                  <tr key={usuario.id} className="hover:bg-slate-50 transition-colors">
+                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xs">
                           {usuario.nome.charAt(0).toUpperCase()}
                         </div>
                         <div className="font-medium text-slate-900">{usuario.nome}</div>
                       </div>
-                    </Td>
-                    <Td density={density} className="text-sm text-slate-600">
+                    </td>
+                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap text-sm text-slate-600`}>
                       {usuario.email}
-                    </Td>
-                    <Td density={density} className="text-sm text-slate-600">
+                    </td>
+                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap text-sm text-slate-600`}>
                       {usuario.crm ? (
                         <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">{usuario.crm}</span>
                       ) : (
                         <span className="text-slate-400">-</span>
                       )}
-                    </Td>
-                    <Td density={density}>
+                    </td>
+                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
                       <span
                         className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
                           usuario.role === 'admin' || usuario.role === 'superadmin'
@@ -302,8 +235,8 @@ export default function Usuarios() {
                       >
                         {roleLabel(usuario.role)}
                       </span>
-                    </Td>
-                    <Td density={density}>
+                    </td>
+                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap`}>
                       <span
                         className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
                           usuario.ativo
@@ -313,8 +246,8 @@ export default function Usuarios() {
                       >
                         {usuario.ativo ? 'Ativo' : 'Inativo'}
                       </span>
-                    </Td>
-                    <Td density={density} align="right">
+                    </td>
+                    <td className={`px-4 sm:px-6 ${density === 'compact' ? 'py-3' : 'py-4'} whitespace-nowrap text-right`}>
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEdit(usuario)}
@@ -323,9 +256,9 @@ export default function Usuarios() {
                         >
                           <Edit2 size={16} />
                         </button>
-                        {getUsuarioId(usuario) !== currentUserId && (
+                        {usuario.id !== user.id && (
                           <button
-                            onClick={() => handleDelete(getUsuarioId(usuario))}
+                            onClick={() => handleDelete(usuario.id)}
                             className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Excluir"
                           >
@@ -333,12 +266,12 @@ export default function Usuarios() {
                           </button>
                         )}
                       </div>
-                    </Td>
-                  </Tr>
+                    </td>
+                  </tr>
                 ))}
-              </TBody>
-            </TableWrapper>
-          </>
+              </tbody>
+            </table>
+          </div>
         ) : (
           <EmptyState
             icon={Search}
@@ -348,7 +281,7 @@ export default function Usuarios() {
             onAction={!searchTerm ? () => setModalOpen(true) : null}
           />
         )}
-      </TableContainer>
+      </div>
 
       {modalOpen && (
         <UsuarioModal

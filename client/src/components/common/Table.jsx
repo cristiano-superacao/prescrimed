@@ -1,8 +1,33 @@
 import React from 'react';
 
-export function TableContainer({ children, className = '' }) {
+export function TableContainer({ title, actions, emptyMessage, children }) {
   return (
-    <div className={`bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden relative ${className}`}>
+    <div className="bg-white dark:bg-gray-900 shadow rounded-lg">
+      {(title || actions) && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          {title && (
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{title}</h2>
+          )}
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
+        </div>
+      )}
+      <div className="px-2 md:px-0">
+        {children}
+      </div>
+      {emptyMessage && (
+        <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">{emptyMessage}</div>
+      )}
+    </div>
+  );
+}
+
+export function MobileGrid({ children }) {
+  return <div className="md:hidden space-y-3 p-2">{children}</div>;
+}
+
+export function MobileCard({ children }) {
+  return (
+    <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3">
       {children}
     </div>
   );
@@ -10,90 +35,43 @@ export function TableContainer({ children, className = '' }) {
 
 export function TableWrapper({ children }) {
   return (
-    <div className="overflow-x-auto custom-scrollbar md:block hidden">
-      <div className="min-w-[920px]">
-        <table className="min-w-full divide-y divide-slate-200">
-          {children}
-        </table>
-      </div>
+    <div className="hidden md:block overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+        {children}
+      </table>
     </div>
   );
 }
 
-export function TableHeader({ children }) {
+export function TableHeader({ columns }) {
   return (
-    <thead className="bg-slate-50">
-      <tr>{children}</tr>
+    <thead className="bg-gray-50 dark:bg-gray-800">
+      <tr>
+        {columns.map((col, idx) => (
+          <th
+            key={idx}
+            className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+          >
+            {col}
+          </th>
+        ))}
+      </tr>
     </thead>
   );
 }
 
-export function Th({ children, className = '', align = 'left' }) {
-  const alignStyles = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right',
-  };
-
-  return (
-    <th 
-      className={`px-4 sm:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider ${alignStyles[align] || alignStyles.left} ${className}`}
-    >
-      {children}
-    </th>
-  );
-}
-
 export function TBody({ children }) {
-  return (
-    <tbody className="divide-y divide-slate-100 bg-white">
-      {children}
-    </tbody>
-  );
+  return <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">{children}</tbody>;
 }
 
-export function Tr({ children, className = '', onClick = null }) {
-  return (
-    <tr 
-      onClick={onClick}
-      className={`hover:bg-slate-50 transition-colors ${onClick ? 'cursor-pointer' : ''} ${className}`}
-    >
-      {children}
-    </tr>
-  );
+export function Tr({ children }) {
+  return <tr>{children}</tr>;
 }
 
-export function Td({ children, className = '', align = 'left', density = 'comfortable' }) {
-  const alignStyles = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right',
-  };
-  
-  const py = density === 'compact' ? 'py-3' : 'py-4';
-
+export function Td({ children, className = '' }) {
   return (
-    <td 
-      className={`px-4 sm:px-6 ${py} whitespace-nowrap ${alignStyles[align] || alignStyles.left} ${className}`}
-    >
+    <td className={`px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200 ${className}`}>
       {children}
     </td>
-  );
-}
-
-export function MobileGrid({ children, className = '' }) {
-  return (
-    <div className={`md:hidden p-4 sm:p-6 space-y-3 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-export function MobileCard({ children, className = '', density = 'comfortable' }) {
-  const padding = density === 'compact' ? 'p-3' : 'p-4';
-  return (
-    <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${padding} ${className}`}>
-      {children}
-    </div>
   );
 }
