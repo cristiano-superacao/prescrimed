@@ -7,6 +7,9 @@ Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e c
 [![Railway](https://img.shields.io/badge/Deploy-Railway-purple.svg)](https://railway.app/)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-blue.svg)](https://www.postgresql.org/)
 
+> **Última Atualização:** 17 de janeiro de 2026  
+> **Status do Sistema:** ✅ Operacional com logging aprimorado e troubleshooting de CORS/405
+
 ---
 
 ## 🎯 Funcionalidades
@@ -231,9 +234,17 @@ Consulte [RAILWAY_SETUP.md](RAILWAY_SETUP.md) para instruções detalhadas passo
    - Remova `FORCE_SYNC` e `SEED_MINIMAL`
    - Mantenha `DATABASE_URL`, `JWT_SECRET`, etc.
 
-5. **Validar Deploy**
+5. **Configurar CORS para Frontend**
+   ```
+   ALLOWED_ORIGINS=https://seu-frontend.netlify.app
+   FRONTEND_URL=https://seu-frontend.netlify.app
+   CORS_ORIGIN=https://seu-frontend.netlify.app
+   ```
+
+6. **Validar Deploy**
    - Acesse `https://seu-servico.up.railway.app/health`
    - Deve retornar: `{"status":"ok","database":"connected",...}`
+   - Verifique os logs para: `[API] POST /api/auth/login` (confirmando requisições)
 
 ---
 
@@ -328,6 +339,56 @@ cd client && VITE_BASE=/prescrimed/ npm run build
 ```
 
 ### Erro 405 em /api/auth/register ou /api/auth/login
+**Sintoma:** `405 Method Not Allowed` ao tentar fazer login ou registro
+
+**Causas Possíveis:**
+1. **CORS bloqueando requisições do frontend**
+2. **Método HTTP incorreto** sendo enviado pelo cliente
+3. **Middleware interceptando** a requisição antes de chegar na rota
+
+**Soluções:**
+
+**1. Verificar CORS no Backend:**
+```env
+# No Railway, adicione o domínio do frontend:
+ALLOWED_ORIGINS=https://prescrimed.up.railway.app,https://prescrimed.netlify.app
+FRONTEND_URL=https://prescrimed.netlify.app
+CORS_ORIGIN=https://prescrimed.netlify.app
+```
+
+**2. Verificar logs do servidor:**
+O sistema agora registra todas as requisições na API:
+```
+[API] POST /api/auth/login
+[API] 405 Method Not Allowed: GET /api/auth/login
+```
+
+**3. Verificar configuração do frontend:**
+```env
+# client/.env.production
+VITE_BACKEND_ROOT=https://prescrimed-backend-production.up.railway.app
+```
+
+**4. Limpar cache do navegador:**
+- Ctrl+Shift+Delete (Chrome/Edge)
+- Limpar cookies e cache do site
+- Tentar em janela anônima
+
+**5. Verificar método da requisição:**
+O frontend deve sempre usar POST para `/api/auth/login` e `/api/auth/register`
+
+**6. Redeploy completo:**
+```bash
+# Reconstruir frontend
+cd client && npm run build:railway
+
+# Fazer commit e push
+git add .
+git commit -m "fix: rebuild frontend with correct API configuration"
+git push origin master
+```
+
+### Erro 405 em /api/auth/register ou /api/auth/login
 **Sintoma:** `405 Method Not Allowed` ou `Origem não permitida pelo CORS`
 
 **Causa:** CORS bloqueando requisições do frontend
@@ -370,6 +431,27 @@ npm run create:superadmin
 POST   /api/auth/register    # Cadastro (empresa + usuário)
 POST   /api/auth/login       # Login (retorna JWT)
 GET    /api/auth/me          # Dados do usuário autenticado
+```
+
+**Exemplo de Login:**
+```bash
+curl -X POST https://seu-backend.up.railway.app/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"superadmin@prescrimed.com","senha":"Prescri@2026"}'
+```
+
+**Resposta Esperada:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "nome": "Super Admin",
+    "email": "superadmin@prescrimed.com",
+    "role": "superadmin",
+    "empresaId": 1
+  }
+}
 ```
 
 ### Usuários
@@ -419,6 +501,16 @@ GET    /api/test             # Teste de conectividade
 GET    /api/diagnostic/db-check  # Verificar tabelas/colunas
 ```
 
+**Logs do Sistema:**
+O backend agora registra todas as requisições API:
+```
+[API] POST /api/auth/login
+[API] GET /api/usuarios
+[API] 405 Method Not Allowed: GET /api/auth/login  # Erro de método
+```
+
+Isso facilita o troubleshooting de problemas como erro 405 (método não permitido).
+
 ---
 
 ## 🤝 Contribuindo
@@ -444,7 +536,19 @@ Seguimos [Conventional Commits](https://www.conventionalcommits.org/):
 
 ---
 
-## 📄 Licença
+## � Changelog Recente
+
+### [Janeiro 2026] - Melhorias de Diagnóstico e CORS
+- ✅ **Logs aprimorados:** Todas as requisições `/api/*` agora são registradas com método e URL
+- ✅ **Troubleshooting 405:** Logs detalhados para identificar métodos HTTP não permitidos
+- ✅ **CORS otimizado:** Suporte para múltiplas origens via `ALLOWED_ORIGINS`
+- ✅ **Documentação expandida:** Guia completo de troubleshooting para erros comuns
+- ✅ **Health check robusto:** Validação de conectividade e estado do banco
+- ✅ **Scripts utilitários:** `create:superadmin`, `smoke:api`, `check:railway`
+
+---
+
+## �📄 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 

@@ -2,6 +2,9 @@
 
 Este guia contém o passo a passo completo para configurar e fazer deploy do Prescrimed no Railway.
 
+> **Última Atualização:** 17 de janeiro de 2026  
+> **Versão do Guia:** 1.1 - Com troubleshooting aprimorado
+
 ---
 
 ## 📋 Pré-requisitos
@@ -167,6 +170,33 @@ Após confirmar que tudo funciona:
 ### Frontend não carrega (404)
 - **Causa:** Build do client falhou
 - **Solução:** Verifique logs de build; se necessário, rode local: `npm run build:client`
+
+### Erro 405 (Method Not Allowed) no login
+- **Sintoma:** Login retorna erro 405 ou CORS bloqueado
+- **Causa:** CORS não configurado corretamente ou método HTTP incorreto
+- **Solução:**
+  1. Adicione o domínio do frontend em `ALLOWED_ORIGINS`:
+     ```
+     ALLOWED_ORIGINS=https://seu-frontend.netlify.app,https://prescrimed.up.railway.app
+     ```
+  2. Verifique os logs do Railway para ver a requisição:
+     ```
+     [API] POST /api/auth/login  # Correto
+     [API] 405 Method Not Allowed: GET /api/auth/login  # Erro: método errado
+     ```
+  3. Se o método estiver incorreto, reconstrua o frontend:
+     ```bash
+     cd client && npm run build:railway
+     git add . && git commit -m "fix: rebuild frontend"
+     git push
+     ```
+
+### Logs não aparecem no Railway
+- **Causa:** Logs podem estar desabilitados ou filtrados
+- **Solução:** 
+  1. Vá em Settings → Deployments → [último deploy] → View logs
+  2. Procure por `[API]` para ver requisições
+  3. Procure por `✅` e `❌` para status do sistema
 
 ---
 

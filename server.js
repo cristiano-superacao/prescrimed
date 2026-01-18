@@ -341,12 +341,14 @@ app.head('/api/*', (req, res) => {
  * Garante que apenas métodos permitidos sejam aceitos
  */
 const allowedApiMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD']);
+// Log detalhado de requisições na API
 app.use('/api', (req, res, next) => {
-  // Se método não está na lista permitida, retorna erro 405
+  console.log(`[API] ${req.method} ${req.originalUrl}`);
   if (!allowedApiMethods.has(req.method)) {
+    console.warn(`[API] 405 Method Not Allowed: ${req.method} ${req.originalUrl}`);
     return res.status(405).json({ error: 'Método HTTP não permitido' });
   }
-  next(); // Continua para próximo middleware
+  next();
 });
 
 /**
