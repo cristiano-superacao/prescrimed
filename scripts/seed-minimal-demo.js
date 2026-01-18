@@ -146,32 +146,30 @@ export async function seedMinimal({ closeConnection = true } = {}) {
 
     // Estoque (2 itens + movimentações)
     const [dipirona] = await EstoqueItem.findOrCreate({
-      where: { empresaId: empresa.id, tipo: 'medicamento', nome: 'Dipirona' },
+      where: { empresaId: empresa.id, categoria: 'medicamento', nome: 'Dipirona' },
       defaults: {
         empresaId: empresa.id,
-        tipo: 'medicamento',
         nome: 'Dipirona',
         unidade: 'comprimido',
-        categoria: 'Analgésico',
+        categoria: 'medicamento',
+        descricao: 'Analgésico',
         quantidade: 50,
         quantidadeMinima: 10,
-        precoUnitario: 0.35,
-        fornecedor: 'Fornecedor Demo',
+        valorUnitario: 0.35,
       },
     });
 
     const [suplemento] = await EstoqueItem.findOrCreate({
-      where: { empresaId: empresa.id, tipo: 'alimento', nome: 'Suplemento Nutricional' },
+      where: { empresaId: empresa.id, categoria: 'alimento', nome: 'Suplemento Nutricional' },
       defaults: {
         empresaId: empresa.id,
-        tipo: 'alimento',
         nome: 'Suplemento Nutricional',
         unidade: 'unidade',
-        categoria: 'Nutrição',
+        categoria: 'alimento',
+        descricao: 'Nutrição',
         quantidade: 20,
         quantidadeMinima: 5,
-        precoUnitario: 8.9,
-        fornecedor: 'Fornecedor Demo',
+        valorUnitario: 8.9,
       },
     });
 
@@ -182,12 +180,15 @@ export async function seedMinimal({ closeConnection = true } = {}) {
         empresaId: empresa.id,
         estoqueItemId: dipirona.id,
         usuarioId: nutricionista.id,
-        usuarioNome: nutricionista.nome,
         tipo: 'entrada',
         quantidade: 50,
+        quantidadeAnterior: 0,
+        quantidadeNova: 50,
+        valorUnitario: 0.35,
+        valorTotal: 17.5,
         motivo: 'Seed demo',
-        observacao: 'Entrada inicial (demo).',
-        data: now,
+        observacoes: 'Entrada inicial (demo).',
+        dataMovimentacao: now,
       },
     });
 
@@ -197,12 +198,15 @@ export async function seedMinimal({ closeConnection = true } = {}) {
         empresaId: empresa.id,
         estoqueItemId: suplemento.id,
         usuarioId: nutricionista.id,
-        usuarioNome: nutricionista.nome,
         tipo: 'entrada',
         quantidade: 20,
+        quantidadeAnterior: 0,
+        quantidadeNova: 20,
+        valorUnitario: 8.9,
+        valorTotal: 178,
         motivo: 'Seed demo',
-        observacao: 'Entrada inicial (demo).',
-        data: now,
+        observacoes: 'Entrada inicial (demo).',
+        dataMovimentacao: now,
       },
     });
 
@@ -216,7 +220,8 @@ export async function seedMinimal({ closeConnection = true } = {}) {
         descricao: 'Mensalidade (demo)',
         valor: 1500,
         categoria: 'Mensalidade',
-        data: now,
+        dataVencimento: now,
+        dataPagamento: now,
         status: 'pago',
         formaPagamento: 'pix',
         observacoes: 'Lançamento gerado automaticamente (demo).',
@@ -231,7 +236,8 @@ export async function seedMinimal({ closeConnection = true } = {}) {
         descricao: 'Compra de insumos (demo)',
         valor: 320,
         categoria: 'Insumos',
-        data: now,
+        dataVencimento: now,
+        dataPagamento: now,
         status: 'pago',
         formaPagamento: 'cartao',
         observacoes: 'Lançamento gerado automaticamente (demo).',

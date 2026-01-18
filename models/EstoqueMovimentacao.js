@@ -1,0 +1,82 @@
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
+
+const EstoqueMovimentacao = sequelize.define('EstoqueMovimentacao', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  empresaId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Empresas',
+      key: 'id'
+    }
+  },
+  estoqueItemId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'EstoqueItens',
+      key: 'id'
+    }
+  },
+  usuarioId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Usuarios',
+      key: 'id'
+    }
+  },
+  tipo: {
+    type: DataTypes.ENUM('entrada', 'saida', 'ajuste'),
+    allowNull: false
+  },
+  quantidade: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  quantidadeAnterior: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  quantidadeNova: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  valorUnitario: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  valorTotal: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  motivo: {
+    type: DataTypes.STRING(200),
+    allowNull: true
+  },
+  observacoes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  dataMovimentacao: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'EstoqueMovimentacoes',
+  timestamps: true,
+  indexes: [
+    { fields: ['empresaId'] },
+    { fields: ['estoqueItemId'] },
+    { fields: ['tipo'] },
+    { fields: ['dataMovimentacao'] }
+  ]
+});
+
+export default EstoqueMovimentacao;

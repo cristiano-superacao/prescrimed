@@ -157,6 +157,63 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Renovar token (refresh)
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    // Se não houver refreshToken, tenta usar o token atual
+    const token = refreshToken || req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Token não fornecido' });
+    }
+
+    try {
+      // Verifica o token (mesmo que expirado, decode para pegar o ID)
+      const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+      
+      // Busca o usuário
+      const usuario = await Usuario.findByPk(decoded.id, {
+        include: [{ model: Empresa, as: 'empresa' }]
+      });
+
+      if (!usuario || !usuario.ativo) {
+        return res.status(401).json({ error: 'Usuário inválido ou inativo' });
+      }
+
+      // Gera novo token
+      const newToken = jwt.sign(
+        { id: usuario.id, email: usuario.email, role: usuario.role, empresaId: usuario.empresaId },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.SESSION_TIMEOUT || '8h' }
+      );
+
+      res.json({
+        token: newToken,
+        user: {
+          id: usuario.id,
+          nome: usuario.nome,
+          email: usuario.email,
+          telefone: usuario.contato || null,
+          especialidade: usuario.especialidade || null,
+          crm: usuario.crm || null,
+          crmUf: usuario.crmUf || null,
+          permissoes: usuario.permissoes || [],
+          role: usuario.role,
+          empresaId: usuario.empresaId,
+          empresa: usuario.empresa
+        }
+      });
+    } catch (jwtError) {
+      return res.status(401).json({ error: 'Token inválido ou expirado' });
+    }
+  } catch (error) {
+    console.error('Erro ao renovar token:', error);
+    res.status(500).json({ error: 'Erro ao renovar token' });
+  }
+});
+
 // Verificar token
 router.get('/me', async (req, res) => {
   try {
