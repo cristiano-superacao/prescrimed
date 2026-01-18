@@ -529,43 +529,111 @@ export default function Estoque() {
 
       {/* Main Content Table */}
       <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-100">
-              <tr>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Item</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Quantidade</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unidade</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Validade</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
-                    <div className="flex justify-center mb-2">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+        {loading ? (
+          <div className="px-6 py-12 text-center text-slate-400">
+            <div className="flex justify-center mb-2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+            </div>
+            Carregando estoque...
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="px-6 py-12 text-center text-slate-400">
+            <EmptyState
+              icon={Package}
+              title="Nenhum item encontrado"
+              description="Nenhum item encontrado no estoque."
+            />
+          </div>
+        ) : (
+          <>
+            {/* Mobile: cards */}
+            <div className="md:hidden p-4 sm:p-6 space-y-3">
+              {filteredItems.map((item) => {
+                const isLow = item.quantidade <= item.quantidadeMinima;
+                return (
+                  <div
+                    key={item._id}
+                    className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`p-2 rounded-lg shrink-0 ${
+                            activeTab === 'medicamentos'
+                              ? 'bg-primary-50 text-primary-600'
+                              : 'bg-green-50 text-green-600'
+                          }`}
+                        >
+                          {activeTab === 'medicamentos' ? <Pill size={18} /> : <Utensils size={18} />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 truncate">{item.nome}</p>
+                          <p className="text-xs text-slate-500 truncate">
+                            {item.lote ? `Lote: ${item.lote}` : 'Sem lote'}
+                            {item.categoria ? ` • Cat: ${item.categoria}` : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      {isLow ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold border border-red-100 shrink-0">
+                          <AlertTriangle size={12} /> Baixo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100 shrink-0">
+                          <CheckCircle2 size={12} /> Normal
+                        </span>
+                      )}
                     </div>
-                    Carregando estoque...
-                  </td>
-                </tr>
-              ) : filteredItems.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
-                    <EmptyState
-                      icon={Package}
-                      title="Nenhum item encontrado"
-                      description="Nenhum item encontrado no estoque."
-                    />
-                  </td>
-                </tr>
-              ) : (
-                filteredItems.map((item) => {
-                  const isLow = item.quantidade <= item.quantidadeMinima;
-                  return (
-                    <tr key={item._id} className="hover:bg-slate-50/50 transition-colors group">
+
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-sm text-slate-500">Quantidade</span>
+                      <span className={`font-bold text-lg ${isLow ? 'text-red-600' : 'text-slate-700'}`}>
+                        {item.quantidade}
+                        <span className="ml-2 text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-md font-medium">
+                          {item.unidade}
+                        </span>
+                      </span>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-sm text-slate-500">Validade</span>
+                      <span className="text-sm text-slate-600">
+                        {item.validade ? new Date(item.validade).toLocaleDateString('pt-BR') : '-'}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-end">
+                      <button
+                        type="button"
+                        className="text-slate-500 hover:text-primary-600 font-semibold text-sm transition-colors"
+                      >
+                        Detalhes
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 border-b border-slate-100">
+                  <tr>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Item</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Quantidade</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unidade</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Validade</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredItems.map((item) => {
+                    const isLow = item.quantidade <= item.quantidadeMinima;
+                    return (
+                      <tr key={item._id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-lg ${activeTab === 'medicamentos' ? 'bg-primary-50 text-primary-600' : 'bg-green-50 text-green-600'}`}>
@@ -610,12 +678,13 @@ export default function Estoque() {
                         </button>
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       {renderModal()}

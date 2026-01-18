@@ -119,8 +119,56 @@ export default function Empresas() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : empresas.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <>
+            {/* Mobile: cards */}
+            <div className="md:hidden p-4 sm:p-6 space-y-3">
+              {empresas.map((empresa) => (
+                <div
+                  key={empresa.id}
+                  className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
+                    density === 'compact' ? 'p-3' : 'p-4'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900 truncate">{empresa.nome}</p>
+                      <p className="text-sm text-slate-600 truncate">{empresa.email || '-'}</p>
+                    </div>
+
+                    <span
+                      className={`px-2.5 py-1 text-xs rounded-full font-medium border shrink-0 ${
+                        empresa.status === 'ativo'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-red-50 text-red-700 border-red-100'
+                      }`}
+                    >
+                      {empresa.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-primary-50 text-primary-700 border border-primary-100 uppercase">
+                      {empresa.plano}
+                    </span>
+                    <span className="text-xs text-slate-600">CNPJ: {empresa.cnpj || '-'}</span>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(empresa.id)}
+                      className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
@@ -185,8 +233,9 @@ export default function Empresas() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          </>
         ) : (
           <EmptyState
             icon={Building2}

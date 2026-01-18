@@ -253,42 +253,138 @@ export default function Agenda() {
       />
 
       <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-100">
-              <tr>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Tipo</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Título</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Data/Hora</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Participante</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Local</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-slate-400">
-                    <div className="flex justify-center mb-2">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+        {loading ? (
+          <div className="px-6 py-12 text-center text-slate-400">
+            <div className="flex justify-center mb-2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+            </div>
+            Carregando agenda...
+          </div>
+        ) : filteredAgendamentos.length === 0 ? (
+          <div className="px-6 py-12 text-center text-slate-400">
+            <EmptyState
+              icon={CalendarIcon}
+              title="Nenhum agendamento encontrado"
+              description="Nenhum agendamento encontrado."
+            />
+          </div>
+        ) : (
+          <>
+            {/* Mobile: cards */}
+            <div className="md:hidden p-4 sm:p-6 space-y-3">
+              {filteredAgendamentos.map((ag) => (
+                <div
+                  key={ag.id || ag._id}
+                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`p-2 rounded-lg shrink-0 ${
+                            ag.tipo === 'Consulta'
+                              ? 'bg-blue-50 text-blue-600'
+                              : ag.tipo === 'Reunião'
+                                ? 'bg-purple-50 text-purple-600'
+                                : ag.tipo === 'Exame'
+                                  ? 'bg-amber-50 text-amber-600'
+                                  : 'bg-primary-50 text-primary-600'
+                          }`}
+                        >
+                          {getIconByType(ag.tipo)}
+                        </div>
+                        <span className="text-sm font-semibold text-slate-700">{ag.tipo}</span>
+                      </div>
+                      <p className="mt-2 font-bold text-slate-900 truncate">{ag.titulo}</p>
                     </div>
-                    Carregando agenda...
-                  </td>
-                </tr>
-              ) : filteredAgendamentos.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-slate-400">
-                    <EmptyState
-                      icon={CalendarIcon}
-                      title="Nenhum agendamento encontrado"
-                      description="Nenhum agendamento encontrado."
-                    />
-                  </td>
-                </tr>
-              ) : (
-                filteredAgendamentos.map((ag) => (
-                  <tr key={ag.id || ag._id} className="hover:bg-slate-50/50 transition-colors group">
+
+                    <select
+                      value={ag.status || 'agendado'}
+                      onChange={(e) => handleStatusChange(ag.id || ag._id, e.target.value)}
+                      className={`
+                        text-xs font-bold px-3 py-1.5 rounded-full border-none focus:ring-2 focus:ring-primary-500 cursor-pointer appearance-none shrink-0
+                        ${
+                          ag.status === 'agendado'
+                            ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-100'
+                            : ag.status === 'confirmado'
+                              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                              : ag.status === 'cancelado'
+                                ? 'bg-red-50 text-red-700 ring-1 ring-red-100'
+                                : 'bg-slate-100 text-slate-700 ring-1 ring-slate-200'
+                        }
+                      `}
+                    >
+                      <option value="agendado">Agendado</option>
+                      <option value="confirmado">Confirmado</option>
+                      <option value="cancelado">Cancelado</option>
+                      <option value="concluido">Concluído</option>
+                    </select>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-2">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Clock size={14} className="text-slate-400" />
+                      <span className="font-medium text-slate-700">
+                        {new Date(ag.dataHoraInicio).toLocaleDateString('pt-BR')}
+                      </span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-slate-600">
+                        {new Date(ag.dataHoraInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <User size={14} className="text-slate-400" />
+                      <span className="truncate">{ag.participante || '-'}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <MapPin size={14} className="text-slate-400" />
+                      <span className="truncate">{ag.local || '-'}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(ag)}
+                      className="p-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                      aria-label="Editar"
+                      title="Editar"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(ag.id || ag._id)}
+                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      aria-label="Excluir"
+                      title="Excluir"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 border-b border-slate-100">
+                  <tr>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Tipo</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Título</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Data/Hora</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Participante</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Local</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredAgendamentos.map((ag) => (
+                    <tr key={ag.id || ag._id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-slate-700 font-medium">
                         <div className={`p-2 rounded-lg ${
@@ -377,11 +473,12 @@ export default function Agenda() {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Modal de Novo/Editar Agendamento */}

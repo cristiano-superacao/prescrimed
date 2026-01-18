@@ -192,8 +192,94 @@ export default function Financeiro() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredTransacoes.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <>
+            {/* Mobile: cards */}
+            <div className="md:hidden p-4 sm:p-6 space-y-3">
+              {filteredTransacoes.map((transacao) => (
+                <div
+                  key={transacao._id}
+                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900 truncate">{transacao.descricao}</p>
+                      <p className="text-sm text-slate-600 truncate">{transacao.categoria}</p>
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border shrink-0 ${
+                        transacao.status === 'pago'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-amber-50 text-amber-700 border-amber-100'
+                      }`}
+                    >
+                      {transacao.status === 'pago' ? (
+                        <><CheckCircle2 size={12} /> Pago</>
+                      ) : (
+                        <><Clock size={12} /> Pendente</>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                        transacao.tipo === 'receita'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}
+                    >
+                      {transacao.tipo === 'receita' ? (
+                        <><ArrowUpRight size={12} /> Receita</>
+                      ) : (
+                        <><ArrowDownRight size={12} /> Despesa</>
+                      )}
+                    </span>
+
+                    <span className="inline-flex items-center gap-2 text-xs text-slate-600">
+                      <Calendar size={14} className="text-slate-400" />
+                      {new Date(transacao.data).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Valor</span>
+                    <span
+                      className={`font-semibold ${
+                        transacao.tipo === 'receita' ? 'text-emerald-600' : 'text-red-600'
+                      }`}
+                    >
+                      {transacao.tipo === 'despesa' ? '-' : '+'}{formatCurrency(transacao.valor)}
+                    </span>
+                  </div>
+
+                  {transacao.pacienteId && (
+                    <p className="mt-2 text-xs text-slate-500 truncate">Paciente: {transacao.pacienteId.nome}</p>
+                  )}
+
+                  <div className="mt-4 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(transacao)}
+                      className="px-3 py-2 text-slate-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors text-sm font-semibold"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(transacao._id)}
+                      className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descrição</th>
@@ -266,8 +352,9 @@ export default function Financeiro() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          </>
         ) : (
           <div className="p-8">
             <EmptyState
