@@ -12,6 +12,7 @@
     "railway:start": "node server.js",
     "seed:demo": "node scripts/seed-demo-data.js",
     "seed:minimal": "node scripts/seed-minimal-demo.js",
+    "create:superadmin": "node scripts/create-superadmin.js",
     "smoke:api": "node scripts/smoke-api-flow.js",
     "check:railway": "node scripts/check-railway-config.js",
     "reset:local": "scripts\\reset-local-config.bat",
