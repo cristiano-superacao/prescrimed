@@ -78,8 +78,8 @@ export default function Layout() {
           {/* padding responsivo: 1rem (mobile), 1.5rem (sm), 2rem horizontal e 1.5rem vertical (lg) */}
           
           {/* Container centralizado com largura máxima e espaçamento entre elementos */}
-          <div className="max-w-screen-2xl mx-auto space-y-6 lg:space-y-8">
-            {/* max-w-screen-2xl: até 1536px mantendo limite confortável */}
+          <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
+            {/* max-w-7xl: até 1280px mantendo limite confortável */}
             {/* mx-auto: centraliza horizontalmente */}
             {/* espaçamento vertical: 1.5rem (space-y-6) e 2rem em telas grandes (lg:space-y-8) */}
             
