@@ -46,8 +46,18 @@ export default function TransacaoModal({ transacao, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h2 className="text-lg font-semibold text-slate-900">
             {transacao ? 'Editar Transação' : 'Nova Transação'}
@@ -57,7 +67,8 @@ export default function TransacaoModal({ transacao, onClose }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Descrição</label>
             <input
@@ -161,7 +172,9 @@ export default function TransacaoModal({ transacao, onClose }) {
             ></textarea>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          </div>
+
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-white shrink-0">
             <button
               type="button"
               onClick={onClose}
