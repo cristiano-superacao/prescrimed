@@ -25,8 +25,8 @@ start "MongoDB Memory Server" cmd /k "node start-mongo-memory.js"
 timeout /t 8 /nobreak >nul
 
 REM Iniciar Backend API
-echo [4/4] ⚙️  Iniciando Backend API (porta 3000)...
-start "Backend API - Porta 3000" cmd /k "npm run dev"
+echo [4/4] ⚙️  Iniciando Backend API (porta 8000)...
+start "Backend API - Porta 8000" cmd /k "npm run dev"
 timeout /t 5 /nobreak >nul
 
 REM Iniciar Frontend React
@@ -40,7 +40,7 @@ echo ║           ✅ SISTEMA INICIADO COM SUCESSO         ║
 echo ╚═══════════════════════════════════════════════════╝
 echo.
 echo 📊 MongoDB Memory: rodando
-echo 🔧 Backend API:    http://localhost:3000
+echo 🔧 Backend API:    http://localhost:8000
 echo 🎨 Frontend App:   http://localhost:5173
 echo.
 echo 🔐 Credenciais:

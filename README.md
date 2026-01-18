@@ -98,7 +98,7 @@ cp .env.example .env
 npm start
 ```
 
-Abra [http://localhost:3000](http://localhost:3000)
+Abra [http://localhost:8000](http://localhost:8000)
 
 ### Desenvolvimento Local
 
@@ -125,7 +125,7 @@ Crie um arquivo `.env` na raiz do projeto:
 NODE_ENV=production
 
 # Servidor
-PORT=3000
+PORT=8000
 
 # Banco de Dados (Railway PostgreSQL)
 DATABASE_URL=postgresql://usuario:senha@host:5432/database
@@ -288,7 +288,7 @@ npm run create:superadmin
 
 ### Smoke Test (valida fluxo completo)
 ```bash
-# Local (requer backend rodando em localhost:3000)
+# Local (requer backend rodando em localhost:8000)
 npm run smoke:api
 
 # Railway

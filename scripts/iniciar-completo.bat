@@ -17,7 +17,7 @@ start /B node start-mongo-memory.js
 timeout /t 3 /nobreak >nul
 
 REM Iniciar Backend
-echo [3/4] Iniciando Backend (porta 3000)...
+echo [3/4] Iniciando Backend (porta 8000)...
 start /MIN cmd /k "npm run dev"
 timeout /t 3 /nobreak >nul
 
@@ -33,7 +33,7 @@ echo ║           ✓ SISTEMA INICIADO!                   ║
 echo ╚══════════════════════════════════════════════════╝
 echo.
 echo Frontend: http://localhost:5173
-echo Backend:  http://localhost:3000
+echo Backend:  http://localhost:8000
 echo.
 echo Login: superadmin@prescrimed.com
 echo Senha: super123

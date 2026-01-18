@@ -43,8 +43,8 @@ const __dirname = path.dirname(__filename);         // Diretório do arquivo atu
 // Carrega variáveis de ambiente do arquivo .env
 dotenv.config();
 
-// Define porta inicial do servidor (padrão 3000 se não especificada)
-let PORT = parseInt(process.env.PORT || '3000', 10);
+// Define porta inicial do servidor (padrão 8000 se não especificada)
+let PORT = parseInt(process.env.PORT || '8000', 10);
 
 // Cria instância do aplicativo Express
 const app = express();
@@ -496,8 +496,8 @@ function startServer(initialPort, maxAttempts = 10) {
   // Tenta iniciar servidor na porta especificada
   const srv = app.listen(PORT, '0.0.0.0', () => {
     // Callback executado quando servidor inicia com sucesso
-    console.log(`🚀 Servidor ativo na porta ${PORT}`);
-    console.log(`📍 Acesse: http://localhost:${PORT}`);
+    console.log(`🚀 Servidor ativo na porta ${srv.address().port}`);
+    console.log(`📍 Acesse: http://localhost:${srv.address().port}`);
   });
 
   // Handler de erros do servidor

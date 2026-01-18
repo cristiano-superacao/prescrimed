@@ -2,11 +2,12 @@
 
 ## ✅ Servidor está rodando!
 
-O sistema normalmente ficará ativo em: **http://localhost:3000**
+
+O sistema normalmente ficará ativo em: **http://localhost:8000**
 
 Se houver problema para acessar via `localhost` (comum em alguns ambientes Windows/proxy), use:
 
-- `http://127.0.0.1:3000`
+- `http://127.0.0.1:8000`
 
 ---
 
@@ -15,13 +16,7 @@ Se houver problema para acessar via `localhost` (comum em alguns ambientes Windo
 Execute o smoke test local:
 
 ```bash
-node test-local.js
-```
-
-Se aparecer erro de conexão (`fetch failed`), force a URL base:
-
-```bash
-set TEST_BASE_URL=http://127.0.0.1:3000
+set TEST_BASE_URL=http://127.0.0.1:8000
 node test-local.js
 ```
 
@@ -32,7 +27,7 @@ node test-local.js
 ### 1. Verificar Health Check
 Abra no navegador:
 ```
-http://localhost:3000/health
+http://localhost:8000/health
 ```
 
 Deve retornar:
@@ -47,7 +42,7 @@ Deve retornar:
 
 ### 2. Acessar a Interface
 ```
-http://localhost:3000
+http://localhost:8000
 ```
 
 Você verá a tela de login do Prescrimed com layout responsivo e profissional.
@@ -117,12 +112,12 @@ Os dados são salvos automaticamente no banco local!
 
 ### Health Check
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:8000/health
 ```
 
 ### Registrar Nova Empresa
 ```bash
-curl -X POST http://localhost:3000/api/auth/register \
+curl -X POST http://localhost:8000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "tipoSistema": "casa-repouso",
@@ -138,7 +133,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 
 ### Login
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@clinica.com",
@@ -150,13 +145,13 @@ Copie o `token` retornado para usar nas próximas requisições.
 
 ### Listar Empresas (requer autenticação)
 ```bash
-curl http://localhost:3000/api/empresas \
+curl http://localhost:8000/api/empresas \
   -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```
 
 ### Criar Empresa via API
 ```bash
-curl -X POST http://localhost:3000/api/empresas \
+curl -X POST http://localhost:8000/api/empresas \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer SEU_TOKEN_AQUI" \
   -d '{
