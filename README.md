@@ -136,9 +136,9 @@ JWT_REFRESH_SECRET=seu-refresh-secret-aqui-minimo-32-caracteres
 SESSION_TIMEOUT=8h
 
 # CORS / Frontend
-FRONTEND_URL=https://prescrimed.netlify.app
-CORS_ORIGIN=https://prescrimed.netlify.app
-ALLOWED_ORIGINS=https://outro-dominio.com,https://mais-um.com
+FRONTEND_URL=https://prescrimed.netlify.app,https://prescrimed.up.railway.app
+CORS_ORIGIN=https://prescrimed.netlify.app,https://prescrimed.up.railway.app
+ALLOWED_ORIGINS=https://prescrimed.netlify.app,https://prescrimed.up.railway.app,http://localhost:8000,http://127.0.0.1:8000,http://localhost:5173,http://127.0.0.1:5173
 
 # Seed / Deploy Inicial (TEMPORÁRIO - remova após primeiro deploy)
 FORCE_SYNC=true
@@ -237,9 +237,9 @@ Consulte [RAILWAY_SETUP.md](RAILWAY_SETUP.md) para instruções detalhadas passo
 
 5. **Configurar CORS para Frontend**
    ```
-   ALLOWED_ORIGINS=https://seu-frontend.netlify.app
-   FRONTEND_URL=https://seu-frontend.netlify.app
-   CORS_ORIGIN=https://seu-frontend.netlify.app
+   ALLOWED_ORIGINS=https://prescrimed.netlify.app,https://prescrimed.up.railway.app,http://localhost:8000,http://127.0.0.1:8000,http://localhost:5173,http://127.0.0.1:5173
+   FRONTEND_URL=https://prescrimed.netlify.app,https://prescrimed.up.railway.app
+   CORS_ORIGIN=https://prescrimed.netlify.app,https://prescrimed.up.railway.app
    ```
 
 6. **Validar Deploy**
@@ -351,10 +351,10 @@ cd client && VITE_BASE=/prescrimed/ npm run build
 
 **1. Verificar CORS no Backend:**
 ```env
-# No Railway, adicione o domínio do frontend:
-ALLOWED_ORIGINS=https://prescrimed.up.railway.app,https://prescrimed.netlify.app
-FRONTEND_URL=https://prescrimed.netlify.app
-CORS_ORIGIN=https://prescrimed.netlify.app
+# No Railway, adicione todos os domínios e localhost para testes locais:
+ALLOWED_ORIGINS=https://prescrimed.netlify.app,https://prescrimed.up.railway.app,http://localhost:8000,http://127.0.0.1:8000,http://localhost:5173,http://127.0.0.1:5173
+FRONTEND_URL=https://prescrimed.netlify.app,https://prescrimed.up.railway.app/
+CORS_ORIGIN=https://prescrimed.netlify.app,https://prescrimed.up.railway.app/
 ```
 
 **2. Verificar logs do servidor:**
