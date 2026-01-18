@@ -42,7 +42,7 @@ export const getApiUrl = () => {
   }
 
   // Em desenvolvimento local
-  return 'http://localhost:3000/api';
+  return 'http://localhost:8000/api';
 };
 
 // Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
@@ -121,7 +121,7 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
-        const response = await axios.post('/api/auth/refresh', { refreshToken });
+        const response = await api.post('/auth/refresh', { refreshToken });
         
         const { token } = response.data;
         localStorage.setItem('token', token);

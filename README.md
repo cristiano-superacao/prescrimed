@@ -124,7 +124,12 @@ Crie um arquivo `.env` na raiz do projeto:
 # Ambiente
 NODE_ENV=production
 
+# Região e Localização
+TZ=America/Sao_Paulo
+
 # Servidor
+# Em produção (Railway/Nixpacks/Cloud Run), a plataforma define PORT automaticamente.
+# Para desenvolvimento local, você pode definir uma porta fixa (ex.: 8000).
 PORT=8000
 
 # Banco de Dados (Railway PostgreSQL)
@@ -566,7 +571,13 @@ Seguimos [Conventional Commits](https://www.conventionalcommits.org/):
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
+## 📚 Documentação Adicional
 
+- [⚙️ Configuração para Região do Brasil](docs/CONFIGURACAO_BRASIL.md) - Timezone, moeda e formatos brasileiros
+- [🚂 Setup Railway](RAILWAY_SETUP.md) - Deploy na plataforma Railway
+- [📝 Changelog](CHANGELOG.md) - Histórico de versões
+
+---
 ## 🌟 Agradecimentos
 
 - [React](https://reactjs.org/)

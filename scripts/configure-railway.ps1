@@ -38,8 +38,6 @@ $clientRemoveVars = @(
     "DATABASE_URL",
     "JWT_SECRET",
     "JWT_REFRESH_SECRET",
-    "MONGODB_URI",
-    "MONGOHOST",
     "PGHOST",
     "PGPASSWORD",
     "PGDATABASE",

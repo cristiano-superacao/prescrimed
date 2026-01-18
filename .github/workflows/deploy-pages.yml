@@ -1,8 +1,6 @@
 name: Deploy GitHub Pages (client)
 
 on:
-  push:
-    branches: [ master ]
   workflow_dispatch:
 
 permissions:
@@ -45,6 +43,7 @@ jobs:
       - name: Build client for Pages
         run: |
           cd client
+          export VITE_BASE="/prescrimed/"
           npm run build
           cp dist/index.html dist/404.html
 
