@@ -42,7 +42,7 @@ export const getApiUrl = () => {
   }
 
   // Em desenvolvimento local
-  return 'http://localhost:8000/api';
+  return 'http://localhost:3000/api';
 };
 
 // Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
@@ -121,6 +121,7 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
+        // Usa o cliente "api" com baseURL correta para ambientes como GitHub Pages
         const response = await api.post('/auth/refresh', { refreshToken });
         
         const { token } = response.data;
@@ -131,8 +132,10 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Se falhar ao renovar, redireciona para login
         localStorage.clear();
-        const baseUrl = (import.meta?.env?.BASE_URL || '/').replace(/\/?$/, '/');
-        window.location.href = `${baseUrl}login`;
+        // Em apps SPA com HashRouter (ex.: GitHub Pages), garanta redirecionamento correto
+        if (window && window.location) {
+          window.location.hash = '#/login';
+        }
         return Promise.reject(refreshError);
       }
     }
