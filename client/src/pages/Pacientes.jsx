@@ -23,6 +23,16 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import { 
+  TableContainer, 
+  MobileGrid, 
+  MobileCard, 
+  TableWrapper, 
+  TableHeader, 
+  TBody, 
+  Tr, 
+  Td 
+} from '../components/common/Table';
 
 export default function Pacientes() {
   const [pacientes, setPacientes] = useState([]);
@@ -95,24 +105,30 @@ export default function Pacientes() {
     loadPacientes(searchTerm);
   };
 
-  const filteredPacientes = pacientes.filter(p => 
-    p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.cpf && p.cpf.includes(searchTerm))
-  );
+  const filteredPacientes = pacientes.filter(p => {
+    const matchesSearch = p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.cpf && p.cpf.includes(searchTerm));
+    const matchesStatus = statusFilter ? p.status === statusFilter : true;
+    return matchesSearch && matchesStatus;
+  });
 
+  const novosMes = pacientes.filter(p => {
+    if (!p.createdAt) return false;
+    const date = new Date(p.createdAt);
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }).length;
+  const pacientesComNascimento = pacientes.filter(p => p.dataNascimento);
+  const idadeMedia = pacientesComNascimento.length > 0
+    ? Math.round(pacientesComNascimento.reduce((acc, p) => {
+        const age = new Date().getFullYear() - new Date(p.dataNascimento).getFullYear();
+        return acc + age;
+      }, 0) / pacientesComNascimento.length)
+    : 0;
   const stats = {
     total: pacientes.length,
-    novosMes: pacientes.filter(p => {
-      if (!p.createdAt) return false;
-      const date = new Date(p.createdAt);
-      const now = new Date();
-      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-    }).length,
-    idadeMedia: pacientes.length > 0 ? Math.round(pacientes.reduce((acc, p) => {
-      if (!p.dataNascimento) return acc;
-      const age = new Date().getFullYear() - new Date(p.dataNascimento).getFullYear();
-      return acc + age;
-    }, 0) / pacientes.length) : 0
+    novosMes,
+    idadeMedia
   };
 
   return (
@@ -177,40 +193,98 @@ export default function Pacientes() {
         </button>
       </SearchFilterBar>
 
-      <div className="card overflow-hidden">
+      <TableContainer title="Residentes">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredPacientes.length > 0 ? (
-          <div className="overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-            <table className="w-full min-w-[760px]">
-              <thead className="bg-slate-50 border-b border-slate-100 whitespace-nowrap">
-                <tr>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">CPF</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nascimento</th>
-                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Telefone</th>
-                  <th className="px-4 sm:px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+          <>
+            {/* Mobile */}
+            <MobileGrid>
+              {filteredPacientes.map((paciente) => (
+                <MobileCard key={paciente.id || paciente._id}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm">
+                        {paciente.nome.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900 dark:text-gray-100">{paciente.nome}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">CPF: {paciente.cpf || '-'}</p>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-gray-400 mt-1">
+                          <Calendar size={12} />
+                          {paciente.dataNascimento ? new Date(paciente.dataNascimento).toLocaleDateString('pt-BR') : '-'}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-gray-400">
+                      {paciente.status === 'inativo' ? 'Inativo' : 'Ativo'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-slate-600 dark:text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <Phone size={12} />
+                      <span>{paciente.telefone || '-'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail size={12} />
+                      <span>{paciente.email || '-'}</span>
+                    </div>
+                    {paciente.endereco && (
+                      <div className="flex items-center gap-2 col-span-2">
+                        <MapPin size={12} />
+                        <span className="line-clamp-1">{paciente.endereco}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-end gap-2 mt-3">
+                    <button
+                      onClick={() => handleViewHistorico(paciente)}
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                      title="Ver Histórico"
+                    >
+                      <FileText size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleEdit(paciente)}
+                      className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                      title="Editar"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(paciente.id || paciente._id)}
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Excluir"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </MobileCard>
+              ))}
+            </MobileGrid>
+
+            {/* Desktop */}
+            <TableWrapper>
+              <TableHeader columns={["Nome","CPF","Nascimento","Telefone","Ações"]} />
+              <TBody>
                 {filteredPacientes.map((paciente) => (
-                  <tr key={paciente.id || paciente._id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                  <Tr key={paciente.id || paciente._id}>
+                    <Td>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
                           {paciente.nome.charAt(0)}
                         </div>
-                        <span className="font-medium text-slate-900">{paciente.nome}</span>
+                        <span className="font-medium text-slate-900 dark:text-gray-100">{paciente.nome}</span>
                       </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{paciente.cpf}</td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
-                      {new Date(paciente.dataNascimento).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{paciente.telefone}</td>
-                    <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
+                    </Td>
+                    <Td className="text-sm text-slate-600 dark:text-gray-300">{paciente.cpf || '-'}</Td>
+                    <Td className="text-sm text-slate-600 dark:text-gray-300">
+                      {paciente.dataNascimento ? new Date(paciente.dataNascimento).toLocaleDateString('pt-BR') : '-'}
+                    </Td>
+                    <Td className="text-sm text-slate-600 dark:text-gray-300">{paciente.telefone || '-'}</Td>
+                    <Td className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleViewHistorico(paciente)}
@@ -234,12 +308,12 @@ export default function Pacientes() {
                           <Trash2 size={16} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TBody>
+            </TableWrapper>
+          </>
         ) : (
           <EmptyState
             icon={Users}
@@ -249,7 +323,7 @@ export default function Pacientes() {
             onAction={() => setModalOpen(true)}
           />
         )}
-      </div>
+      </TableContainer>
 
       {modalOpen && (
         <PacienteModal
