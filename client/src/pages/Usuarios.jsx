@@ -180,8 +180,88 @@ export default function Usuarios() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredUsuarios.length > 0 ? (
-          <div className="overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-            <table className="w-full min-w-[960px]">
+          <>
+            {/* Mobile: cards */}
+            <div className="md:hidden p-4 sm:p-6 space-y-3">
+              {filteredUsuarios.map((usuario) => (
+                <div
+                  key={usuario.id}
+                  className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
+                    density === 'compact' ? 'p-3' : 'p-4'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm shrink-0">
+                      {usuario.nome.charAt(0).toUpperCase()}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-900 truncate">{usuario.nome}</p>
+                          <p className="text-sm text-slate-600 truncate">{usuario.email}</p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span
+                            className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
+                              usuario.role === 'admin' || usuario.role === 'superadmin'
+                                ? 'bg-purple-50 text-purple-700 border-purple-100'
+                                : 'bg-slate-100 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            {roleLabel(usuario.role)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span
+                          className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
+                            usuario.ativo
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                              : 'bg-red-50 text-red-700 border-red-100'
+                          }`}
+                        >
+                          {usuario.ativo ? 'Ativo' : 'Inativo'}
+                        </span>
+
+                        {usuario.crm ? (
+                          <span className="font-mono bg-slate-100 px-2.5 py-1 rounded-full text-xs text-slate-700 border border-slate-200">
+                            CRM: {usuario.crm}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400">CRM: -</span>
+                        )}
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(usuario)}
+                          className="px-3 py-2 text-slate-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors text-sm font-semibold"
+                        >
+                          Editar
+                        </button>
+                        {usuario.id !== user.id && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(usuario.id)}
+                            className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
+                          >
+                            Excluir
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
+              <table className="w-full min-w-[960px]">
               <thead className="bg-slate-50 border-b border-slate-200 whitespace-nowrap">
                 <tr>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -270,8 +350,9 @@ export default function Usuarios() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          </>
         ) : (
           <EmptyState
             icon={Search}

@@ -253,8 +253,83 @@ export default function Prescricoes() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredPrescricoes.length > 0 ? (
-          <div className="overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-            <table className="w-full min-w-[1100px]">
+          <>
+            {/* Mobile: cards */}
+            <div className="md:hidden p-4 sm:p-6 space-y-3">
+              {filteredPrescricoes.map((prescricao) => (
+                <div
+                  key={prescricao.id || prescricao._id}
+                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900 truncate">
+                        {prescricao.pacienteNome || 'Paciente'}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {new Date(prescricao.createdAt).toLocaleDateString('pt-BR')} •{' '}
+                        {new Date(prescricao.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border shrink-0 ${
+                        prescricao.status === 'ativa'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-red-50 text-red-700 border-red-100'
+                      }`}
+                    >
+                      {prescricao.status === 'ativa' ? (
+                        <><CheckCircle2 size={12} /> Ativa</>
+                      ) : (
+                        <><X size={12} /> Cancelada</>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        prescricao.tipo === 'controlado'
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}
+                    >
+                      {prescricao.tipo === 'controlado' ? 'Controlado' : 'Comum'}
+                    </span>
+
+                    <span className="text-xs text-slate-600">
+                      {prescricao.medicamentos && prescricao.medicamentos.length > 0 ? (
+                        <>
+                          <span className="font-medium">{prescricao.medicamentos[0].nome}</span>
+                          {prescricao.medicamentos.length > 1 && (
+                            <span className="text-slate-400"> +{prescricao.medicamentos.length - 1} outros</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-slate-400">Sem medicamentos</span>
+                      )}
+                    </span>
+                  </div>
+
+                  {prescricao.status === 'ativa' && (
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleCancelar(prescricao.id || prescricao._id)}
+                        className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
+              <table className="w-full min-w-[1100px]">
               <thead className="bg-slate-50 border-b border-slate-100 whitespace-nowrap">
                 <tr>
                   <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Paciente</th>
@@ -331,8 +406,9 @@ export default function Prescricoes() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          </>
         ) : (
           <EmptyState
             icon={Inbox}

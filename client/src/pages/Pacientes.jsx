@@ -197,8 +197,64 @@ export default function Pacientes() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredPacientes.length > 0 ? (
-          <div className="overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
-            <table className="w-full min-w-[760px]">
+          <>
+            {/* Mobile: cards */}
+            <div className="md:hidden p-4 sm:p-6 space-y-3">
+              {filteredPacientes.map((paciente) => (
+                <div
+                  key={paciente.id || paciente._id}
+                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm shrink-0">
+                      {paciente.nome.charAt(0)}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-slate-900 truncate">{paciente.nome}</p>
+                      <div className="mt-1 text-sm text-slate-600 space-y-1">
+                        <p className="truncate">CPF: {paciente.cpf || '-'}</p>
+                        <p>
+                          Nascimento:{' '}
+                          {paciente.dataNascimento
+                            ? new Date(paciente.dataNascimento).toLocaleDateString('pt-BR')
+                            : '-'}
+                        </p>
+                        <p className="truncate">Telefone: {paciente.telefone || '-'}</p>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleViewHistorico(paciente)}
+                          className="px-3 py-2 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors text-sm font-semibold"
+                        >
+                          Histórico
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(paciente)}
+                          className="px-3 py-2 text-slate-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors text-sm font-semibold"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(paciente.id || paciente._id)}
+                          className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto custom-scrollbar -mx-4 sm:-mx-6 md:-mx-8">
+              <table className="w-full min-w-[760px]">
               <thead className="bg-slate-50 border-b border-slate-100 whitespace-nowrap">
                 <tr>
                   <th className="px-4 sm:px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
@@ -252,8 +308,9 @@ export default function Pacientes() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          </>
         ) : (
           <EmptyState
             icon={Users}
