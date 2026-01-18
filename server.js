@@ -209,11 +209,29 @@ const healthCors = cors({ origin: true, methods: ['GET', 'OPTIONS'] });
 app.options('/health', healthCors);
 app.get('/health', healthCors, (req, res) => {
   console.log('🔎 [HEALTH] Requisição recebida em /health');
+  // Log detalhado das variáveis essenciais para debug em produção
+  console.log('[HEALTH] Variáveis essenciais:', {
+    PORT: process.env.PORT,
+    DATABASE_URL: process.env.DATABASE_URL,
+    FRONTEND_URL: process.env.FRONTEND_URL,
+    CORS_ORIGIN: process.env.CORS_ORIGIN,
+    NODE_ENV: process.env.NODE_ENV,
+    JWT_SECRET: !!process.env.JWT_SECRET,
+    JWT_REFRESH_SECRET: !!process.env.JWT_REFRESH_SECRET
+  });
+  // Sempre responde status ok, mesmo se o banco estiver "connecting"
   res.status(200).json({ 
     status: 'ok',                              // Status do servidor
     uptime: process.uptime(),                  // Tempo ativo em segundos
     database: app.locals.dbReady ? 'connected' : 'connecting', // Status do banco
-    timestamp: new Date().toISOString()        // Timestamp atual
+    timestamp: new Date().toISOString(),       // Timestamp atual
+    env: {
+      PORT: process.env.PORT,
+      DATABASE_URL: !!process.env.DATABASE_URL,
+      FRONTEND_URL: process.env.FRONTEND_URL,
+      CORS_ORIGIN: process.env.CORS_ORIGIN,
+      NODE_ENV: process.env.NODE_ENV
+    }
   });
 });
 
@@ -221,11 +239,29 @@ app.get('/health', healthCors, (req, res) => {
 app.options('/api/health', healthCors);
 app.get('/api/health', healthCors, (req, res) => {
   console.log('🔎 [HEALTH] Requisição recebida em /api/health');
+  // Log detalhado das variáveis essenciais para debug em produção
+  console.log('[HEALTH] Variáveis essenciais:', {
+    PORT: process.env.PORT,
+    DATABASE_URL: process.env.DATABASE_URL,
+    FRONTEND_URL: process.env.FRONTEND_URL,
+    CORS_ORIGIN: process.env.CORS_ORIGIN,
+    NODE_ENV: process.env.NODE_ENV,
+    JWT_SECRET: !!process.env.JWT_SECRET,
+    JWT_REFRESH_SECRET: !!process.env.JWT_REFRESH_SECRET
+  });
+  // Sempre responde status ok, mesmo se o banco estiver "connecting"
   res.status(200).json({ 
     status: 'ok',
     uptime: process.uptime(),
     database: app.locals.dbReady ? 'connected' : 'connecting',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    env: {
+      PORT: process.env.PORT,
+      DATABASE_URL: !!process.env.DATABASE_URL,
+      FRONTEND_URL: process.env.FRONTEND_URL,
+      CORS_ORIGIN: process.env.CORS_ORIGIN,
+      NODE_ENV: process.env.NODE_ENV
+    }
   });
 });
 
