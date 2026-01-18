@@ -39,6 +39,22 @@ export default function Estoque() {
     loadStats();
   }, [activeTab]);
 
+  useEffect(() => {
+    if (!modalOpen && !showHistorico) return;
+
+    const onKeyDown = (event) => {
+      if (event.key !== 'Escape') return;
+      if (showHistorico) {
+        setShowHistorico(false);
+        return;
+      }
+      closeModal();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [modalOpen, showHistorico]);
+
   const loadItems = async () => {
     setLoading(true);
     try {
@@ -144,11 +160,22 @@ export default function Estoque() {
 
     const isMed = activeTab === 'medicamentos';
     const isMovimentacao = modalOpen === 'entrada' || modalOpen === 'saida';
+    const formId = isMovimentacao ? 'estoque-movimentacao-form' : 'estoque-cadastro-form';
 
     return (
-      <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-[51]">
+      <div
+        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) closeModal();
+        }}
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0 bg-white/80 backdrop-blur">
             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
               {modalOpen === 'cadastrar' && <Plus className="text-primary-600" />}
               {modalOpen === 'entrada' && <ArrowDownCircle className="text-emerald-600" />}
@@ -157,14 +184,19 @@ export default function Estoque() {
               {modalOpen === 'cadastrar' ? `Novo ${isMed ? 'Medicamento' : 'Alimento'}` :
                modalOpen === 'entrada' ? 'Registrar Entrada' : 'Registrar Saída'}
             </h3>
-            <button onClick={closeModal} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+            <button
+              type="button"
+              aria-label="Fechar modal"
+              onClick={closeModal}
+              className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+            >
               <X size={20} className="text-slate-400" />
             </button>
           </div>
           
-          <div className="p-6">
+          <div className="p-6 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
             {isMovimentacao ? (
-              <form onSubmit={handleMovimentacao} className="space-y-4">
+              <form id={formId} onSubmit={handleMovimentacao} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Selecione o Item</label>
                   <select 
@@ -230,22 +262,9 @@ export default function Estoque() {
                   ></textarea>
                 </div>
 
-                <div className="pt-4 flex justify-end gap-3">
-                  <button type="button" onClick={closeModal} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancelar</button>
-                  <button 
-                    type="submit" 
-                    className={`px-6 py-2 rounded-lg font-bold text-white shadow-lg transition-all transform hover:-translate-y-0.5 ${
-                      modalOpen === 'entrada' 
-                        ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' 
-                        : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'
-                    }`}
-                  >
-                    Confirmar {modalOpen === 'entrada' ? 'Entrada' : 'Saída'}
-                  </button>
-                </div>
               </form>
             ) : (
-              <form onSubmit={handleCadastrar} className="space-y-4">
+              <form id={formId} onSubmit={handleCadastrar} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Item</label>
                   <input 
@@ -338,13 +357,38 @@ export default function Estoque() {
                   </div>
                 )}
 
-                <div className="pt-4 flex justify-end gap-3">
-                  <button type="button" onClick={closeModal} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancelar</button>
-                  <button type="submit" className="px-6 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all transform hover:-translate-y-0.5">
-                    Salvar Cadastro
-                  </button>
-                </div>
               </form>
+            )}
+          </div>
+
+          <div className="p-6 border-t border-slate-100 flex justify-end gap-3 shrink-0 bg-white">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium"
+            >
+              Cancelar
+            </button>
+            {isMovimentacao ? (
+              <button
+                type="submit"
+                form={formId}
+                className={`px-6 py-2 rounded-lg font-bold text-white shadow-lg transition-all transform hover:-translate-y-0.5 ${
+                  modalOpen === 'entrada'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
+                    : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'
+                }`}
+              >
+                Confirmar {modalOpen === 'entrada' ? 'Entrada' : 'Saída'}
+              </button>
+            ) : (
+              <button
+                type="submit"
+                form={formId}
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all transform hover:-translate-y-0.5"
+              >
+                Salvar Cadastro
+              </button>
             )}
           </div>
         </div>
@@ -575,8 +619,18 @@ export default function Estoque() {
 
       {/* Modal Histórico de Movimentações */}
       {showHistorico && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowHistorico(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -590,6 +644,8 @@ export default function Estoque() {
               <button
                 onClick={() => setShowHistorico(false)}
                 className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                type="button"
+                aria-label="Fechar modal"
               >
                 <X size={20} className="text-slate-400" />
               </button>

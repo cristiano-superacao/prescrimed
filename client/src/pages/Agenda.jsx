@@ -44,6 +44,17 @@ export default function Agenda() {
     loadAgendamentos();
   }, []);
 
+  useEffect(() => {
+    if (!modalOpen) return;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setModalOpen(false);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [modalOpen]);
+
   const loadAgendamentos = async () => {
     try {
       setLoading(true);
@@ -372,8 +383,18 @@ export default function Agenda() {
 
       {/* Modal de Novo/Editar Agendamento */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-start bg-slate-50/50 shrink-0">
               <div>
                 <h3 className="font-bold text-xl text-slate-800">
@@ -384,6 +405,8 @@ export default function Agenda() {
               <button 
                 onClick={() => setModalOpen(false)} 
                 className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition"
+                type="button"
+                aria-label="Fechar modal"
               >
                 <X size={24} />
               </button>
