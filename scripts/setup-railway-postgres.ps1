@@ -1,100 +1,8 @@
-# === Auto-configuração Railway (DATABASE_URL) ===
-param(
-    [string] $BackendServiceName = "prescrimed-backend",
-    [string] $PostgresServiceName = "Postgres",
-    [switch] $AutoConfigure
-)
-
-function Get-RailwayCommand {
-    $railway = Get-Command railway -ErrorAction SilentlyContinue
-    if ($railway) { return "railway" }
-    $npx = Get-Command npx -ErrorAction SilentlyContinue
-    if ($npx) { return "npx railway" }
-    throw "Railway CLI não encontrado. Instale com: npm i -g railway ou use Node.js + npx."
-}
-
-function Invoke-Railway {
-    param(
-        [Parameter(Mandatory=$true)][string] $Args,
-        [switch] $Quiet
-    )
-    $cmd = Get-RailwayCommand
-    Write-Host "→ $cmd $Args" -ForegroundColor DarkGray
-    $proc = Start-Process powershell -PassThru -NoNewWindow -ArgumentList "-Command", "$cmd $Args"
-    $proc.WaitForExit()
-    if (-not $Quiet) { Write-Host "   ExitCode: $($proc.ExitCode)" -ForegroundColor DarkGray }
-    return $proc.ExitCode
-}
-
-function Ensure-RailwayLogin {
-    Write-Host "Validando login no Railway..." -ForegroundColor Cyan
-    $exit = Invoke-Railway -Args "whoami" -Quiet
-    if ($exit -ne 0) {
-        Write-Host "Abrindo fluxo de login do Railway..." -ForegroundColor Yellow
-        Start-Process powershell -ArgumentList "-NoExit","-Command","$(Get-RailwayCommand) login" | Out-Null
-        Write-Host "Finalize o login no navegador e pressione Enter aqui para continuar." -ForegroundColor Yellow
-        Read-Host | Out-Null
-    }
-}
-
-function Ensure-ProjectLink {
-    Write-Host "Vinculando diretório ao projeto do Railway (se necessário)..." -ForegroundColor Cyan
-    $exit = Invoke-Railway -Args "status" -Quiet
-    if ($exit -ne 0) {
-        Invoke-Railway -Args "project list" | Out-Null
-        Write-Host "Se o projeto 'prescrimed' aparecer na lista acima, escolha-o na próxima etapa." -ForegroundColor Yellow
-        Invoke-Railway -Args "link" | Out-Null
-    }
-}
-
-function Get-PostgresUrl {
-    Write-Host "Obtendo URL do Postgres (service: $PostgresServiceName)..." -ForegroundColor Cyan
-    $cmd = Get-RailwayCommand
-    $ps = Start-Process powershell -PassThru -NoNewWindow -ArgumentList "-Command", "$cmd variables --service \"$PostgresServiceName\"" -RedirectStandardOutput "$env:TEMP\railway_vars.txt"
-    $ps.WaitForExit()
-    $text = Get-Content "$env:TEMP\railway_vars.txt" -Raw -ErrorAction SilentlyContinue
-    if (-not $text) { throw "Não foi possível ler variáveis do serviço Postgres." }
-    $lines = $text -split "`r?`n"
-    $url = ($lines | Where-Object { $_ -match '^DATABASE_URL=' }) -replace '^DATABASE_URL=',''
-    if (-not $url -or $url.Trim() -eq '') {
-        $url = ($lines | Where-Object { $_ -match '^POSTGRES_URL=' }) -replace '^POSTGRES_URL=',''
-    }
-    if (-not $url -or $url.Trim() -eq '') { throw "DATABASE_URL não encontrado nas variáveis do serviço Postgres." }
-    return $url.Trim()
-}
-
-function Set-BackendDatabaseUrl([string] $url) {
-    Write-Host "Configurando DATABASE_URL no backend ($BackendServiceName)..." -ForegroundColor Cyan
-    $quoted = '"' + $url.Replace('"','\"') + '"'
-    Invoke-Railway -Args "variables set --service \"$BackendServiceName\" DATABASE_URL $quoted" | Out-Null
-}
-
-function Redeploy-Backend {
-    Write-Host "Reimplantando serviço do backend..." -ForegroundColor Cyan
-    Invoke-Railway -Args "up" | Out-Null
-}
-
-if ($AutoConfigure) {
-    try {
-        Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-        Write-Host "AUTO-CONFIG: DATABASE_URL (Railway)" -ForegroundColor Cyan
-        Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-        Ensure-RailwayLogin
-        Ensure-ProjectLink
-        $pgUrl = Get-PostgresUrl
-        Write-Host "✓ Postgres URL obtida" -ForegroundColor Green
-        Set-BackendDatabaseUrl -url $pgUrl
-        Write-Host "✓ DATABASE_URL definida no backend" -ForegroundColor Green
-        Redeploy-Backend
-        Write-Host "✓ Backend reiniciado (aguarde 1-2 min)" -ForegroundColor Green
-        Write-Host "Teste: https://prescrimed-backend-production.up.railway.app/health" -ForegroundColor Yellow
-    }
-    catch {
-        Write-Host "Erro na auto-configuração: $($_.Exception.Message)" -ForegroundColor Red
-    }
-}
-# Script para configurar PostgreSQL no Railway
-# Execute este script APÓS adicionar PostgreSQL no dashboard do Railway
+# Script para configurar PostgreSQL no Railway (criação de empresa/admin e validações)
+# Observação: este script não altera variáveis do Railway.
+# Para automatizar a configuração do DATABASE_URL (Postgres -> Backend), use:
+#   powershell -ExecutionPolicy Bypass -File scripts/railway-auto-config.ps1
+# Depois rode este script para criar empresa e administrador.
 
 param(
     [string]$Email = "admin@meudominio.com",
@@ -118,7 +26,7 @@ try {
     $health = Invoke-RestMethod -Uri "$BackendUrl/health" -ErrorAction Stop
     Write-Host "   ✅ Backend online - Uptime: $([math]::Round($health.uptime, 2))s" -ForegroundColor Green
     
-    if ($health.DATABASE_URL -eq $true) {
+    if ($health.env.DATABASE_URL -eq $true) {
         Write-Host "   ✅ PostgreSQL configurado!" -ForegroundColor Green
     } else {
         Write-Host "   ⚠️  SQLite detectado - PostgreSQL ainda não configurado" -ForegroundColor Yellow

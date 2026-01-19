@@ -2,14 +2,12 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  // Base dinâmico:
-  // - Railway/Netlify: '/' (raiz)
-  // - GitHub Pages: '/prescrimed/'
-  // Padrão para desenvolvimento/local deve ser '/'.
-  // Em produção (GitHub Pages), defina VITE_BASE='/prescrimed/' via .env.production.
-  base: process.env.VITE_BASE || '/',
+  // O frontend precisa funcionar tanto em subpath (GitHub Pages)
+  // quanto em root (Railway/Netlify). Para isso, em build usamos base RELATIVO.
+  // No dev server, usamos '/' para não quebrar HMR.
+  base: command === 'serve' ? '/' : './',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -55,4 +53,4 @@ export default defineConfig({
     host: '0.0.0.0',
     strictPort: false,
   }
-})
+}))

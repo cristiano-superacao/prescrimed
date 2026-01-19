@@ -43,15 +43,13 @@ import BackendStatusMonitor from './components/BackendStatusMonitor'; // Monitor
  * @returns {JSX.Element} Estrutura completa de rotas da aplicação
  */
 function App() {
-  const basename = import.meta.env.BASE_URL || '/';
-
   return (
     <>
       {/* Monitor de status da API - mostra alerta se backend estiver offline */}
       <BackendStatusMonitor />
       
       {/* Configuração do roteador com flags de compatibilidade para React Router v7 */}
-      <Router basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           {/* ===== ROTAS PÚBLICAS (sem autenticação) ===== */}
           <Route path="/login" element={<Login />} /> {/* Página de login */}
