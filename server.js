@@ -96,6 +96,10 @@ async function connectDB() {
     await sequelize.authenticate();
     console.log('✅ Banco de dados conectado com sucesso');
 
+    // Marca banco como pronto imediatamente após autenticar
+    // Evita alerta prolongado de "Banco Inicializando" no frontend
+    app.locals.dbReady = true;
+
     // Em PostgreSQL, ENUM não aceita novos valores sem ALTER TYPE.
     // Para manter compatibilidade com bancos já existentes no Railway,
     // adiciona (se necessário) as novas funções no enum de usuarios.role.
@@ -145,10 +149,21 @@ async function connectDB() {
      * Cria/atualiza tabelas baseado nos modelos Sequelize
      */
     if (process.env.NODE_ENV !== 'production') {
-      // DESENVOLVIMENTO: force: false evita recriar tabelas a cada restart
-      // Isso previne perda de dados durante desenvolvimento
-      await sequelize.sync({ force: false, alter: false });
-      console.log('✅ Tabelas sincronizadas (modo desenvolvimento)');
+      // DESENVOLVIMENTO: detecta schema desatualizado (ex.: nova coluna 'tipo' em EstoqueItens)
+      let devAlter = false;
+      try {
+        const qi = sequelize.getQueryInterface();
+        const cols = await qi.describeTable('EstoqueItens');
+        if (!cols?.tipo) {
+          console.log("🔧 Schema dev desatualizado (faltando coluna 'tipo' em EstoqueItens) - aplicando alter...");
+          devAlter = true;
+        }
+      } catch {
+        // Se tabela não existir ainda, cria com alter
+        devAlter = true;
+      }
+      await sequelize.sync({ force: false, alter: devAlter });
+      console.log(`✅ Tabelas sincronizadas (modo desenvolvimento${devAlter ? ' com ALTER' : ''})`);
     } else {
       // PRODUÇÃO: usa alter apenas se FORCE_SYNC=true
       // Útil para primeira implantação ou atualizações de schema
@@ -181,7 +196,7 @@ async function connectDB() {
       }
     }
     
-    // Marca banco como pronto
+    // Garante flag de pronto após sincronização
     app.locals.dbReady = true;
 
     // Seed opcional (útil no primeiro deploy do Railway)

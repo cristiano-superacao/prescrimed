@@ -7,7 +7,9 @@ export default defineConfig({
   // Base dinâmico:
   // - Railway/Netlify: '/' (raiz)
   // - GitHub Pages: '/prescrimed/'
-  base: process.env.VITE_BASE || '/prescrimed/',
+  // Padrão para desenvolvimento/local deve ser '/'.
+  // Em produção (GitHub Pages), defina VITE_BASE='/prescrimed/' via .env.production.
+  base: process.env.VITE_BASE || '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
