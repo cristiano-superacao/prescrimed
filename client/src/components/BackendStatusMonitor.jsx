@@ -21,6 +21,14 @@ export default function BackendStatusMonitor() {
         data = null;
       }
 
+      // Se /health não retorna JSON (ex.: caiu no frontend estático), trate como offline
+      if (response.ok && !data) {
+        setStatus('offline');
+        setDbStatus(null);
+        setShowAlert(true);
+        return;
+      }
+
       // Alguns ambientes retornam 503 quando o banco não está pronto
       if (response.status === 503) {
         setStatus('degraded');

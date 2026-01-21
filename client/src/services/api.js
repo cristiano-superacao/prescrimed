@@ -24,10 +24,26 @@ export const getApiUrl = () => {
 
   // Se VITE_API_URL estiver definida, usa ela (prioridade máxima)
   if (import.meta.env.VITE_API_URL) {
-    if (isHostedProd && isRailwayHost && isLocalhostUrl(import.meta.env.VITE_API_URL)) {
+    const value = import.meta.env.VITE_API_URL;
+
+    // Em Railway, se estivermos num domínio que NÃO é o backend,
+    // usar '/api' (ou URL na mesma origem) cai no serviço de frontend e gera 405.
+    const looksSameOriginApi = (() => {
+      try {
+        if (typeof value !== 'string') return false;
+        if (value.startsWith('/')) return true; // relativo => mesma origem
+        return new URL(value).origin === window.location.origin;
+      } catch {
+        return false;
+      }
+    })();
+
+    if (isHostedProd && isRailwayHost && looksSameOriginApi && !isOnDefaultBackendHost) {
+      console.warn('⚠️ Ignorando VITE_API_URL na mesma origem (domínio do frontend). Usando backend Railway padrão para evitar 405 em /api/*');
+    } else if (isHostedProd && isRailwayHost && isLocalhostUrl(value)) {
       console.warn('⚠️ Ignorando VITE_API_URL apontando para localhost em produção Railway.');
     } else {
-      return import.meta.env.VITE_API_URL;
+      return value;
     }
   }
 
@@ -37,7 +53,24 @@ export const getApiUrl = () => {
       console.warn('⚠️ Ignorando VITE_BACKEND_ROOT apontando para localhost em produção Railway.');
     } else {
       const root = import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
-      return `${root}/api`;
+
+      // Se o frontend está hospedado num domínio Railway diferente do backend,
+      // e VITE_BACKEND_ROOT foi configurado como o mesmo domínio do frontend,
+      // então bater em `${root}/api` vai atingir o serviço de frontend (static) e gerar 405.
+      // Neste caso, ignoramos esse root e usamos o fallback público do backend.
+      const sameOriginRoot = (() => {
+        try {
+          return new URL(root).origin === window.location.origin;
+        } catch {
+          return false;
+        }
+      })();
+
+      if (isHostedProd && isRailwayHost && sameOriginRoot && !isOnDefaultBackendHost) {
+        console.warn('⚠️ VITE_BACKEND_ROOT aponta para o domínio do frontend. Usando backend Railway padrão para evitar 405 em /api/*');
+      } else {
+        return `${root}/api`;
+      }
     }
   }
 
@@ -48,12 +81,14 @@ export const getApiUrl = () => {
       return '/api';
     }
 
-    // Em Railway com frontend integrado, use a mesma origem
+    // Em Railway: por padrão, ASSUMA serviços separados.
+    // Usar '/api' na mesma origem só funciona se o domínio estiver no backend.
+    // Caso contrário, cai no serviço de frontend e retorna 405/404.
     if (isRailwayHost) {
-      return '/api';
+      return DEFAULT_RAILWAY_API;
     }
 
-    // Caso contrário, use o backend público padrão no Railway
+    // Caso contrário (ex.: GitHub Pages), use o backend público padrão no Railway
     console.warn('⚠️ VITE_* não configurada. Usando fallback para Railway backend público.');
     return DEFAULT_RAILWAY_API;
   }
@@ -66,17 +101,62 @@ export const getApiUrl = () => {
 export const getApiRootUrl = () => {
   // Prioridade 1: variável explícita
   if (import.meta.env.VITE_BACKEND_ROOT) {
-    return import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
+    const root = import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
+    const isHostedProd = import.meta.env.PROD && (
+      window.location.hostname.includes('railway.app') ||
+      window.location.hostname.includes('github.io')
+    );
+    const isRailwayHost = window.location.hostname.includes('railway.app');
+    const defaultBackendHost = new URL(DEFAULT_RAILWAY_ROOT).hostname;
+    const isOnDefaultBackendHost = window.location.hostname === defaultBackendHost;
+
+    const sameOriginRoot = (() => {
+      try {
+        return new URL(root).origin === window.location.origin;
+      } catch {
+        return false;
+      }
+    })();
+
+    if (isHostedProd && isRailwayHost && sameOriginRoot && !isOnDefaultBackendHost) {
+      // VITE_BACKEND_ROOT está apontando para o frontend; use o backend padrão.
+      return DEFAULT_RAILWAY_ROOT;
+    }
+
+    return root;
   }
 
   // Prioridade 2: derivar de VITE_API_URL
   if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL.replace(/\/api$/, '');
+    const value = import.meta.env.VITE_API_URL;
+    const isHostedProd = import.meta.env.PROD && (
+      window.location.hostname.includes('railway.app') ||
+      window.location.hostname.includes('github.io')
+    );
+    const isRailwayHost = window.location.hostname.includes('railway.app');
+    const defaultBackendHost = new URL(DEFAULT_RAILWAY_ROOT).hostname;
+    const isOnDefaultBackendHost = window.location.hostname === defaultBackendHost;
+
+    // Se VITE_API_URL é relativo (ex.: '/api') em Railway e não estamos no backend,
+    // isso aponta para o frontend. Use o backend padrão.
+    if (
+      isHostedProd &&
+      isRailwayHost &&
+      typeof value === 'string' &&
+      value.startsWith('/') &&
+      !isOnDefaultBackendHost
+    ) {
+      return DEFAULT_RAILWAY_ROOT;
+    }
+
+    return value.replace(/\/api$/, '');
   }
 
   // Fallback: tentar derivar do getApiUrl
   const base = getApiUrl();
   if (base === '/api') return '';
+
+  if (base === DEFAULT_RAILWAY_API) return DEFAULT_RAILWAY_ROOT;
   
   return base.replace(/\/api$/, '');
 };
