@@ -333,16 +333,18 @@ const corsOriginEnv = (process.env.CORS_ORIGIN || '').trim();
 const baseOrigins = [
   'http://localhost:5173',  // Vite dev server (frontend em desenvolvimento)
   'http://localhost:3000',  // Backend local
-  'https://prescrimed.netlify.app',  // Frontend em produção (Netlify)
-  'https://precrimed.netlify.app',   // Variação de URL
-  'https://prescrimer.netlify.app',  // Variação de URL
-  // Railway frontend (quando o React estiver hospedado em um serviço separado)
+  // Railway frontend (domínio principal em produção)
   'https://prescrimed.up.railway.app',
+  'https://prescrimed-production.up.railway.app',
+  // Railway backend (API em produção)
+  'https://prescrimed-backend-production.up.railway.app',
+  // Netlify (hospedagem alternativa)
+  'https://prescrimed.netlify.app',
+  'https://precrimed.netlify.app',
+  'https://prescrimer.netlify.app',
   // GitHub Pages (hospedagem alternativa)
   'https://cristiano-superacao.github.io',
   'https://cristiano-superacao.github.io/prescrimed',
-  // Railway backend (API em produção)
-  'https://prescrimed-backend-production.up.railway.app',
   process.env.FRONTEND_URL, // URL customizada via variável de ambiente
   process.env.URL_FRONTEND,
   corsOriginEnv || null,
