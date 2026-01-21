@@ -133,18 +133,17 @@ async function connectDB() {
           await qi.sequelize.query(
             `DO $$
             BEGIN
-              IF EXISTS (SELECT 1 FROM pg_type WHERE typname = :typeName) AND
+              IF EXISTS (SELECT 1 FROM pg_type WHERE typname = '${enumTypeName}') AND
                  NOT EXISTS (
                    SELECT 1
                    FROM pg_type t
                    JOIN pg_enum e ON t.oid = e.enumtypid
-                   WHERE t.typname = :typeName AND e.enumlabel = :value
+                   WHERE t.typname = '${enumTypeName}' AND e.enumlabel = '${value}'
                  )
               THEN
-                EXECUTE format('ALTER TYPE %I ADD VALUE %L', :typeName, :value);
+                EXECUTE format('ALTER TYPE %I ADD VALUE %L', '${enumTypeName}', '${value}');
               END IF;
-            END $$;`,
-            { replacements: { typeName: enumTypeName, value } }
+            END $$;`
           );
         }
       }

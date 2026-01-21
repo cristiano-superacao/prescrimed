@@ -11,7 +11,7 @@ const FinanceiroTransacao = sequelize.define('FinanceiroTransacao', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'Empresas',
+      model: 'empresas',
       key: 'id'
     }
   },
@@ -19,7 +19,7 @@ const FinanceiroTransacao = sequelize.define('FinanceiroTransacao', {
     type: DataTypes.UUID,
     allowNull: true,
     references: {
-      model: 'Pacientes',
+      model: 'pacientes',
       key: 'id'
     }
   },
@@ -27,7 +27,7 @@ const FinanceiroTransacao = sequelize.define('FinanceiroTransacao', {
     type: DataTypes.UUID,
     allowNull: true,
     references: {
-      model: 'Usuarios',
+      model: 'usuarios',
       key: 'id'
     }
   },

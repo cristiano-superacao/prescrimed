@@ -11,7 +11,7 @@ const EstoqueMovimentacao = sequelize.define('EstoqueMovimentacao', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'Empresas',
+      model: 'empresas',
       key: 'id'
     }
   },
@@ -27,7 +27,7 @@ const EstoqueMovimentacao = sequelize.define('EstoqueMovimentacao', {
     type: DataTypes.UUID,
     allowNull: true,
     references: {
-      model: 'Usuarios',
+      model: 'usuarios',
       key: 'id'
     }
   },
