@@ -11,7 +11,7 @@ const EstoqueItem = sequelize.define('EstoqueItem', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'Empresas',
+      model: 'empresas',
       key: 'id'
     }
   },
