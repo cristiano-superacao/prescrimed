@@ -66,6 +66,8 @@ const app = express();
 
 // Flag para indicar se banco de dados está pronto (compartilhado entre rotas)
 app.locals.dbReady = false;
+// Último erro de conexão do banco (para diagnóstico via /health)
+app.locals.dbLastError = null;
 
 /**
  * Configuração de secrets padrão para desenvolvimento
@@ -91,9 +93,15 @@ if (process.env.NODE_ENV !== 'production') {
 async function connectDB() {
   try {
     console.log('📡 Conectando ao banco de dados...');
+    app.locals.dbLastError = null;
+
+    const connectTimeoutMs = Number.parseInt(process.env.DB_CONNECT_TIMEOUT_MS || '15000', 10);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(`DB connect timeout após ${connectTimeoutMs}ms`)), connectTimeoutMs);
+    });
     
     // Testa conexão com o banco
-    await sequelize.authenticate();
+    await Promise.race([sequelize.authenticate(), timeoutPromise]);
     console.log('✅ Banco de dados conectado com sucesso');
 
     // Marca banco como pronto imediatamente após autenticar
@@ -222,6 +230,7 @@ async function connectDB() {
     console.error('❌ Erro ao conectar no banco de dados:', error.message);
     console.error('Stack:', error.stack);
     app.locals.dbReady = false;
+    app.locals.dbLastError = error?.message || String(error);
     
     // Em produção, tenta reconectar automaticamente
     if (process.env.NODE_ENV === 'production') {
@@ -260,6 +269,7 @@ app.get('/health', healthCors, (req, res) => {
     status: 'ok',                              // Status do servidor
     uptime: process.uptime(),                  // Tempo ativo em segundos
     database: app.locals.dbReady ? 'connected' : 'connecting', // Status do banco
+    dbError: app.locals.dbReady ? null : (app.locals.dbLastError || null),
     timestamp: new Date().toISOString(),       // Timestamp atual
     env: {
       PORT: process.env.PORT,
@@ -290,6 +300,7 @@ app.get('/api/health', healthCors, (req, res) => {
     status: 'ok',
     uptime: process.uptime(),
     database: app.locals.dbReady ? 'connected' : 'connecting',
+    dbError: app.locals.dbReady ? null : (app.locals.dbLastError || null),
     timestamp: new Date().toISOString(),
     env: {
       PORT: process.env.PORT,
