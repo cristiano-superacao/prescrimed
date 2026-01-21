@@ -103,8 +103,9 @@ router.post('/', async (req, res) => {
       descricao: req.body.descricao,
       valor: req.body.valor,
       categoria: req.body.categoria,
-      data: req.body.data,
-      status: req.body.status,
+      dataVencimento: req.body.dataVencimento || req.body.data,
+      dataPagamento: req.body.dataPagamento || null,
+      status: req.body.status || 'pendente',
       formaPagamento: req.body.formaPagamento,
       observacoes: req.body.observacoes
     };
@@ -117,7 +118,20 @@ router.post('/', async (req, res) => {
     res.status(201).json(transacaoToClient(full));
   } catch (error) {
     console.error('Erro ao adicionar movimentação:', error);
-    res.status(500).json({ error: 'Erro ao adicionar movimentação' });
+    
+    // Erros de validação Sequelize
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeDatabaseError') {
+      return res.status(400).json({ 
+        error: 'Dados inválidos para movimentação',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        fields: error.errors?.map(e => ({ field: e.path, message: e.message }))
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Erro ao adicionar movimentação',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

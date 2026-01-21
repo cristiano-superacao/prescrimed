@@ -3,12 +3,12 @@ import sequelize from '../config/database.js';
 
 const EstoqueItem = sequelize.define('EstoqueItem', {
   id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
   empresaId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
     references: {
       model: 'Empresas',

@@ -180,6 +180,19 @@ api.interceptors.response.use(
       console.error('🔴 Requisição inválida:', originalRequest.url, error.response.data);
     }
 
+    // Erros 5xx/503: mantém UI responsiva e comunica de forma elegante
+    if (error.response?.status >= 500) {
+      const status = error.response.status;
+      const serverMessage = error.response?.data?.error;
+      const message = status === 503
+        ? (serverMessage || 'Serviço temporariamente indisponível. Tente novamente em instantes.')
+        : (serverMessage || 'Erro interno no servidor. Tente novamente em instantes.');
+
+      if (window.showToast) {
+        window.showToast(message, 'error');
+      }
+    }
+
     return Promise.reject(error);
   }
 );

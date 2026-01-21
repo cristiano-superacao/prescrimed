@@ -42,6 +42,10 @@ export const authenticate = async (req, res, next) => {
 
 // Middleware de isolamento multi-tenant - garante que cada empresa só acesse seus dados
 export const tenantIsolation = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Usuário não autenticado' });
+  }
+
   // SuperAdmin pode acessar todas as empresas
   if (req.user.role === 'superadmin') {
     return next();

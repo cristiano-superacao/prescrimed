@@ -8,15 +8,19 @@ let sequelize;
 
 // Em produção (Railway), idealmente use PostgreSQL (DATABASE_URL).
 // Porém, para não derrubar o deploy por healthcheck quando a variável ainda não foi configurada,
-// só fazemos fail-fast se FAIL_FAST_DB=true.
+// por padrão fazemos fail-fast para evitar gravar dados em SQLite por engano.
 const missingDbConfigInProd =
   process.env.NODE_ENV === 'production' &&
   !process.env.DATABASE_URL &&
   !process.env.PGHOST;
 
-if (missingDbConfigInProd && process.env.FAIL_FAST_DB === 'true') {
+// Permite override explícito (não recomendado) para cenários de troubleshooting.
+const allowSqliteInProd = process.env.ALLOW_SQLITE_IN_PROD === 'true';
+
+if (missingDbConfigInProd && !allowSqliteInProd) {
   throw new Error(
-    'Configuração de banco ausente em produção: defina DATABASE_URL (Railway Postgres) ou PGHOST/PGUSER/PGPASSWORD/PGDATABASE.'
+    'Configuração de banco ausente em produção: defina DATABASE_URL (Railway Postgres) ou PGHOST/PGUSER/PGPASSWORD/PGDATABASE. '
+      + 'Para permitir SQLite em produção temporariamente, defina ALLOW_SQLITE_IN_PROD=true (NÃO RECOMENDADO).'
   );
 }
 
@@ -61,14 +65,7 @@ if (process.env.DATABASE_URL) {
   );
 } else {
   // Desenvolvimento local sem PostgreSQL - usa SQLite
-  if (missingDbConfigInProd) {
-    console.warn(
-      '⚠️ DATABASE_URL não configurada em produção; usando SQLite temporariamente. ' +
-        'No Railway, adicione um PostgreSQL e defina DATABASE_URL no serviço do backend.'
-    );
-  } else {
-    console.log('💾 Usando SQLite para desenvolvimento local');
-  }
+  console.log('💾 Usando SQLite para desenvolvimento local');
 
   const sqliteStorage =
     process.env.SQLITE_PATH || (process.env.NODE_ENV === 'production' ? '/tmp/database.sqlite' : './database.sqlite');

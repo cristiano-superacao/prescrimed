@@ -3,12 +3,12 @@ import sequelize from '../config/database.js';
 
 const FinanceiroTransacao = sequelize.define('FinanceiroTransacao', {
   id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
   empresaId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
     references: {
       model: 'Empresas',
@@ -16,7 +16,7 @@ const FinanceiroTransacao = sequelize.define('FinanceiroTransacao', {
     }
   },
   pacienteId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: true,
     references: {
       model: 'Pacientes',
@@ -24,7 +24,7 @@ const FinanceiroTransacao = sequelize.define('FinanceiroTransacao', {
     }
   },
   usuarioId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: true,
     references: {
       model: 'Usuarios',

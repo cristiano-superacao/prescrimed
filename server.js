@@ -7,9 +7,23 @@
  * Funcionalidades:
  * - Configuração de middlewares de segurança (Helmet, CORS)
  * - Configuração de otimização (Compression, Morgan logger)
- * - Conexão com banco de dados PostgreSQL via Sequelize
- * - Registro de rotas da API REST
- * - Servir frontend estático (build do Vite)
+          console.warn('⚠️ Falha ao aplicar ALTER no SQLite. Recriando tabelas (force=true) para manter o ambiente local funcional.');
+          // SQLite pode falhar ao dropar tabelas com FK habilitada.
+          // Desabilita FK temporariamente para permitir drop/create.
+          try {
+            await sequelize.query('PRAGMA foreign_keys = OFF');
+          } catch (_) {
+            // ignora
+          }
+
+          await sequelize.sync({ force: true });
+
+          try {
+            await sequelize.query('PRAGMA foreign_keys = ON');
+          } catch (_) {
+            // ignora
+          }
+          console.log('✅ Tabelas recriadas com sucesso (SQLite force=true)');
  * - Health check para monitoramento
  * - Tratamento global de erros
  * - Fallback automático de portas em caso de conflito
@@ -64,7 +78,10 @@ let PORT = parsePort(process.env.PORT, 8000);
 // Cria instância do aplicativo Express
 const app = express();
 
-// Flag para indicar se banco de dados está pronto (compartilhado entre rotas)
+// Flags de DB (compartilhado entre rotas)
+// dbConnected: conexão ok (authenticate)
+// dbReady: schema pronto (sync concluído)
+app.locals.dbConnected = false;
 app.locals.dbReady = false;
 
 /**
@@ -95,10 +112,8 @@ async function connectDB() {
     // Testa conexão com o banco
     await sequelize.authenticate();
     console.log('✅ Banco de dados conectado com sucesso');
-
-    // Marca banco como pronto imediatamente após autenticar
-    // Evita alerta prolongado de "Banco Inicializando" no frontend
-    app.locals.dbReady = true;
+    app.locals.dbConnected = true;
+    app.locals.dbReady = false;
 
     // Em PostgreSQL, ENUM não aceita novos valores sem ALTER TYPE.
     // Para manter compatibilidade com bancos já existentes no Railway,
@@ -162,8 +177,57 @@ async function connectDB() {
         // Se tabela não existir ainda, cria com alter
         devAlter = true;
       }
-      await sequelize.sync({ force: false, alter: devAlter });
-      console.log(`✅ Tabelas sincronizadas (modo desenvolvimento${devAlter ? ' com ALTER' : ''})`);
+      try {
+        await sequelize.sync({ force: false, alter: devAlter });
+        console.log(`✅ Tabelas sincronizadas (modo desenvolvimento${devAlter ? ' com ALTER' : ''})`);
+      } catch (syncError) {
+        const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : undefined;
+        // Em SQLite, ALTER pode falhar em migrações de coluna/constraints.
+        // Para manter o dev funcional, recria o schema automaticamente.
+        if (dialect === 'sqlite') {
+          console.warn('⚠️ Falha ao aplicar ALTER no SQLite. Recriando tabelas (force=true) para manter o ambiente local funcional.');
+          // Em SQLite, é comum o DROP falhar por constraints. Desabilita FK temporariamente.
+          try {
+            await sequelize.query('PRAGMA foreign_keys = OFF;');
+          } catch {}
+
+          try {
+            await sequelize.sync({ force: true });
+            try {
+              await sequelize.query('PRAGMA foreign_keys = ON;');
+            } catch {}
+            console.log('✅ Tabelas recriadas com sucesso (SQLite force=true)');
+          } catch (forceError) {
+            // Fallback final: remove o arquivo do SQLite e recria do zero.
+            // Isso evita deadlocks/constraints em bancos locais com schema antigo.
+            const msg = forceError?.message || String(forceError);
+            const storage = sequelize?.options?.storage;
+            if (storage && msg.includes('SQLITE_CONSTRAINT')) {
+              console.warn(`⚠️ sync(force=true) falhou no SQLite (${msg}). Resetando arquivo do banco: ${storage}`);
+              try { await sequelize.close(); } catch {}
+
+              try {
+                const absStorage = path.isAbsolute(storage) ? storage : path.join(process.cwd(), storage);
+                if (fs.existsSync(absStorage)) {
+                  fs.unlinkSync(absStorage);
+                }
+              } catch (deleteError) {
+                console.warn('⚠️ Não foi possível apagar o arquivo SQLite automaticamente:', deleteError?.message || deleteError);
+              }
+
+              // Reabre e recria schema
+              await sequelize.authenticate();
+              await sequelize.sync({ force: false });
+              try { await sequelize.query('PRAGMA foreign_keys = ON;'); } catch {}
+              console.log('✅ SQLite resetado e schema recriado com sucesso');
+            } else {
+              throw forceError;
+            }
+          }
+        } else {
+          throw syncError;
+        }
+      }
     } else {
       // PRODUÇÃO: usa alter apenas se FORCE_SYNC=true
       // Útil para primeira implantação ou atualizações de schema
@@ -196,7 +260,8 @@ async function connectDB() {
       }
     }
     
-    // Garante flag de pronto após sincronização
+    // Garante flags após sincronização
+    app.locals.dbConnected = true;
     app.locals.dbReady = true;
 
     // Seed opcional (útil no primeiro deploy do Railway)
@@ -221,6 +286,7 @@ async function connectDB() {
   } catch (error) {
     console.error('❌ Erro ao conectar no banco de dados:', error.message);
     console.error('Stack:', error.stack);
+    app.locals.dbConnected = false;
     app.locals.dbReady = false;
     
     // Em produção, tenta reconectar automaticamente
@@ -259,7 +325,7 @@ app.get('/health', healthCors, (req, res) => {
   res.status(200).json({ 
     status: 'ok',                              // Status do servidor
     uptime: process.uptime(),                  // Tempo ativo em segundos
-    database: app.locals.dbReady ? 'connected' : 'connecting', // Status do banco
+    database: app.locals.dbReady ? 'connected' : (app.locals.dbConnected ? 'syncing' : 'connecting'), // Status do banco
     timestamp: new Date().toISOString(),       // Timestamp atual
     env: {
       PORT: process.env.PORT,
@@ -289,7 +355,7 @@ app.get('/api/health', healthCors, (req, res) => {
   res.status(200).json({ 
     status: 'ok',
     uptime: process.uptime(),
-    database: app.locals.dbReady ? 'connected' : 'connecting',
+    database: app.locals.dbReady ? 'connected' : (app.locals.dbConnected ? 'syncing' : 'connecting'),
     timestamp: new Date().toISOString(),
     env: {
       PORT: process.env.PORT,
