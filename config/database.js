@@ -29,14 +29,31 @@ if (process.env.DATABASE_URL) {
   console.log('📡 Usando DATABASE_URL do Railway/Render (PostgreSQL)');
   // Normaliza esquema 'postgresql://' para 'postgres://' (compatibilidade com driver pg)
   const normalizedUrl = process.env.DATABASE_URL.replace(/^postgresql:\/\//i, 'postgres://');
+
+  // Railway pode fornecer URL pública (proxy rlwy.net) OU URL interna (postgres.railway.internal).
+  // A URL interna normalmente NÃO usa SSL; forçar SSL pode impedir a conexão.
+  let needsSsl = true;
+  try {
+    const urlObj = new URL(normalizedUrl);
+    const host = (urlObj.hostname || '').toLowerCase();
+    if (host.endsWith('.railway.internal') || host === 'localhost' || host === '127.0.0.1') {
+      needsSsl = false;
+    }
+  } catch {
+    // Se não conseguir parsear, mantém SSL por segurança (URLs públicas geralmente exigem).
+    needsSsl = true;
+  }
+
   sequelize = new Sequelize(normalizedUrl, {
     dialect: 'postgres',
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
-    },
+    dialectOptions: needsSsl
+      ? {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false
+          }
+        }
+      : undefined,
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
       max: 5,
