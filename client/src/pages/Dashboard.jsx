@@ -358,30 +358,137 @@ export default function Dashboard() {
           icon={Users}
           label="Pacientes"
           value={stats?.totalPacientes || 0}
-          description="+12% vs mês anterior"
+          description={`${stats?.leitos?.ocupados || 0} leitos ocupados`}
           color="primary"
         />
         <StatsCard
           icon={FileText}
           label="Prescrições"
           value={stats?.totalPrescricoes || 0}
-          description="+6% no período"
+          description={`${stats?.prescrioesAtivas || 0} ativas`}
           color="emerald"
         />
         <StatsCard
           icon={UserCheck}
           label="Equipe"
           value={stats?.totalUsuarios || 0}
-          description="Usuários ativos"
+          description="Profissionais ativos"
           color="purple"
         />
         <StatsCard
-          icon={TrendingUp}
-          label="Atividade"
-          value={stats?.prescricoesPeriodo || 0}
-          description="Prescrições recentes"
+          icon={Calendar}
+          label="Agendamentos"
+          value={stats?.agendamentosHoje || 0}
+          description="Para hoje"
           color="amber"
         />
+      </div>
+
+      {/* Cards Adicionais - Leitos, Estoque, Financeiro */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Leitos */}
+        <div className="card bg-gradient-to-br from-sky-50 to-blue-50 border-sky-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-sky-100 rounded-xl">
+                <Building2 className="text-sky-700" size={24} />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-sky-600 font-semibold">Leitos</p>
+                <h3 className="text-2xl font-bold text-sky-900">{stats?.leitos?.total || 0}</h3>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-sky-700">Ocupados</span>
+              <span className="font-semibold text-sky-900">{stats?.leitos?.ocupados || 0}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-sky-700">Disponíveis</span>
+              <span className="font-semibold text-emerald-700">{stats?.leitos?.disponiveis || 0}</span>
+            </div>
+            <div className="mt-3 w-full bg-sky-200 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-sky-600 h-full rounded-full transition-all"
+                style={{ width: `${stats?.leitos?.total > 0 ? (stats?.leitos?.ocupados / stats?.leitos?.total * 100) : 0}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-sky-600 text-center">
+              {stats?.leitos?.total > 0 ? Math.round(stats?.leitos?.ocupados / stats?.leitos?.total * 100) : 0}% de ocupação
+            </p>
+          </div>
+        </div>
+
+        {/* Estoque */}
+        <div className="card bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-orange-100 rounded-xl">
+                <Package className="text-orange-700" size={24} />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-orange-600 font-semibold">Estoque</p>
+                <h3 className="text-2xl font-bold text-orange-900">{stats?.estoque?.total || 0}</h3>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-orange-700">Itens cadastrados</span>
+              <span className="font-semibold text-orange-900">{stats?.estoque?.total || 0}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-orange-700">Abaixo do mínimo</span>
+              <span className="font-semibold text-red-700">{stats?.estoque?.abaixoMinimo || 0}</span>
+            </div>
+            {stats?.estoque?.abaixoMinimo > 0 && (
+              <div className="mt-3 p-2 bg-red-100 border border-red-200 rounded-lg">
+                <p className="text-xs text-red-700 font-semibold flex items-center gap-1">
+                  <AlertTriangle size={14} />
+                  Atenção ao estoque!
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Financeiro */}
+        <div className="card bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-emerald-100 rounded-xl">
+                <DollarSign className="text-emerald-700" size={24} />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-emerald-600 font-semibold">Saldo</p>
+                <h3 className="text-2xl font-bold text-emerald-900">
+                  R$ {(stats?.financeiro?.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </h3>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-emerald-700">Receitas</span>
+              <span className="font-semibold text-emerald-900">
+                R$ {(stats?.financeiro?.receitasPagas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-emerald-700">Despesas</span>
+              <span className="font-semibold text-red-700">
+                R$ {(stats?.financeiro?.despesasPagas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-emerald-200">
+              <span className="text-sm text-emerald-700 font-semibold">Pendentes</span>
+              <span className="text-xs text-amber-700">
+                R$ {((stats?.financeiro?.receitasPendentes || 0) + (stats?.financeiro?.despesasPendentes || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Chart Section */}

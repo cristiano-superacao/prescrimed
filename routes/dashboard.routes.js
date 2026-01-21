@@ -1,6 +1,7 @@
 import express from 'express';
-import { Usuario, Empresa, Paciente, Prescricao } from '../models/index.js';
+import { Usuario, Empresa, Paciente, Prescricao, Agendamento, CasaRepousoLeito, EstoqueItem, FinanceiroTransacao } from '../models/index.js';
 import { Op } from 'sequelize';
+import sequelize from '../config/database.js';
 
 const router = express.Router();
 
@@ -10,6 +11,7 @@ router.get('/stats', async (req, res) => {
     const { empresaId } = req.query;
     const where = empresaId ? { empresaId } : {};
     
+    // Contadores principais
     const totalEmpresas = await Empresa.count();
     const totalUsuarios = await Usuario.count({ where });
     const totalPacientes = await Paciente.count({ where });
@@ -18,13 +20,104 @@ router.get('/stats', async (req, res) => {
     const prescrioesAtivas = await Prescricao.count({
       where: { ...where, status: 'ativa' }
     });
+
+    // Estatísticas de agendamentos
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
+
+    const agendamentosHoje = await Agendamento.count({
+      where: {
+        ...where,
+        dataHora: {
+          [Op.gte]: hoje,
+          [Op.lt]: amanha
+        }
+      }
+    });
+
+    // Estatísticas de leitos
+    const leitosOcupados = await CasaRepousoLeito.count({
+      where: { ...where, status: 'ocupado' }
+    });
+    
+    const leitosDisponiveis = await CasaRepousoLeito.count({
+      where: { ...where, status: 'disponivel' }
+    });
+
+    // Estatísticas de estoque
+    const itensEstoque = await EstoqueItem.count({ where });
+    const itensAbaixoMinimo = await EstoqueItem.count({
+      where: {
+        ...where,
+        [Op.and]: [
+          sequelize.where(
+            sequelize.col('quantidade'),
+            '<=',
+            sequelize.col('quantidadeMinima')
+          )
+        ]
+      }
+    });
+
+    // Estatísticas financeiras
+    const financeiro = await FinanceiroTransacao.findAll({
+      where,
+      attributes: [
+        [sequelize.fn('SUM', sequelize.literal("CASE WHEN tipo = 'receita' AND status = 'pago' THEN valor ELSE 0 END")), 'receitasPagas'],
+        [sequelize.fn('SUM', sequelize.literal("CASE WHEN tipo = 'despesa' AND status = 'pago' THEN valor ELSE 0 END")), 'despesasPagas'],
+        [sequelize.fn('SUM', sequelize.literal("CASE WHEN tipo = 'receita' AND status = 'pendente' THEN valor ELSE 0 END")), 'receitasPendentes'],
+        [sequelize.fn('SUM', sequelize.literal("CASE WHEN tipo = 'despesa' AND status = 'pendente' THEN valor ELSE 0 END")), 'despesasPendentes'],
+      ],
+      raw: true
+    });
+
+    const financeiroData = financeiro[0] || {};
+    const saldo = (parseFloat(financeiroData.receitasPagas || 0) - parseFloat(financeiroData.despesasPagas || 0));
+
+    // Gráfico de prescrições dos últimos 30 dias
+    const dataInicio = new Date();
+    dataInicio.setDate(dataInicio.getDate() - 30);
+
+    const graficoPrescricoes = await Prescricao.findAll({
+      where: {
+        ...where,
+        createdAt: { [Op.gte]: dataInicio }
+      },
+      attributes: [
+        [sequelize.fn('DATE', sequelize.col('createdAt')), 'data'],
+        [sequelize.fn('COUNT', sequelize.col('id')), 'total']
+      ],
+      group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
+      order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
+      raw: true
+    });
     
     res.json({
       totalEmpresas,
       totalUsuarios,
       totalPacientes,
       totalPrescricoes,
-      prescrioesAtivas
+      prescrioesAtivas,
+      agendamentosHoje,
+      leitos: {
+        ocupados: leitosOcupados,
+        disponiveis: leitosDisponiveis,
+        total: leitosOcupados + leitosDisponiveis
+      },
+      estoque: {
+        total: itensEstoque,
+        abaixoMinimo: itensAbaixoMinimo
+      },
+      financeiro: {
+        receitasPagas: parseFloat(financeiroData.receitasPagas || 0),
+        despesasPagas: parseFloat(financeiroData.despesasPagas || 0),
+        receitasPendentes: parseFloat(financeiroData.receitasPendentes || 0),
+        despesasPendentes: parseFloat(financeiroData.despesasPendentes || 0),
+        saldo
+      },
+      graficoPrescricoes
     });
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error);
