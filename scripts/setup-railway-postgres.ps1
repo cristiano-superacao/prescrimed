@@ -1,5 +1,8 @@
-# Script para configurar PostgreSQL no Railway
-# Execute este script APÓS adicionar PostgreSQL no dashboard do Railway
+# Script para configurar PostgreSQL no Railway (criação de empresa/admin e validações)
+# Observação: este script não altera variáveis do Railway.
+# Para automatizar a configuração do DATABASE_URL (Postgres -> Backend), use:
+#   powershell -ExecutionPolicy Bypass -File scripts/railway-auto-config.ps1
+# Depois rode este script para criar empresa e administrador.
 
 param(
     [string]$Email = "admin@meudominio.com",
@@ -23,7 +26,7 @@ try {
     $health = Invoke-RestMethod -Uri "$BackendUrl/health" -ErrorAction Stop
     Write-Host "   ✅ Backend online - Uptime: $([math]::Round($health.uptime, 2))s" -ForegroundColor Green
     
-    if ($health.DATABASE_URL -eq $true) {
+    if ($health.env.DATABASE_URL -eq $true) {
         Write-Host "   ✅ PostgreSQL configurado!" -ForegroundColor Green
     } else {
         Write-Host "   ⚠️  SQLite detectado - PostgreSQL ainda não configurado" -ForegroundColor Yellow

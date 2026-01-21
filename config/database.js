@@ -27,7 +27,9 @@ if (missingDbConfigInProd && !allowSqliteInProd) {
 if (process.env.DATABASE_URL) {
   // Railway ou Render fornece DATABASE_URL completa (PostgreSQL em produção)
   console.log('📡 Usando DATABASE_URL do Railway/Render (PostgreSQL)');
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
+  // Normaliza esquema 'postgresql://' para 'postgres://' (compatibilidade com driver pg)
+  const normalizedUrl = process.env.DATABASE_URL.replace(/^postgresql:\/\//i, 'postgres://');
+  sequelize = new Sequelize(normalizedUrl, {
     dialect: 'postgres',
     dialectOptions: {
       ssl: {

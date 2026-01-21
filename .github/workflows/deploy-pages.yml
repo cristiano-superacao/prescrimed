@@ -26,9 +26,6 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies (root)
-        run: npm ci
-
       - name: Install dependencies (client)
         run: |
           cd client
@@ -37,8 +34,15 @@ jobs:
       - name: Configure environment
         run: |
           cd client
-          echo "VITE_API_URL=${{ secrets.VITE_API_URL || 'https://prescrimed-backend-production.up.railway.app/api' }}" > .env.production
-          echo "VITE_BACKEND_ROOT=${{ secrets.VITE_BACKEND_ROOT || 'https://prescrimed-backend-production.up.railway.app' }}" >> .env.production
+          API_URL="${{ secrets.VITE_API_URL }}"
+          BACKEND_ROOT="${{ secrets.VITE_BACKEND_ROOT }}"
+          if [ -z "$BACKEND_ROOT" ]; then
+            BACKEND_ROOT="https://prescrimed-backend-production.up.railway.app"
+          fi
+          if [ -z "$API_URL" ]; then
+            API_URL="${BACKEND_ROOT%/}/api"
+          fi
+          printf "VITE_API_URL=%s\nVITE_BACKEND_ROOT=%s\n" "$API_URL" "$BACKEND_ROOT" > .env.production
           cat .env.production
         shell: bash
 
