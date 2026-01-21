@@ -338,10 +338,6 @@ const baseOrigins = [
   'https://prescrimed-production.up.railway.app',
   // Railway backend (API em produção)
   'https://prescrimed-backend-production.up.railway.app',
-  // Netlify (hospedagem alternativa)
-  'https://prescrimed.netlify.app',
-  'https://precrimed.netlify.app',
-  'https://prescrimer.netlify.app',
   // GitHub Pages (hospedagem alternativa)
   'https://cristiano-superacao.github.io',
   'https://cristiano-superacao.github.io/prescrimed',

@@ -104,37 +104,9 @@ async function main() {
       process.exit(1);
     }
 
-    // 3.5. Copiar arquivos necessários para o dist
-    log('\n📋 Copiando arquivos de configuração...', 'cyan');
-    const publicRedirects = path.join(__dirname, 'client', 'public', '_redirects');
-    const netlifyToml = path.join(__dirname, 'client', 'netlify.toml');
-    const distRedirects = path.join(__dirname, 'client', 'dist', '_redirects');
-    const distNetlifyToml = path.join(__dirname, 'client', 'dist', 'netlify.toml');
-    
-    try {
-      if (fs.existsSync(publicRedirects)) {
-        fs.copyFileSync(publicRedirects, distRedirects);
-        log('✅ Arquivo _redirects copiado', 'green');
-      }
-      if (fs.existsSync(netlifyToml)) {
-        fs.copyFileSync(netlifyToml, distNetlifyToml);
-        log('✅ Arquivo netlify.toml copiado', 'green');
-      }
-    } catch (error) {
-      log('⚠️  Aviso: Não foi possível copiar alguns arquivos de configuração', 'yellow');
-    }
-
-    // 4. Deploy no Netlify
-    log('\n🌐 Fazendo deploy no Netlify...', 'cyan');
-    const deployCommand = 'netlify deploy --prod --dir=dist --site 7952a4ed-c83e-48bc-aeef-475f1167aeaf --message "Deploy automatizado via script"';
-    
-    if (!execCommand(deployCommand, 'Deploy no Netlify')) {
-      process.exit(1);
-    }
-
-    // Sucesso!
-    log('\n\n🎉 DEPLOY CONCLUÍDO COM SUCESSO! 🎉\n', 'green');
-    log('✅ Frontend: https://precrimed.netlify.app', 'cyan');
+    // 3.5. Deploy no Railway (automático via git push)
+    log('\n🚂 Deploy no Railway é automático via git push.', 'cyan');
+    log('✅ Frontend: https://prescrimed.up.railway.app', 'cyan');
     log(`✅ Backend: ${backendUrl}`, 'cyan');
     log('\n💡 Aguarde alguns segundos para o deploy propagar e teste o sistema!\n', 'yellow');
   });

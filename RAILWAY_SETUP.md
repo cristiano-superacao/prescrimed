@@ -45,8 +45,8 @@ Este guia contém o passo a passo completo para configurar e fazer deploy do Pre
 
 | Variável | Valor | Descrição |
 |----------|-------|-----------|
-| `FRONTEND_URL` | `https://prescrimed.netlify.app` | URL do seu frontend no Netlify |
-| `CORS_ORIGIN` | `https://prescrimed.netlify.app` | Mesma URL (para CORS) |
+| `FRONTEND_URL` | `https://prescrimed.up.railway.app` | URL do frontend no Railway |
+| `CORS_ORIGIN` | `https://prescrimed.up.railway.app` | Mesma URL (para CORS) |
 | `SESSION_TIMEOUT` | `8h` | Tempo de sessão do usuário |
 
 ### 🚀 Variáveis para Primeiro Deploy (TEMPORÁRIAS)
@@ -177,7 +177,7 @@ Após confirmar que tudo funciona:
 - **Solução:**
   1. Adicione o domínio do frontend em `ALLOWED_ORIGINS`:
      ```
-     ALLOWED_ORIGINS=https://seu-frontend.netlify.app,https://prescrimed.up.railway.app
+    ALLOWED_ORIGINS=https://prescrimed.up.railway.app
      ```
   2. Verifique os logs do Railway para ver a requisição:
      ```

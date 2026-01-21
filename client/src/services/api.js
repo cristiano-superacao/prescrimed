@@ -1,17 +1,21 @@
 import axios from 'axios';
 
-// Fallback padrão para produção em GitHub Pages quando variáveis não estão presentes
+// Fallback padrão para produção quando variáveis não estão presentes
 const DEFAULT_RAILWAY_ROOT = 'https://prescrimed-backend-production.up.railway.app';
 const DEFAULT_RAILWAY_API = `${DEFAULT_RAILWAY_ROOT}/api`;
+
+const isLocalhostUrl = (value) =>
+  typeof value === 'string' && /localhost|127\.0\.0\.1/.test(value);
 
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
   // Detectar se está em ambiente hospedado (Railway/Netlify/Pages)
   const isHostedProd = import.meta.env.PROD && (
     window.location.hostname.includes('railway.app') ||
-    window.location.hostname.includes('netlify.app') ||
     window.location.hostname.includes('github.io')
   );
+
+  const isRailwayHost = window.location.hostname.includes('railway.app');
 
   // Detecta se este host é o próprio backend padrão do Railway
   // (quando backend e frontend estiverem servidos pelo mesmo serviço)
@@ -20,19 +24,32 @@ export const getApiUrl = () => {
 
   // Se VITE_API_URL estiver definida, usa ela (prioridade máxima)
   if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+    if (isHostedProd && isRailwayHost && isLocalhostUrl(import.meta.env.VITE_API_URL)) {
+      console.warn('⚠️ Ignorando VITE_API_URL apontando para localhost em produção Railway.');
+    } else {
+      return import.meta.env.VITE_API_URL;
+    }
   }
 
   // Fallback: se BACKEND_ROOT estiver definido, monta /api a partir dele
   if (import.meta.env.VITE_BACKEND_ROOT) {
-    const root = import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
-    return `${root}/api`;
+    if (isHostedProd && isRailwayHost && isLocalhostUrl(import.meta.env.VITE_BACKEND_ROOT)) {
+      console.warn('⚠️ Ignorando VITE_BACKEND_ROOT apontando para localhost em produção Railway.');
+    } else {
+      const root = import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
+      return `${root}/api`;
+    }
   }
 
   // Em produção hospedada SEM variáveis configuradas
   if (isHostedProd) {
     // Se estivermos no host do backend (mesmo domínio), use proxy relativo
     if (isOnDefaultBackendHost) {
+      return '/api';
+    }
+
+    // Em Railway com frontend integrado, use a mesma origem
+    if (isRailwayHost) {
       return '/api';
     }
 

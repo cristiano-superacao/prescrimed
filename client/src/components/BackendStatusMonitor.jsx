@@ -89,21 +89,32 @@ export default function BackendStatusMonitor() {
             await evaluateHealthResponse(response);
             setLastCheck(new Date());
             return;
-          } else {
-            console.warn('⚠️ BackendStatusMonitor: VITE_BACKEND_ROOT não configurado, desabilitando healthcheck');
-            setStatus('online');
-            setDbStatus(null);
-            setShowAlert(false);
+          }
+
+          // Em produção Railway integrada, use a mesma origem
+          if (window.location.hostname.includes('railway.app')) {
+            const response = await fetch('/health', {
+              method: 'GET',
+              signal: AbortSignal.timeout(5000)
+            });
+
+            await evaluateHealthResponse(response);
             setLastCheck(new Date());
             return;
           }
+
+          console.warn('⚠️ BackendStatusMonitor: VITE_BACKEND_ROOT não configurado, desabilitando healthcheck');
+          setStatus('online');
+          setDbStatus(null);
+          setShowAlert(false);
+          setLastCheck(new Date());
+          return;
         }
 
         // Evitar tentar localhost em produção hospedada
         if (healthUrlRoot.includes('localhost') && 
-            (window.location.hostname.includes('railway.app') || 
-             window.location.hostname.includes('netlify.app') ||
-             window.location.hostname.includes('github.io'))) {
+          (window.location.hostname.includes('railway.app') || 
+           window.location.hostname.includes('github.io'))) {
           console.error('❌ BackendStatusMonitor: tentando acessar localhost em produção! Configure VITE_BACKEND_ROOT.');
           setStatus('offline');
           setDbStatus(null);
