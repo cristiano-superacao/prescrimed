@@ -89,13 +89,14 @@ if (process.env.NODE_ENV !== 'production') {
 /**
  * Função para conectar ao banco de dados PostgreSQL
  * Executa em background para não bloquear início do servidor
+ * Inclui retry logic para ambientes com latência variável
  */
-async function connectDB() {
+async function connectDB(retryCount = 0, maxRetries = 5) {
   try {
-    console.log('📡 Conectando ao banco de dados...');
+    console.log(`📡 Conectando ao banco de dados... (tentativa ${retryCount + 1}/${maxRetries + 1})`);
     app.locals.dbLastError = null;
 
-    const connectTimeoutMs = Number.parseInt(process.env.DB_CONNECT_TIMEOUT_MS || '15000', 10);
+    const connectTimeoutMs = Number.parseInt(process.env.DB_CONNECT_TIMEOUT_MS || '60000', 10);
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error(`DB connect timeout após ${connectTimeoutMs}ms`)), connectTimeoutMs);
     });
@@ -231,10 +232,18 @@ async function connectDB() {
     app.locals.dbReady = false;
     app.locals.dbLastError = error?.message || String(error);
     
-    // Em produção, tenta reconectar automaticamente
-    if (process.env.NODE_ENV === 'production') {
-      console.log('🔄 Tentando reconectar em 5 segundos...');
-      setTimeout(connectDB, 5000); // Retry após 5 segundos
+    // Retry automático com backoff exponencial
+    if (retryCount < maxRetries) {
+      const delayMs = Math.min(5000 * Math.pow(2, retryCount), 30000); // Máximo 30 segundos
+      console.log(`🔄 Tentando reconectar em ${delayMs / 1000} segundos... (tentativa ${retryCount + 2}/${maxRetries + 1})`);
+      setTimeout(() => connectDB(retryCount + 1, maxRetries), delayMs);
+    } else {
+      console.error(`❌ Falha ao conectar após ${maxRetries + 1} tentativas. Sistema iniciado em modo degradado.`);
+      // Em produção, continua tentando em background indefinidamente
+      if (process.env.NODE_ENV === 'production') {
+        console.log('🔄 Continuando tentativas de reconexão em background (a cada 60 segundos)...');
+        setTimeout(() => connectDB(0, maxRetries), 60000);
+      }
     }
   }
 }

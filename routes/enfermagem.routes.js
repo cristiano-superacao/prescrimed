@@ -1,12 +1,12 @@
 import express from 'express';
 import { Op } from 'sequelize';
 import { RegistroEnfermagem, Paciente, Usuario } from '../models/index.js';
-import { authenticateToken } from '../middleware/auth.middleware.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
 // Listar todos os registros com filtros
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const { pacienteId, tipo, dataInicio, dataFim, prioridade, alerta } = req.query;
     const empresaId = req.user.empresaId;
@@ -50,7 +50,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Buscar registro por ID
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const empresaId = req.user.empresaId;
@@ -83,7 +83,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Criar novo registro
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
     const {
       pacienteId,
@@ -169,7 +169,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Atualizar registro
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const empresaId = req.user.empresaId;
@@ -247,7 +247,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // Deletar registro
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const empresaId = req.user.empresaId;
@@ -269,7 +269,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 // Estatísticas dos registros
-router.get('/stats/dashboard', authenticateToken, async (req, res) => {
+router.get('/stats/dashboard', authenticate, async (req, res) => {
   try {
     const empresaId = req.user.empresaId;
     const hoje = new Date();
@@ -322,3 +322,4 @@ router.get('/stats/dashboard', authenticateToken, async (req, res) => {
 });
 
 export default router;
+

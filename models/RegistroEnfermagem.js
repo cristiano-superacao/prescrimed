@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
 const RegistroEnfermagem = sequelize.define('RegistroEnfermagem', {
   id: {
@@ -101,4 +101,4 @@ const RegistroEnfermagem = sequelize.define('RegistroEnfermagem', {
   timestamps: true
 });
 
-module.exports = RegistroEnfermagem;
+export default RegistroEnfermagem;

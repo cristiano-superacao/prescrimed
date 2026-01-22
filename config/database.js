@@ -51,15 +51,23 @@ if (process.env.DATABASE_URL) {
           ssl: {
             require: true,
             rejectUnauthorized: false
-          }
+          },
+          connectTimeout: 60000 // 60 segundos
         }
-      : undefined,
+      : {
+          connectTimeout: 60000 // 60 segundos
+        },
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
+      max: 10,
+      min: 2,
+      acquire: 60000, // 60 segundos para adquirir conexão
+      idle: 10000,
+      evict: 10000
+    },
+    retry: {
+      max: 3,
+      timeout: 60000
     }
   });
 } else if (process.env.PGHOST) {
@@ -73,12 +81,20 @@ if (process.env.DATABASE_URL) {
       host: process.env.PGHOST,
       port: parseInt(process.env.PGPORT || '5432', 10),
       dialect: 'postgres',
+      dialectOptions: {
+        connectTimeout: 60000
+      },
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
       pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
+        max: 10,
+        min: 2,
+        acquire: 60000,
+        idle: 10000,
+        evict: 10000
+      },
+      retry: {
+        max: 3,
+        timeout: 60000
       }
     }
   );
