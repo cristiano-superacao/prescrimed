@@ -44,6 +44,7 @@ export default function Financeiro() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTransacao, setSelectedTransacao] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [filter, setFilter] = useState({
     tipo: '',
     status: '',
@@ -84,14 +85,18 @@ export default function Financeiro() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta transação?')) return;
+  const handleDelete = async (id, descricao) => {
+    const confirmMessage = `Tem certeza que deseja excluir a transação "${descricao}"?\n\nEsta ação não pode ser desfeita.`;
+    if (!window.confirm(confirmMessage)) return;
     try {
+      setDeletingId(id);
       await financeiroService.delete(id);
-      toast.success('Transação excluída');
+      toast.success('Transação excluída com sucesso');
       loadData();
     } catch (error) {
       toast.error(errorMessage('delete', 'transação'));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -253,15 +258,22 @@ export default function Financeiro() {
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => handleEdit(t)}
-                        className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                        className="p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                        aria-label="Editar transação"
                       >
-                        <Edit2 size={16} />
+                        <Edit2 size={18} />
                       </button>
                       <button 
-                        onClick={() => handleDelete(t._id)}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                        onClick={() => handleDelete(t._id, t.descricao)}
+                        disabled={deletingId === t._id}
+                        className="p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Excluir transação"
                       >
-                        <Trash2 size={16} />
+                        {deletingId === t._id ? (
+                          <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                        ) : (
+                          <Trash2 size={18} />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -319,15 +331,28 @@ export default function Financeiro() {
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => handleEdit(transacao)}
-                          className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                          aria-label="Editar transação"
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={18} />
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            Editar
+                          </span>
                         </button>
                         <button 
-                          onClick={() => handleDelete(transacao._id)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                          onClick={() => handleDelete(transacao._id, transacao.descricao)}
+                          disabled={deletingId === transacao._id}
+                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                          aria-label="Excluir transação"
                         >
-                          <Trash2 size={16} />
+                          {deletingId === transacao._id ? (
+                            <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                          ) : (
+                            <Trash2 size={18} />
+                          )}
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            Excluir
+                          </span>
                         </button>
                       </div>
                     </Td>

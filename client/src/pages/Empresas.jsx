@@ -26,6 +26,7 @@ export default function Empresas() {
   const [loading, setLoading] = useState(true);
   const [density, setDensity] = useState('comfortable');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const isSuperAdmin = user?.role === 'superadmin';
 
   useEffect(() => {
@@ -49,16 +50,20 @@ export default function Empresas() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta empresa?')) {
+  const handleDelete = async (id, nome) => {
+    const confirmMessage = `Tem certeza que deseja excluir a empresa "${nome}"?\n\nEsta ação não pode ser desfeita e todos os dados associados serão perdidos.`;
+    if (!window.confirm(confirmMessage)) {
       return;
     }
     try {
+      setDeletingId(id);
       await empresaService.delete(id);
       toast.success(successMessage('delete', 'Empresa', { gender: 'f' }));
       loadEmpresas();
     } catch (error) {
       toast.error(errorMessage('delete', 'empresa'));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -157,11 +162,17 @@ export default function Empresas() {
                         {empresa.plano || 'basico'}
                       </span>
                       <button
-                        onClick={() => handleDelete(empresa.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-xl"
+                        onClick={() => handleDelete(empresa.id, empresa.nome)}
+                        disabled={deletingId === empresa.id}
+                        className="p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Excluir Empresa"
+                        aria-label="Excluir empresa"
                       >
-                        <Trash2 size={18} />
+                        {deletingId === empresa.id ? (
+                          <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                        ) : (
+                          <Trash2 size={18} />
+                        )}
                       </button>
                     </div>
                   </MobileCard>
@@ -205,11 +216,20 @@ export default function Empresas() {
                       <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleDelete(empresa.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-xl"
+                            onClick={() => handleDelete(empresa.id, empresa.nome)}
+                            disabled={deletingId === empresa.id}
+                            className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Excluir Empresa"
+                            aria-label="Excluir empresa"
                           >
-                            <Trash2 size={18} />
+                            {deletingId === empresa.id ? (
+                              <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                            ) : (
+                              <Trash2 size={18} />
+                            )}
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                              Excluir
+                            </span>
                           </button>
                         </div>
                       </Td>
