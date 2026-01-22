@@ -7,6 +7,84 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.2.0] - 2026-01-21
+
+### ✨ Adicionado
+
+#### Módulo de Registros de Enfermagem (Completo)
+- **Backend:** Model `RegistroEnfermagem.js` com tipos (Admissão, Evolução, Alta, Intercorrência)
+- **Backend:** Sinais vitais em JSON (PA, FC, FR, Temperatura, SatO2, Glicemia)
+- **Backend:** Avaliação de riscos (queda, lesão) e prioridades
+- **Backend:** Routes completas `/api/enfermagem` com stats
+- **Frontend:** Página `Evolucao.jsx` completa (900+ linhas)
+- **Frontend:** Modal com 3 seções color-coded
+- **Frontend:** Dashboard com 4 cards de estatísticas
+- **Frontend:** Service layer `enfermagem.service.js`
+
+#### Sistema de Exportação PDF/Excel
+- **Financeiro:** Exportação PDF com impressão formatada e estatísticas
+- **Financeiro:** Exportação Excel (CSV UTF-8) com resumo financeiro
+- **Estoque:** Exportação PDF com relatório de inventário
+- **Estoque:** Exportação Excel com dados completos do estoque
+- Botões responsivos com tooltips informativos
+- Estados de loading e disabled quando não há dados
+- Padrão visual consistente (vermelho PDF, verde Excel)
+
+#### Documentação Completa
+- **DOCUMENTATION.md:** Documentação técnica detalhada (823 linhas)
+- Arquitetura backend e frontend explicada
+- Todos os 9 módulos documentados com endpoints
+- Modelos de dados com exemplos
+- Guia de desenvolvimento para novos módulos
+- Troubleshooting de problemas comuns
+- **README.md:** Atualizado com link para documentação técnica
+
+### 🎨 Melhorado
+
+#### Design System Padronizado
+- **Botões de Ação:** Ícones 18px (vs 16px), padding p-2.5 (vs p-2)
+- **Gradientes:** Hover com `from-{color}-500 to-{color}-600`
+- **Sombras:** `shadow-sm hover:shadow-md` em todos botões
+- **Transições:** `transition-all duration-200` suaves
+- **Tooltips:** Posicionamento absoluto consistente com fade in/out
+- **Loading States:** Spinners animados durante exclusões
+- **Confirmações:** Mensagens personalizadas com nome do item
+
+#### Páginas Reconstruídas com Novo Padrão
+- **Pacientes:** Botões Histórico, Editar, Excluir com gradientes
+- **Usuários:** Proteção contra auto-exclusão, tooltips descritivos
+- **Financeiro:** Integração com exportação, layout otimizado
+- **Empresas:** Avisos sobre perda de dados, loading states
+- **Estoque:** Botões compactados para mobile, exportação completa
+
+#### Responsividade Aprimorada
+- Mobile: Ícones apenas, texto oculto
+- Tablet (sm): Texto em botões principais
+- Desktop (lg): Todos textos visíveis
+- Headers com `flex-wrap` e gaps consistentes
+- Separadores visuais entre grupos de botões
+
+#### Acessibilidade
+- `aria-labels` em todos botões de ação
+- `title` attributes informativos
+- Estados `disabled` claramente visíveis
+- Navegação por teclado melhorada
+
+### 🔧 Técnico
+
+#### Padrões de Código
+- HandleDelete padronizado com try/finally
+- Exportação CSV com BOM UTF-8
+- Estados `deletingId` para controle de loading
+- Tooltips com `group` e `group-hover`
+
+#### Build
+- Bundle: 296.97 KB (gzipped: 64.77 KB)
+- +12KB de funcionalidades (exportação + enfermagem)
+- Todos builds bem-sucedidos
+
+---
+
 ## [1.1.0] - 2026-01-17
 
 ### ✨ Adicionado
