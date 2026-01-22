@@ -43,6 +43,7 @@ export default function Pacientes() {
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [viewHistorico, setViewHistorico] = useState(null);
   const [historicoPrescricoes, setHistoricoPrescricoes] = useState([]);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     loadPacientes();
@@ -85,17 +86,21 @@ export default function Pacientes() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir este paciente?')) {
+  const handleDelete = async (id, nome) => {
+    const confirmMessage = `Tem certeza que deseja excluir o paciente "${nome}"?\n\nEsta ação não pode ser desfeita.`;
+    if (!window.confirm(confirmMessage)) {
       return;
     }
 
     try {
+      setDeletingId(id);
       await pacienteService.delete(id);
       toast.success(successMessage('delete', 'Paciente'));
       loadPacientes(searchTerm);
     } catch (error) {
       toast.error(errorMessage('delete', 'paciente'));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -241,24 +246,32 @@ export default function Pacientes() {
                   <div className="flex items-center justify-end gap-2 mt-3">
                     <button
                       onClick={() => handleViewHistorico(paciente)}
-                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                      className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                       title="Ver Histórico"
+                      aria-label="Ver histórico do paciente"
                     >
-                      <FileText size={16} />
+                      <FileText size={18} />
                     </button>
                     <button
                       onClick={() => handleEdit(paciente)}
-                      className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
-                      title="Editar"
+                      className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                      title="Editar paciente"
+                      aria-label="Editar paciente"
                     >
-                      <Edit2 size={16} />
+                      <Edit2 size={18} />
                     </button>
                     <button
-                      onClick={() => handleDelete(paciente.id || paciente._id)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                      title="Excluir"
+                      onClick={() => handleDelete(paciente.id || paciente._id, paciente.nome)}
+                      disabled={deletingId === (paciente.id || paciente._id)}
+                      className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Excluir paciente"
+                      aria-label="Excluir paciente"
                     >
-                      <Trash2 size={16} />
+                      {deletingId === (paciente.id || paciente._id) ? (
+                        <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                      ) : (
+                        <Trash2 size={18} />
+                      )}
                     </button>
                   </div>
                 </MobileCard>
@@ -288,24 +301,41 @@ export default function Pacientes() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleViewHistorico(paciente)}
-                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                           title="Ver Histórico"
+                          aria-label="Ver histórico do paciente"
                         >
-                          <FileText size={16} />
+                          <FileText size={18} />
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            Histórico
+                          </span>
                         </button>
                         <button
                           onClick={() => handleEdit(paciente)}
-                          className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
-                          title="Editar"
+                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                          title="Editar paciente"
+                          aria-label="Editar paciente"
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={18} />
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            Editar
+                          </span>
                         </button>
                         <button
-                          onClick={() => handleDelete(paciente.id || paciente._id)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                          title="Excluir"
+                          onClick={() => handleDelete(paciente.id || paciente._id, paciente.nome)}
+                          disabled={deletingId === (paciente.id || paciente._id)}
+                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Excluir paciente"
+                          aria-label="Excluir paciente"
                         >
-                          <Trash2 size={16} />
+                          {deletingId === (paciente.id || paciente._id) ? (
+                            <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                          ) : (
+                            <Trash2 size={18} />
+                          )}
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            Excluir
+                          </span>
                         </button>
                       </div>
                     </Td>

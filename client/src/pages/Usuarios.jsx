@@ -30,6 +30,7 @@ export default function Usuarios() {
   const [density, setDensity] = useState('comfortable');
   const [feedback, setFeedback] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   useEffect(() => {
@@ -58,21 +59,25 @@ export default function Usuarios() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, nome) => {
     if (id === user.id) {
       toast.error(customErrorMessage('cannotDeleteSelf'));
       return;
     }
-    if (!window.confirm('Tem certeza que deseja excluir este usuário?')) {
+    const confirmMessage = `Tem certeza que deseja excluir o usuário "${nome}"?\n\nEsta ação não pode ser desfeita.`;
+    if (!window.confirm(confirmMessage)) {
       return;
     }
     try {
+      setDeletingId(id);
       await usuarioService.delete(id);
       toast.success(successMessage('delete', 'Usuário'));
       setFeedback({ type: 'success', message: 'Usuário excluído e lista atualizada.' });
       loadUsuarios();
     } catch (error) {
       toast.error(errorMessage('delete', 'usuário'));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -231,18 +236,25 @@ export default function Usuarios() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEdit(usuario)}
-                        className="p-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
-                        title="Editar"
+                        className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                        title="Editar usuário"
+                        aria-label="Editar usuário"
                       >
-                        <Edit2 size={16} />
+                        <Edit2 size={18} />
                       </button>
                       {usuario.id !== user.id && (
                         <button
-                          onClick={() => handleDelete(usuario.id)}
-                          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                          title="Excluir"
+                          onClick={() => handleDelete(usuario.id, usuario.nome)}
+                          disabled={deletingId === usuario.id}
+                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Excluir usuário"
+                          aria-label="Excluir usuário"
                         >
-                          <Trash2 size={16} />
+                          {deletingId === usuario.id ? (
+                            <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                          ) : (
+                            <Trash2 size={18} />
+                          )}
                         </button>
                       )}
                     </div>
@@ -301,18 +313,31 @@ export default function Usuarios() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEdit(usuario)}
-                          className="p-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                           title="Editar"
+                          aria-label="Editar usuário"
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={18} />
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            Editar
+                          </span>
                         </button>
                         {usuario.id !== user.id && (
                           <button
-                            onClick={() => handleDelete(usuario.id)}
-                            className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                            onClick={() => handleDelete(usuario.id, usuario.nome)}
+                            disabled={deletingId === usuario.id}
+                            className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Excluir"
+                            aria-label="Excluir usuário"
                           >
-                            <Trash2 size={16} />
+                            {deletingId === usuario.id ? (
+                              <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                            ) : (
+                              <Trash2 size={18} />
+                            )}
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                              Excluir
+                            </span>
                           </button>
                         )}
                       </div>
