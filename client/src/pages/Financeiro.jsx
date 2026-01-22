@@ -10,7 +10,9 @@ import {
   Edit2,
   Trash2,
   CheckCircle2,
-  Clock
+  Clock,
+  FileDown,
+  FileSpreadsheet
 } from 'lucide-react';
 import { financeiroService } from '../services/financeiro.service';
 import TransacaoModal from '../components/TransacaoModal';
@@ -106,6 +108,143 @@ export default function Financeiro() {
     loadData();
   };
 
+  const exportToPDF = () => {
+    try {
+      // Criar conteúdo HTML para impressão
+      const printWindow = window.open('', '_blank');
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Relatório Financeiro - Prescrimed</title>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+            .stats { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
+            .stat-card { border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; flex: 1; min-width: 200px; }
+            .stat-label { color: #6b7280; font-size: 12px; text-transform: uppercase; }
+            .stat-value { font-size: 24px; font-weight: bold; margin: 8px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+            th { background: #f9fafb; font-weight: 600; color: #374151; }
+            .receita { color: #059669; }
+            .despesa { color: #dc2626; }
+            .pago { color: #059669; background: #d1fae5; padding: 4px 8px; border-radius: 4px; }
+            .pendente { color: #d97706; background: #fef3c7; padding: 4px 8px; border-radius: 4px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <h1>Relatório Financeiro</h1>
+          <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+          
+          <div class="stats">
+            <div class="stat-card">
+              <div class="stat-label">Saldo Atual</div>
+              <div class="stat-value">${formatCurrency(stats.saldo)}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Receitas</div>
+              <div class="stat-value" style="color: #059669">${formatCurrency(stats.receitas)}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Despesas</div>
+              <div class="stat-value" style="color: #dc2626">${formatCurrency(stats.despesas)}</div>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredTransacoes.map(t => `
+                <tr>
+                  <td>${new Date(t.data).toLocaleDateString('pt-BR')}</td>
+                  <td>${t.descricao}</td>
+                  <td>${t.categoria}</td>
+                  <td class="${t.tipo}">${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</td>
+                  <td class="${t.tipo}">${t.tipo === 'despesa' ? '-' : '+'}${formatCurrency(t.valor)}</td>
+                  <td><span class="${t.status}">${t.status === 'pago' ? 'Pago' : 'Pendente'}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+      toast.success('Abrindo visualização para impressão/PDF');
+    } catch (error) {
+      toast.error('Erro ao gerar PDF');
+    }
+  };
+
+  const exportToExcel = () => {
+    try {
+      // Criar dados CSV
+      const headers = ['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor', 'Status'];
+      const rows = filteredTransacoes.map(t => [
+        new Date(t.data).toLocaleDateString('pt-BR'),
+        t.descricao,
+        t.categoria,
+        t.tipo === 'receita' ? 'Receita' : 'Despesa',
+        `${t.tipo === 'despesa' ? '-' : ''}${t.valor}`,
+        t.status === 'pago' ? 'Pago' : 'Pendente'
+      ]);
+      
+      // Adicionar estatísticas no topo
+      const statsRows = [
+        ['RELATÓRIO FINANCEIRO'],
+        ['Gerado em:', new Date().toLocaleString('pt-BR')],
+        [],
+        ['RESUMO'],
+        ['Saldo Atual', stats.saldo],
+        ['Receitas', stats.receitas],
+        ['Despesas', stats.despesas],
+        ['Receitas Pendentes', stats.receitasPendentes],
+        ['Despesas Pendentes', stats.despesasPendentes],
+        [],
+        ['TRANSAÇÕES']
+      ];
+      
+      const csvContent = [
+        ...statsRows.map(row => row.join(';')),
+        headers.join(';'),
+        ...rows.map(row => row.join(';'))
+      ].join('\n');
+      
+      // Adicionar BOM para UTF-8
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `financeiro_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Arquivo Excel exportado com sucesso');
+    } catch (error) {
+      toast.error('Erro ao exportar para Excel');
+    }
+  };
+
   const filteredTransacoes = transacoes.filter(t => {
     const matchesSearch = t.descricao.toLowerCase().includes(filter.search.toLowerCase()) ||
                           t.categoria.toLowerCase().includes(filter.search.toLowerCase());
@@ -121,12 +260,48 @@ export default function Financeiro() {
         title="Financeiro"
         subtitle="Gestão completa de receitas, despesas e fluxo de caixa."
       >
-        <button
-          onClick={() => setModalOpen(true)}
-          className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
-        >
-          <Plus size={20} /> Nova Transação
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Botões de Exportação */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportToPDF}
+              disabled={filteredTransacoes.length === 0}
+              className="group relative px-4 py-2.5 bg-white border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Exportar para PDF"
+              aria-label="Exportar relatório em PDF"
+            >
+              <FileDown size={18} />
+              <span className="hidden sm:inline font-medium">PDF</span>
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                Exportar PDF
+              </span>
+            </button>
+            <button
+              onClick={exportToExcel}
+              disabled={filteredTransacoes.length === 0}
+              className="group relative px-4 py-2.5 bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Exportar para Excel"
+              aria-label="Exportar relatório em Excel"
+            >
+              <FileSpreadsheet size={18} />
+              <span className="hidden sm:inline font-medium">Excel</span>
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                Exportar Excel
+              </span>
+            </button>
+          </div>
+          
+          {/* Separador visual */}
+          <div className="hidden md:block w-px h-8 bg-slate-200"></div>
+          
+          {/* Botão Nova Transação */}
+          <button
+            onClick={() => setModalOpen(true)}
+            className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
+          >
+            <Plus size={20} /> <span className="hidden sm:inline">Nova Transação</span><span className="sm:hidden">Nova</span>
+          </button>
+        </div>
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
