@@ -28,9 +28,12 @@ if (process.env.DATABASE_URL) {
   // Railway ou Render fornece DATABASE_URL completa (PostgreSQL em produção)
   console.log('📡 Usando DATABASE_URL do Railway/Render (PostgreSQL)');
   
+  // Verifica se usa conexão interna (railway.internal) que NÃO requer SSL
+  const isInternalConnection = process.env.DATABASE_URL.includes('railway.internal');
+  
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
-    dialectOptions: {
+    dialectOptions: isInternalConnection ? {} : {
       ssl: {
         require: true,
         rejectUnauthorized: false
