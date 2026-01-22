@@ -78,6 +78,7 @@ export default function Empresas() {
 
   return (
     <div className="space-y-8">
+      import ActionIconButton from '../components/common/ActionIconButton';
       <PageHeader
         label="Gestão"
         title="Empresas"
@@ -91,22 +92,15 @@ export default function Empresas() {
           <RefreshCcw size={18} /> Atualizar lista
         </button>
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="btn btn-primary flex items-center justify-center gap-2"
-        >
-          <Plus size={18} /> Nova Empresa
-        </button>
-      </PageHeader>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatsCard
-          icon={Building2}
-          label="Empresas Ativas"
-          value={empresas.length}
-          color="primary"
-        />
-        {/* Placeholders for future stats */}
-        <div className="hidden md:block"></div>
+                                <ActionIconButton
+                                  onClick={() => handleDelete(empresa.id, empresa.nome)}
+                                  icon={Trash2}
+                                  tooltip="Excluir"
+                                  ariaLabel="Excluir empresa"
+                                  variant="danger"
+                                  disabled={deletingId === empresa.id}
+                                  loading={deletingId === empresa.id}
+                                />
         <div className="hidden md:block"></div>
       </div>
 

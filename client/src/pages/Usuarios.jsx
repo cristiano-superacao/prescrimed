@@ -10,6 +10,7 @@ import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
+import ActionIconButton from '../components/common/ActionIconButton';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -311,34 +312,23 @@ export default function Usuarios() {
                     </Td>
                     <Td className={`${density === 'compact' ? 'py-3' : 'py-4'} text-right`}>
                       <div className="flex items-center justify-end gap-2">
-                        <button
+                        <ActionIconButton
                           onClick={() => handleEdit(usuario)}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
-                          title="Editar"
-                          aria-label="Editar usuário"
-                        >
-                          <Edit2 size={18} />
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Editar
-                          </span>
-                        </button>
+                          icon={Edit2}
+                          tooltip="Editar"
+                          ariaLabel="Editar usuário"
+                          variant="primary"
+                        />
                         {usuario.id !== user.id && (
-                          <button
+                          <ActionIconButton
                             onClick={() => handleDelete(usuario.id, usuario.nome)}
+                            icon={Trash2}
+                            tooltip="Excluir"
+                            ariaLabel="Excluir usuário"
+                            variant="danger"
                             disabled={deletingId === usuario.id}
-                            className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Excluir"
-                            aria-label="Excluir usuário"
-                          >
-                            {deletingId === usuario.id ? (
-                              <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
-                            ) : (
-                              <Trash2 size={18} />
-                            )}
-                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                              Excluir
-                            </span>
-                          </button>
+                            loading={deletingId === usuario.id}
+                          />
                         )}
                       </div>
                     </Td>

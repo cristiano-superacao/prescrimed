@@ -25,6 +25,7 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import ActionIconButton from '../components/common/ActionIconButton';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -493,31 +494,22 @@ export default function Financeiro() {
                     </Td>
                     <Td className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <ActionIconButton
                           onClick={() => handleEdit(transacao)}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
-                          aria-label="Editar transação"
-                        >
-                          <Edit2 size={18} />
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Editar
-                          </span>
-                        </button>
-                        <button 
+                          icon={Edit2}
+                          tooltip="Editar"
+                          ariaLabel="Editar transação"
+                          variant="primary"
+                        />
+                        <ActionIconButton
                           onClick={() => handleDelete(transacao._id, transacao.descricao)}
+                          icon={Trash2}
+                          tooltip="Excluir"
+                          ariaLabel="Excluir transação"
+                          variant="danger"
                           disabled={deletingId === transacao._id}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                          aria-label="Excluir transação"
-                        >
-                          {deletingId === transacao._id ? (
-                            <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
-                          ) : (
-                            <Trash2 size={18} />
-                          )}
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Excluir
-                          </span>
-                        </button>
+                          loading={deletingId === transacao._id}
+                        />
                       </div>
                     </Td>
                   </Tr>

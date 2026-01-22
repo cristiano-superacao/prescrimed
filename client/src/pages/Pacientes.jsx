@@ -23,6 +23,7 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import ActionIconButton from '../components/common/ActionIconButton';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -299,44 +300,29 @@ export default function Pacientes() {
                     <Td className="text-sm text-slate-600 dark:text-gray-300">{paciente.telefone || '-'}</Td>
                     <Td className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button
+                        <ActionIconButton
                           onClick={() => handleViewHistorico(paciente)}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
-                          title="Ver Histórico"
-                          aria-label="Ver histórico do paciente"
-                        >
-                          <FileText size={18} />
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Histórico
-                          </span>
-                        </button>
-                        <button
+                          icon={FileText}
+                          tooltip="Histórico"
+                          ariaLabel="Ver histórico do paciente"
+                          variant="emerald"
+                        />
+                        <ActionIconButton
                           onClick={() => handleEdit(paciente)}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
-                          title="Editar paciente"
-                          aria-label="Editar paciente"
-                        >
-                          <Edit2 size={18} />
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Editar
-                          </span>
-                        </button>
-                        <button
+                          icon={Edit2}
+                          tooltip="Editar"
+                          ariaLabel="Editar paciente"
+                          variant="primary"
+                        />
+                        <ActionIconButton
                           onClick={() => handleDelete(paciente.id || paciente._id, paciente.nome)}
+                          icon={Trash2}
+                          tooltip="Excluir"
+                          ariaLabel="Excluir paciente"
+                          variant="danger"
                           disabled={deletingId === (paciente.id || paciente._id)}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Excluir paciente"
-                          aria-label="Excluir paciente"
-                        >
-                          {deletingId === (paciente.id || paciente._id) ? (
-                            <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
-                          ) : (
-                            <Trash2 size={18} />
-                          )}
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Excluir
-                          </span>
-                        </button>
+                          loading={deletingId === (paciente.id || paciente._id)}
+                        />
                       </div>
                     </Td>
                   </Tr>
