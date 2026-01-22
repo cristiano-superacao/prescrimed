@@ -70,10 +70,10 @@ export default function Cronograma() {
         type: 'medicacoes',
         originalType: 'Medicação',
         title: `Prescrição: ${pres.medicamentos?.[0]?.nome || 'Medicamentos diversos'}`,
-        subtitle: pres.pacienteId?.nome || 'Paciente não identificado',
+        subtitle: pres.pacienteNome || pres.pacienteId?.nome || 'Paciente não identificado',
         date: new Date(pres.dataEmissao || pres.createdAt),
         status: pres.status,
-        details: `${pres.medicamentos?.length || 0} medicamentos`,
+        details: `${pres.medicamentos?.length || 0} ${pres.medicamentos?.length === 1 ? 'medicamento' : 'medicamentos'}`,
         source: 'prescricao'
       }));
 

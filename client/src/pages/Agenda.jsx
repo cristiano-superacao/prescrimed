@@ -190,6 +190,35 @@ export default function Agenda() {
     }
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Data não informada';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Data inválida';
+      return date.toLocaleDateString('pt-BR', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+    } catch (error) {
+      return 'Data inválida';
+    }
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return '--:--';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '--:--';
+      return date.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } catch (error) {
+      return '--:--';
+    }
+  };
+
   const filteredAgendamentos = agendamentos.filter(ag => 
     ag.titulo.toLowerCase().includes(filterTerm.toLowerCase()) ||
     ag.participante?.toLowerCase().includes(filterTerm.toLowerCase())
@@ -231,7 +260,7 @@ export default function Agenda() {
         </div>
       </PageHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatsCard
           icon={CalendarIcon}
           label="Total"
@@ -312,12 +341,17 @@ export default function Agenda() {
                   <div className="mt-3 space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300">
                       <Clock size={14} />
-                      <span>{new Date(ag.dataHoraInicio).toLocaleDateString('pt-BR')} às {new Date(ag.dataHoraInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span>{formatDate(ag.dataHoraInicio)} às {formatTime(ag.dataHoraInicio)}</span>
                     </div>
-                    {ag.participante && (
+                    {ag.participante ? (
                       <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300">
                         <User size={14} />
                         <span>{ag.participante}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-slate-400 dark:text-gray-500">
+                        <User size={14} />
+                        <span className="italic">Sem participante</span>
                       </div>
                     )}
                     {ag.local && (
@@ -370,10 +404,10 @@ export default function Agenda() {
                     <Td>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-700 dark:text-gray-200">
-                          {new Date(ag.dataHoraInicio).toLocaleDateString('pt-BR')}
+                          {formatDate(ag.dataHoraInicio)}
                         </span>
                         <span className="text-xs text-slate-500 dark:text-gray-400">
-                          {new Date(ag.dataHoraInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          {formatTime(ag.dataHoraInicio)}
                         </span>
                       </div>
                     </Td>
@@ -381,12 +415,12 @@ export default function Agenda() {
                       {ag.participante ? (
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-gray-700 flex items-center justify-center text-slate-500 dark:text-gray-300 text-xs font-bold">
-                            {ag.participante.charAt(0)}
+                            {ag.participante.charAt(0).toUpperCase()}
                           </div>
                           <span className="text-sm text-slate-600 dark:text-gray-300">{ag.participante}</span>
                         </div>
                       ) : (
-                        <span className="text-slate-400 dark:text-gray-500 text-sm">-</span>
+                        <span className="text-slate-400 dark:text-gray-500 text-sm italic">Sem participante</span>
                       )}
                     </Td>
                     <Td>
@@ -583,7 +617,8 @@ export default function Agenda() {
                       }).length === 0 && (
                         <div className="px-4 py-8 text-center text-slate-500">
                           <User size={32} className="mx-auto mb-2 opacity-30" />
-                          <p className="text-sm">Nenhum paciente encontrado</p>
+                          <p className="text-sm font-medium">Nenhum paciente encontrado</p>
+                          <p className="text-xs mt-1">Tente buscar por outro nome ou CPF</p>
                         </div>
                       )}
                       

@@ -40,6 +40,35 @@ export default function Prescricoes() {
   const [tipoFilter, setTipoFilter] = useState('todas');
   const [feedback, setFeedback] = useState(null);
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Data não informada';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Data inválida';
+      return date.toLocaleDateString('pt-BR', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+    } catch (error) {
+      return 'Data inválida';
+    }
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return '--:--';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '--:--';
+      return date.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } catch (error) {
+      return '--:--';
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -257,14 +286,16 @@ export default function Prescricoes() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
-                        {p.pacienteNome ? p.pacienteNome.charAt(0) : 'P'}
+                        {p.pacienteNome ? p.pacienteNome.charAt(0).toUpperCase() : 'P'}
                       </div>
                       <div>
-                        <p className="font-medium text-slate-900 dark:text-gray-100">{p.pacienteNome}</p>
+                        <p className="font-medium text-slate-900 dark:text-gray-100">
+                          {p.pacienteNome || 'Paciente não identificado'}
+                        </p>
                         <div className="flex items-center gap-2 mt-1 text-xs text-slate-600 dark:text-gray-300">
-                          <span>{new Date(p.createdAt).toLocaleDateString('pt-BR')}</span>
+                          <span>{formatDate(p.createdAt)}</span>
                           <span className="text-slate-400">
-                            {new Date(p.createdAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                            {formatTime(p.createdAt)}
                           </span>
                         </div>
                       </div>
@@ -283,12 +314,12 @@ export default function Prescricoes() {
                         <span className="font-medium">{p.medicamentos[0].nome}</span>
                         {p.medicamentos.length > 1 && (
                           <span className="text-slate-400 text-xs ml-1">
-                            +{p.medicamentos.length - 1} outros
+                            +{p.medicamentos.length - 1} {p.medicamentos.length === 2 ? 'outro' : 'outros'}
                           </span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-slate-400">-</span>
+                      <span className="text-slate-400 italic">Sem medicamentos</span>
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-3">
@@ -325,15 +356,17 @@ export default function Prescricoes() {
                     <Td>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
-                          {prescricao.pacienteNome ? prescricao.pacienteNome.charAt(0) : 'P'}
+                          {prescricao.pacienteNome ? prescricao.pacienteNome.charAt(0).toUpperCase() : 'P'}
                         </div>
-                        <span className="font-medium text-slate-900 dark:text-gray-100">{prescricao.pacienteNome}</span>
+                        <span className="font-medium text-slate-900 dark:text-gray-100">
+                          {prescricao.pacienteNome || 'Paciente não identificado'}
+                        </span>
                       </div>
                     </Td>
                     <Td className="text-sm text-slate-600 dark:text-gray-300">
-                      {new Date(prescricao.createdAt).toLocaleDateString('pt-BR')}
+                      {formatDate(prescricao.createdAt)}
                       <span className="text-xs text-slate-400 block">
-                        {new Date(prescricao.createdAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                        {formatTime(prescricao.createdAt)}
                       </span>
                     </Td>
                     <Td>
