@@ -30,19 +30,27 @@ if (process.env.DATABASE_URL) {
   // Normaliza esquema 'postgresql://' para 'postgres://' (compatibilidade com driver pg)
   const normalizedUrl = process.env.DATABASE_URL.replace(/^postgresql:\/\//i, 'postgres://');
 
-  // Railway pode fornecer URL pública (proxy rlwy.net) OU URL interna (postgres.railway.internal).
-  // A URL interna normalmente NÃO usa SSL; forçar SSL pode impedir a conexão.
-  let needsSsl = true;
+  // Railway usa proxy público (.rlwy.net) que REQUER SSL
+  // URLs internas (.railway.internal) não usam SSL
+  let needsSsl = false;
   try {
     const urlObj = new URL(normalizedUrl);
     const host = (urlObj.hostname || '').toLowerCase();
+    // Proxy público do Railway (.rlwy.net) REQUER SSL
+    if (host.includes('rlwy.net') || host.includes('railway.app')) {
+      needsSsl = true;
+    }
+    // URLs internas ou localhost NÃO usam SSL
     if (host.endsWith('.railway.internal') || host === 'localhost' || host === '127.0.0.1') {
       needsSsl = false;
     }
-  } catch {
-    // Se não conseguir parsear, mantém SSL por segurança (URLs públicas geralmente exigem).
+  } catch (err) {
+    // Se não conseguir parsear, tenta com SSL por segurança
+    console.warn('⚠️ Erro ao parsear DATABASE_URL, usando SSL por padrão:', err.message);
     needsSsl = true;
   }
+
+  console.log(`🔐 SSL ${needsSsl ? 'ATIVADO' : 'DESATIVADO'} para conexão com PostgreSQL`);
 
   sequelize = new Sequelize(normalizedUrl, {
     dialect: 'postgres',
@@ -52,16 +60,16 @@ if (process.env.DATABASE_URL) {
             require: true,
             rejectUnauthorized: false
           },
-          connectTimeout: 60000 // 60 segundos
+          connectTimeout: 60000
         }
       : {
-          connectTimeout: 60000 // 60 segundos
+          connectTimeout: 60000
         },
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
       max: 10,
       min: 2,
-      acquire: 60000, // 60 segundos para adquirir conexão
+      acquire: 60000,
       idle: 10000,
       evict: 10000
     },
