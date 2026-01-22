@@ -27,55 +27,21 @@ if (missingDbConfigInProd && !allowSqliteInProd) {
 if (process.env.DATABASE_URL) {
   // Railway ou Render fornece DATABASE_URL completa (PostgreSQL em produção)
   console.log('📡 Usando DATABASE_URL do Railway/Render (PostgreSQL)');
-  // Normaliza esquema 'postgresql://' para 'postgres://' (compatibilidade com driver pg)
-  const normalizedUrl = process.env.DATABASE_URL.replace(/^postgresql:\/\//i, 'postgres://');
-
-  // Railway usa proxy público (.rlwy.net) que REQUER SSL
-  // URLs internas (.railway.internal) não usam SSL
-  let needsSsl = false;
-  try {
-    const urlObj = new URL(normalizedUrl);
-    const host = (urlObj.hostname || '').toLowerCase();
-    // Proxy público do Railway (.rlwy.net) REQUER SSL
-    if (host.includes('rlwy.net') || host.includes('railway.app')) {
-      needsSsl = true;
-    }
-    // URLs internas ou localhost NÃO usam SSL
-    if (host.endsWith('.railway.internal') || host === 'localhost' || host === '127.0.0.1') {
-      needsSsl = false;
-    }
-  } catch (err) {
-    // Se não conseguir parsear, tenta com SSL por segurança
-    console.warn('⚠️ Erro ao parsear DATABASE_URL, usando SSL por padrão:', err.message);
-    needsSsl = true;
-  }
-
-  console.log(`🔐 SSL ${needsSsl ? 'ATIVADO' : 'DESATIVADO'} para conexão com PostgreSQL`);
-
-  sequelize = new Sequelize(normalizedUrl, {
+  
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
-    dialectOptions: needsSsl
-      ? {
-          ssl: {
-            require: true,
-            rejectUnauthorized: false
-          },
-          connectTimeout: 60000
-        }
-      : {
-          connectTimeout: 60000
-        },
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    },
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
       max: 10,
       min: 2,
       acquire: 60000,
-      idle: 10000,
-      evict: 10000
-    },
-    retry: {
-      max: 3,
-      timeout: 60000
+      idle: 10000
     }
   });
 } else if (process.env.PGHOST) {

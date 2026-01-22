@@ -89,24 +89,17 @@ if (process.env.NODE_ENV !== 'production') {
 /**
  * Função para conectar ao banco de dados PostgreSQL
  * Executa em background para não bloquear início do servidor
- * Inclui retry logic para ambientes com latência variável
  */
-async function connectDB(retryCount = 0, maxRetries = 5) {
+async function connectDB(retryCount = 0) {
   try {
-    console.log(`📡 Conectando ao banco de dados... (tentativa ${retryCount + 1}/${maxRetries + 1})`);
+    console.log(`📡 Conectando ao banco de dados... (tentativa ${retryCount + 1})`);
     app.locals.dbLastError = null;
-
-    const connectTimeoutMs = Number.parseInt(process.env.DB_CONNECT_TIMEOUT_MS || '60000', 10);
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error(`DB connect timeout após ${connectTimeoutMs}ms`)), connectTimeoutMs);
-    });
     
     // Testa conexão com o banco
-    await Promise.race([sequelize.authenticate(), timeoutPromise]);
+    await sequelize.authenticate();
     console.log('✅ Banco de dados conectado com sucesso');
 
     // Marca banco como pronto imediatamente após autenticar
-    // Evita alerta prolongado de "Banco Inicializando" no frontend
     app.locals.dbReady = true;
 
     // Em PostgreSQL, ENUM não aceita novos valores sem ALTER TYPE.
@@ -228,23 +221,13 @@ async function connectDB(retryCount = 0, maxRetries = 5) {
     console.log('🎉 Sistema pronto para uso!');
   } catch (error) {
     console.error('❌ Erro ao conectar no banco de dados:', error.message);
-    console.error('Stack:', error.stack);
     app.locals.dbReady = false;
     app.locals.dbLastError = error?.message || String(error);
     
     // Retry automático com backoff exponencial
-    if (retryCount < maxRetries) {
-      const delayMs = Math.min(5000 * Math.pow(2, retryCount), 30000); // Máximo 30 segundos
-      console.log(`🔄 Tentando reconectar em ${delayMs / 1000} segundos... (tentativa ${retryCount + 2}/${maxRetries + 1})`);
-      setTimeout(() => connectDB(retryCount + 1, maxRetries), delayMs);
-    } else {
-      console.error(`❌ Falha ao conectar após ${maxRetries + 1} tentativas. Sistema iniciado em modo degradado.`);
-      // Em produção, continua tentando em background indefinidamente
-      if (process.env.NODE_ENV === 'production') {
-        console.log('🔄 Continuando tentativas de reconexão em background (a cada 60 segundos)...');
-        setTimeout(() => connectDB(0, maxRetries), 60000);
-      }
-    }
+    const delayMs = Math.min(5000 * Math.pow(2, retryCount), 30000); // Máximo 30 segundos
+    console.log(`🔄 Tentando reconectar em ${delayMs / 1000} segundos...`);
+    setTimeout(() => connectDB(retryCount + 1), delayMs);
   }
 }
 
