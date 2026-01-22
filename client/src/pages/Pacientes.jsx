@@ -18,7 +18,7 @@ import {
 import { pacienteService } from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage } from '../utils/toastMessages';
-import PacienteModal from '../components/PacienteModal';
+import PacienteModal from '../components/PacienteModalNew';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';

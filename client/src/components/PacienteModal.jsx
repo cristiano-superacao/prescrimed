@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, User, MapPin, Phone, AlertCircle } from 'lucide-react';
 import { pacienteService } from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
@@ -20,13 +20,6 @@ export default function PacienteModal({ paciente, onClose }) {
       estado: '',
       cep: '',
     },
-    alergias: [],
-    condicoesMedicas: [],
-    convenio: {
-      nome: '',
-      numero: '',
-      validade: '',
-    },
     contatoEmergencia: {
       nome: '',
       telefone: '',
@@ -34,6 +27,7 @@ export default function PacienteModal({ paciente, onClose }) {
     },
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   useEffect(() => {
     if (paciente) {
       setFormData(paciente);
