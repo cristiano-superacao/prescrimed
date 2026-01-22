@@ -10,7 +10,9 @@ import {
   X,
   Calendar,
   Layers,
-  CheckCircle2
+  CheckCircle2,
+  FileDown,
+  FileSpreadsheet
 } from 'lucide-react';
 import { estoqueService } from '../services/estoque.service';
 import toast from 'react-hot-toast';
@@ -127,6 +129,148 @@ export default function Estoque() {
     setModalOpen(null);
     setFormData({});
     setMovimentacaoData({ quantidade: '', motivo: '', observacao: '' });
+  };
+
+  const exportToPDF = () => {
+    try {
+      const printWindow = window.open('', '_blank');
+      const tabName = activeTab === 'medicamentos' ? 'Medicamentos' : 'Alimentos';
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Relatório de Estoque - ${tabName} - Prescrimed</title>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+            .stats { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
+            .stat-card { border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; flex: 1; min-width: 180px; }
+            .stat-label { color: #6b7280; font-size: 12px; text-transform: uppercase; }
+            .stat-value { font-size: 24px; font-weight: bold; margin: 8px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+            th { background: #f9fafb; font-weight: 600; color: #374151; }
+            .baixo-estoque { color: #dc2626; font-weight: 600; }
+            .ok { color: #059669; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <h1>Relatório de Estoque - ${tabName}</h1>
+          <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+          
+          <div class="stats">
+            <div class="stat-card">
+              <div class="stat-label">Total de Itens</div>
+              <div class="stat-value">${itemStats.total}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Baixo Estoque</div>
+              <div class="stat-value" style="color: #dc2626">${itemStats.baixoEstoque}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Vencendo (30 dias)</div>
+              <div class="stat-value" style="color: #d97706">${itemStats.vencendo}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Categorias</div>
+              <div class="stat-value">${itemStats.categorias}</div>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Quantidade</th>
+                <th>Qtd. Mínima</th>
+                <th>Validade</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredItems.map(item => {
+                const isBaixo = item.quantidade <= (item.quantidadeMinima || 0);
+                const validade = item.validade ? new Date(item.validade).toLocaleDateString('pt-BR') : '-';
+                return `
+                  <tr>
+                    <td>${item.nome}</td>
+                    <td>${item.categoria || 'Geral'}</td>
+                    <td class="${isBaixo ? 'baixo-estoque' : 'ok'}">${item.quantidade} ${item.unidade || ''}</td>
+                    <td>${item.quantidadeMinima || '-'}</td>
+                    <td>${validade}</td>
+                    <td>${isBaixo ? '<span class="baixo-estoque">⚠️ Baixo</span>' : '<span class="ok">✓ OK</span>'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+      toast.success('Abrindo visualização para impressão/PDF');
+    } catch (error) {
+      toast.error('Erro ao gerar PDF');
+    }
+  };
+
+  const exportToExcel = () => {
+    try {
+      const tabName = activeTab === 'medicamentos' ? 'Medicamentos' : 'Alimentos';
+      const headers = ['Nome', 'Categoria', 'Quantidade', 'Unidade', 'Qtd. Mínima', 'Validade', 'Lote', 'Fabricante'];
+      const rows = filteredItems.map(item => [
+        item.nome,
+        item.categoria || 'Geral',
+        item.quantidade,
+        item.unidade || '',
+        item.quantidadeMinima || '',
+        item.validade ? new Date(item.validade).toLocaleDateString('pt-BR') : '',
+        item.lote || '',
+        item.fabricante || ''
+      ]);
+      
+      const statsRows = [
+        [`RELATÓRIO DE ESTOQUE - ${tabName.toUpperCase()}`],
+        ['Gerado em:', new Date().toLocaleString('pt-BR')],
+        [],
+        ['RESUMO'],
+        ['Total de Itens', itemStats.total],
+        ['Baixo Estoque', itemStats.baixoEstoque],
+        ['Vencendo (30 dias)', itemStats.vencendo],
+        ['Categorias Diferentes', itemStats.categorias],
+        [],
+        ['ITENS DO ESTOQUE']
+      ];
+      
+      const csvContent = [
+        ...statsRows.map(row => row.join(';')),
+        headers.join(';'),
+        ...rows.map(row => row.join(';'))
+      ].join('\n');
+      
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `estoque_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Arquivo Excel exportado com sucesso');
+    } catch (error) {
+      toast.error('Erro ao exportar para Excel');
+    }
   };
 
   const filteredItems = items.filter(item => 
@@ -369,30 +513,66 @@ export default function Estoque() {
         title="Controle de Estoque"
         subtitle="Gerencie o inventário de medicamentos e alimentos, registre entradas e saídas."
       >
-        <button 
-          onClick={loadMovimentacoes}
-          className="btn bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all"
-        >
-          <Layers size={18} /> Ver Histórico
-        </button>
-        <button 
-          onClick={() => setModalOpen('entrada')}
-          className="btn bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all"
-        >
-          <ArrowDownCircle size={18} /> Registrar Entrada
-        </button>
-        <button 
-          onClick={() => setModalOpen('saida')}
-          className="btn bg-red-50 text-red-700 hover:bg-red-100 border-red-200 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all"
-        >
-          <ArrowUpCircle size={18} /> Registrar Saída
-        </button>
-        <button 
-          onClick={() => setModalOpen('cadastrar')}
-          className="btn bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-600/20 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all"
-        >
-          <Plus size={18} /> Novo Item
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Botões de Exportação */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportToPDF}
+              disabled={filteredItems.length === 0}
+              className="group relative px-3 py-2.5 bg-white border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Exportar para PDF"
+              aria-label="Exportar relatório em PDF"
+            >
+              <FileDown size={18} />
+              <span className="hidden lg:inline font-medium text-sm">PDF</span>
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                Exportar PDF
+              </span>
+            </button>
+            <button
+              onClick={exportToExcel}
+              disabled={filteredItems.length === 0}
+              className="group relative px-3 py-2.5 bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Exportar para Excel"
+              aria-label="Exportar relatório em Excel"
+            >
+              <FileSpreadsheet size={18} />
+              <span className="hidden lg:inline font-medium text-sm">Excel</span>
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                Exportar Excel
+              </span>
+            </button>
+          </div>
+          
+          {/* Separador */}
+          <div className="hidden md:block w-px h-8 bg-slate-200"></div>
+          
+          {/* Botões de Ação */}
+          <button 
+            onClick={loadMovimentacoes}
+            className="btn bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200 flex items-center gap-2 px-3 py-2.5 rounded-lg font-semibold transition-all text-sm"
+          >
+            <Layers size={18} /> <span className="hidden sm:inline">Histórico</span>
+          </button>
+          <button 
+            onClick={() => setModalOpen('entrada')}
+            className="btn bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 flex items-center gap-2 px-3 py-2.5 rounded-lg font-semibold transition-all text-sm"
+          >
+            <ArrowDownCircle size={18} /> <span className="hidden sm:inline">Entrada</span>
+          </button>
+          <button 
+            onClick={() => setModalOpen('saida')}
+            className="btn bg-red-50 text-red-700 hover:bg-red-100 border-red-200 flex items-center gap-2 px-3 py-2.5 rounded-lg font-semibold transition-all text-sm"
+          >
+            <ArrowUpCircle size={18} /> <span className="hidden sm:inline">Saída</span>
+          </button>
+          <button 
+            onClick={() => setModalOpen('cadastrar')}
+            className="btn bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-600/20 flex items-center gap-2 px-3 py-2.5 rounded-lg font-semibold transition-all text-sm"
+          >
+            <Plus size={18} /> <span className="hidden sm:inline">Novo</span>
+          </button>
+        </div>
       </PageHeader>
 
       {/* Estatísticas Gerais */}
