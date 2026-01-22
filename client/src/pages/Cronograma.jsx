@@ -48,34 +48,45 @@ export default function Cronograma() {
       ]);
 
       const agendamentos = Array.isArray(agendamentosData) ? agendamentosData : [];
-      const formattedAgendamentos = agendamentos.map(ag => ({
-        id: ag.id || ag._id,
-        type: ag.tipo === 'Consulta' ? 'consultas' : ag.tipo === 'Exame' ? 'exames' : 'outros',
-        originalType: ag.tipo,
-        title: ag.titulo,
-        subtitle: ag.participante || 'Sem participante',
-        date: new Date(ag.dataHoraInicio),
-        status: ag.status,
-        details: ag.local,
-        source: 'agendamento'
-      }));
+      const formattedAgendamentos = agendamentos.map(ag => {
+        const dataHora = ag.dataHoraInicio ? new Date(ag.dataHoraInicio) : new Date();
+        const isValidDate = !isNaN(dataHora.getTime());
+        
+        return {
+          id: ag.id || ag._id,
+          type: ag.tipo === 'Consulta' ? 'consultas' : ag.tipo === 'Exame' ? 'exames' : 'outros',
+          originalType: ag.tipo,
+          title: ag.titulo,
+          subtitle: ag.participante || 'Sem participante',
+          date: isValidDate ? dataHora : new Date(),
+          status: ag.status,
+          details: ag.local,
+          source: 'agendamento'
+        };
+      });
 
       const prescricoesResponse = prescricoesData || {};
       const listaPrescricoes = Array.isArray(prescricoesResponse) 
         ? prescricoesResponse 
         : (Array.isArray(prescricoesResponse.prescricoes) ? prescricoesResponse.prescricoes : []);
         
-      const formattedPrescricoes = listaPrescricoes.map(pres => ({
-        id: pres.id || pres._id,
-        type: 'medicacoes',
-        originalType: 'Medicação',
-        title: `Prescrição: ${pres.medicamentos?.[0]?.nome || 'Medicamentos diversos'}`,
-        subtitle: pres.pacienteNome || pres.pacienteId?.nome || 'Paciente não identificado',
-        date: new Date(pres.dataEmissao || pres.createdAt),
-        status: pres.status,
-        details: `${pres.medicamentos?.length || 0} ${pres.medicamentos?.length === 1 ? 'medicamento' : 'medicamentos'}`,
-        source: 'prescricao'
-      }));
+      const formattedPrescricoes = listaPrescricoes.map(pres => {
+        const dataRef = pres.dataEmissao || pres.createdAt || new Date().toISOString();
+        const dataPrescricao = new Date(dataRef);
+        const isValidDate = !isNaN(dataPrescricao.getTime());
+        
+        return {
+          id: pres.id || pres._id,
+          type: 'medicacoes',
+          originalType: 'Medicação',
+          title: `Prescrição: ${pres.medicamentos?.[0]?.nome || 'Medicamentos diversos'}`,
+          subtitle: pres.pacienteNome || pres.pacienteId?.nome || 'Paciente não identificado',
+          date: isValidDate ? dataPrescricao : new Date(),
+          status: pres.status,
+          details: `${pres.medicamentos?.length || 0} ${pres.medicamentos?.length === 1 ? 'medicamento' : 'medicamentos'}`,
+          source: 'prescricao'
+        };
+      });
 
       const allItems = [...formattedAgendamentos, ...formattedPrescricoes].sort((a, b) => a.date - b.date);
       setItems(allItems);
@@ -263,64 +274,70 @@ export default function Cronograma() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredItems.map((item) => {
               const statusInfo = getStatusInfo(item.date, item.status, item.type);
+              const isValidDate = item.date && !isNaN(item.date.getTime());
               
               return (
                 <div 
                   key={`${item.source}-${item.id}`} 
-                  className="group bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col md:flex-row gap-5"
+                  className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col"
                 >
-                  {/* Date Column */}
-                  <div className="flex md:flex-col items-center justify-center md:justify-start gap-2 md:gap-0 min-w-[80px] p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <span className="text-2xl font-bold text-slate-800 leading-none">{item.date.getDate()}</span>
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.date.toLocaleDateString('pt-BR', { month: 'short' })}</span>
+                  {/* Date Section */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
+                      <span className="text-xl font-bold text-slate-800 leading-none">
+                        {isValidDate ? item.date.getDate() : 'NaN'}
+                      </span>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        {isValidDate ? item.date.toLocaleDateString('pt-BR', { month: 'short' }) : ''}
+                      </span>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusInfo.color}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${statusInfo.dot}`}></div>
+                      {statusInfo.label}
+                    </span>
                   </div>
 
-                  {/* Main Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            item.type === 'medicacoes' ? 'bg-purple-50 text-purple-700' :
-                            item.type === 'consultas' ? 'bg-blue-50 text-blue-700' :
-                            'bg-slate-100 text-slate-600'
-                          }`}>
-                            {item.type === 'medicacoes' ? <Pill size={10} /> : 
-                             item.type === 'consultas' ? <Stethoscope size={10} /> : <FileText size={10} />}
-                            {item.originalType}
-                          </span>
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusInfo.color}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${statusInfo.dot}`}></div>
-                            {statusInfo.label}
-                          </span>
-                        </div>
-                        <h4 className="text-lg font-bold text-slate-900 truncate pr-4 group-hover:text-primary-700 transition-colors">
-                          {item.title}
-                        </h4>
-                      </div>
+                  {/* Type Badge */}
+                  <div className="mb-2">
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      item.type === 'medicacoes' ? 'bg-purple-50 text-purple-700' :
+                      item.type === 'consultas' ? 'bg-blue-50 text-blue-700' :
+                      'bg-slate-100 text-slate-600'
+                    }`}>
+                      {item.type === 'medicacoes' ? <Pill size={10} /> : 
+                       item.type === 'consultas' ? <Stethoscope size={10} /> : <FileText size={10} />}
+                      {item.originalType}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h4 className="text-base font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-primary-700 transition-colors min-h-[3rem]">
+                    {item.title}
+                  </h4>
+
+                  {/* Details */}
+                  <div className="space-y-2 mt-auto">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <User size={14} className="text-slate-400 shrink-0" />
+                      <span className="truncate">{item.subtitle}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Clock size={14} className="text-slate-400 shrink-0" />
+                      <span>
+                        {isValidDate ? item.date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Invalid Date'}
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 mt-3">
+                    {item.details && (
                       <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <User size={16} className="text-slate-400" />
-                        <span className="truncate">{item.subtitle}</span>
+                        <MapPin size={14} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{item.details}</span>
                       </div>
-                      
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Clock size={16} className="text-slate-400" />
-                        <span>{item.date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-
-                      {item.details && (
-                        <div className="flex items-center gap-2 text-sm text-slate-600 sm:col-span-2">
-                          <MapPin size={16} className="text-slate-400" />
-                          <span className="truncate">{item.details}</span>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
               );
