@@ -17,6 +17,8 @@ import {
 import { estoqueService } from '../services/estoque.service';
 import toast from 'react-hot-toast';
 import { errorMessage, apiErrorMessage } from '../utils/toastMessages';
+import { downloadCsv } from '../utils/exportCsv';
+import { openPrintWindow, escapeHtml } from '../utils/printWindow';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -133,88 +135,85 @@ export default function Estoque() {
 
   const exportToPDF = () => {
     try {
-      const printWindow = window.open('', '_blank');
       const tabName = activeTab === 'medicamentos' ? 'Medicamentos' : 'Alimentos';
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Relatório de Estoque - ${tabName} - Prescrimed</title>
-          <meta charset="utf-8">
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
-            .stats { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
-            .stat-card { border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; flex: 1; min-width: 180px; }
-            .stat-label { color: #6b7280; font-size: 12px; text-transform: uppercase; }
-            .stat-value { font-size: 24px; font-weight: bold; margin: 8px 0; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-            th { background: #f9fafb; font-weight: 600; color: #374151; }
-            .baixo-estoque { color: #dc2626; font-weight: 600; }
-            .ok { color: #059669; }
-            @media print { body { padding: 0; } }
-          </style>
-        </head>
-        <body>
-          <h1>Relatório de Estoque - ${tabName}</h1>
-          <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
-          
-          <div class="stats">
-            <div class="stat-card">
-              <div class="stat-label">Total de Itens</div>
-              <div class="stat-value">${itemStats.total}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Baixo Estoque</div>
-              <div class="stat-value" style="color: #dc2626">${itemStats.baixoEstoque}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Vencendo (30 dias)</div>
-              <div class="stat-value" style="color: #d97706">${itemStats.vencendo}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Categorias</div>
-              <div class="stat-value">${itemStats.categorias}</div>
-            </div>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Categoria</th>
-                <th>Quantidade</th>
-                <th>Qtd. Mínima</th>
-                <th>Validade</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredItems.map(item => {
-                const isBaixo = item.quantidade <= (item.quantidadeMinima || 0);
-                const validade = item.validade ? new Date(item.validade).toLocaleDateString('pt-BR') : '-';
-                return `
-                  <tr>
-                    <td>${item.nome}</td>
-                    <td>${item.categoria || 'Geral'}</td>
-                    <td class="${isBaixo ? 'baixo-estoque' : 'ok'}">${item.quantidade} ${item.unidade || ''}</td>
-                    <td>${item.quantidadeMinima || '-'}</td>
-                    <td>${validade}</td>
-                    <td>${isBaixo ? '<span class="baixo-estoque">⚠️ Baixo</span>' : '<span class="ok">✓ OK</span>'}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </body>
-        </html>
+      const generatedAt = new Date();
+      const styles = `
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+        .stats { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
+        .stat-card { border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; flex: 1; min-width: 180px; }
+        .stat-label { color: #6b7280; font-size: 12px; text-transform: uppercase; }
+        .stat-value { font-size: 24px; font-weight: bold; margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; }
+        .baixo-estoque { color: #dc2626; font-weight: 600; }
+        .ok { color: #059669; }
+        @media print { body { padding: 0; } }
       `;
-      printWindow.document.write(html);
-      printWindow.document.close();
-      setTimeout(() => {
-        printWindow.print();
-      }, 250);
+
+      const rowsHtml = filteredItems
+        .map((item) => {
+          const isBaixo = item.quantidade <= (item.quantidadeMinima || 0);
+          const validade = item.validade ? new Date(item.validade).toLocaleDateString('pt-BR') : '-';
+          return `
+            <tr>
+              <td>${escapeHtml(item.nome)}</td>
+              <td>${escapeHtml(item.categoria || 'Geral')}</td>
+              <td class="${isBaixo ? 'baixo-estoque' : 'ok'}">${escapeHtml(item.quantidade)} ${escapeHtml(item.unidade || '')}</td>
+              <td>${escapeHtml(item.quantidadeMinima || '-')}</td>
+              <td>${escapeHtml(validade)}</td>
+              <td>${isBaixo ? '<span class="baixo-estoque">⚠️ Baixo</span>' : '<span class="ok">✓ OK</span>'}</td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const bodyHtml = `
+        <h1>Relatório de Estoque - ${escapeHtml(tabName)}</h1>
+        <p>Gerado em: ${escapeHtml(generatedAt.toLocaleDateString('pt-BR'))} às ${escapeHtml(generatedAt.toLocaleTimeString('pt-BR'))}</p>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-label">Total de Itens</div>
+            <div class="stat-value">${escapeHtml(itemStats.total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Baixo Estoque</div>
+            <div class="stat-value" style="color: #dc2626">${escapeHtml(itemStats.baixoEstoque)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Vencendo (30 dias)</div>
+            <div class="stat-value" style="color: #d97706">${escapeHtml(itemStats.vencendo)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Categorias</div>
+            <div class="stat-value">${escapeHtml(itemStats.categorias)}</div>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Categoria</th>
+              <th>Quantidade</th>
+              <th>Qtd. Mínima</th>
+              <th>Validade</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      `;
+
+      openPrintWindow({
+        title: `Relatório de Estoque - ${tabName} - Prescrimed`,
+        styles,
+        bodyHtml
+      });
       toast.success('Abrindo visualização para impressão/PDF');
     } catch (error) {
       toast.error('Erro ao gerar PDF');
@@ -236,7 +235,7 @@ export default function Estoque() {
         item.fabricante || ''
       ]);
       
-      const statsRows = [
+      const lines = [
         [`RELATÓRIO DE ESTOQUE - ${tabName.toUpperCase()}`],
         ['Gerado em:', new Date().toLocaleString('pt-BR')],
         [],
@@ -246,26 +245,15 @@ export default function Estoque() {
         ['Vencendo (30 dias)', itemStats.vencendo],
         ['Categorias Diferentes', itemStats.categorias],
         [],
-        ['ITENS DO ESTOQUE']
+        ['ITENS DO ESTOQUE'],
+        headers,
+        ...rows
       ];
       
-      const csvContent = [
-        ...statsRows.map(row => row.join(';')),
-        headers.join(';'),
-        ...rows.map(row => row.join(';'))
-      ].join('\n');
-      
-      const BOM = '\uFEFF';
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `estoque_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      downloadCsv({
+        filename: `estoque_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`,
+        lines
+      });
       
       toast.success('Arquivo Excel exportado com sucesso');
     } catch (error) {

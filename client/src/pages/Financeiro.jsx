@@ -19,6 +19,8 @@ import TransacaoModal from '../components/TransacaoModal';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
 import { formatCurrency } from '../utils/currency';
+import { downloadCsv } from '../utils/exportCsv';
+import { openPrintWindow, escapeHtml } from '../utils/printWindow';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -110,82 +112,82 @@ export default function Financeiro() {
 
   const exportToPDF = () => {
     try {
-      // Criar conteúdo HTML para impressão
-      const printWindow = window.open('', '_blank');
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Relatório Financeiro - Prescrimed</title>
-          <meta charset="utf-8">
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
-            .stats { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
-            .stat-card { border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; flex: 1; min-width: 200px; }
-            .stat-label { color: #6b7280; font-size: 12px; text-transform: uppercase; }
-            .stat-value { font-size: 24px; font-weight: bold; margin: 8px 0; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-            th { background: #f9fafb; font-weight: 600; color: #374151; }
-            .receita { color: #059669; }
-            .despesa { color: #dc2626; }
-            .pago { color: #059669; background: #d1fae5; padding: 4px 8px; border-radius: 4px; }
-            .pendente { color: #d97706; background: #fef3c7; padding: 4px 8px; border-radius: 4px; }
-            @media print { body { padding: 0; } }
-          </style>
-        </head>
-        <body>
-          <h1>Relatório Financeiro</h1>
-          <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
-          
-          <div class="stats">
-            <div class="stat-card">
-              <div class="stat-label">Saldo Atual</div>
-              <div class="stat-value">${formatCurrency(stats.saldo)}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Receitas</div>
-              <div class="stat-value" style="color: #059669">${formatCurrency(stats.receitas)}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Despesas</div>
-              <div class="stat-value" style="color: #dc2626">${formatCurrency(stats.despesas)}</div>
-            </div>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Descrição</th>
-                <th>Categoria</th>
-                <th>Tipo</th>
-                <th>Valor</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredTransacoes.map(t => `
-                <tr>
-                  <td>${new Date(t.data).toLocaleDateString('pt-BR')}</td>
-                  <td>${t.descricao}</td>
-                  <td>${t.categoria}</td>
-                  <td class="${t.tipo}">${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</td>
-                  <td class="${t.tipo}">${t.tipo === 'despesa' ? '-' : '+'}${formatCurrency(t.valor)}</td>
-                  <td><span class="${t.status}">${t.status === 'pago' ? 'Pago' : 'Pendente'}</span></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-        </html>
+      const generatedAt = new Date();
+      const styles = `
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+        .stats { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
+        .stat-card { border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; flex: 1; min-width: 200px; }
+        .stat-label { color: #6b7280; font-size: 12px; text-transform: uppercase; }
+        .stat-value { font-size: 24px; font-weight: bold; margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; }
+        .receita { color: #059669; }
+        .despesa { color: #dc2626; }
+        .pago { color: #059669; background: #d1fae5; padding: 4px 8px; border-radius: 4px; }
+        .pendente { color: #d97706; background: #fef3c7; padding: 4px 8px; border-radius: 4px; }
+        @media print { body { padding: 0; } }
       `;
-      printWindow.document.write(html);
-      printWindow.document.close();
-      setTimeout(() => {
-        printWindow.print();
-      }, 250);
+
+      const rowsHtml = filteredTransacoes
+        .map((t) => {
+          const tipo = t.tipo === 'receita' ? 'receita' : 'despesa';
+          const status = t.status === 'pago' ? 'pago' : 'pendente';
+          return `
+            <tr>
+              <td>${escapeHtml(new Date(t.data).toLocaleDateString('pt-BR'))}</td>
+              <td>${escapeHtml(t.descricao)}</td>
+              <td>${escapeHtml(t.categoria)}</td>
+              <td class="${tipo}">${tipo === 'receita' ? 'Receita' : 'Despesa'}</td>
+              <td class="${tipo}">${tipo === 'despesa' ? '-' : '+'}${escapeHtml(formatCurrency(t.valor))}</td>
+              <td><span class="${status}">${status === 'pago' ? 'Pago' : 'Pendente'}</span></td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const bodyHtml = `
+        <h1>Relatório Financeiro</h1>
+        <p>Gerado em: ${escapeHtml(generatedAt.toLocaleDateString('pt-BR'))} às ${escapeHtml(generatedAt.toLocaleTimeString('pt-BR'))}</p>
+        
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-label">Saldo Atual</div>
+            <div class="stat-value">${escapeHtml(formatCurrency(stats.saldo))}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Receitas</div>
+            <div class="stat-value" style="color: #059669">${escapeHtml(formatCurrency(stats.receitas))}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Despesas</div>
+            <div class="stat-value" style="color: #dc2626">${escapeHtml(formatCurrency(stats.despesas))}</div>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      `;
+
+      openPrintWindow({
+        title: 'Relatório Financeiro - Prescrimed',
+        styles,
+        bodyHtml
+      });
       toast.success('Abrindo visualização para impressão/PDF');
     } catch (error) {
       toast.error('Erro ao gerar PDF');
@@ -194,9 +196,9 @@ export default function Financeiro() {
 
   const exportToExcel = () => {
     try {
-      // Criar dados CSV
       const headers = ['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor', 'Status'];
-      const rows = filteredTransacoes.map(t => [
+
+      const rows = filteredTransacoes.map((t) => [
         new Date(t.data).toLocaleDateString('pt-BR'),
         t.descricao,
         t.categoria,
@@ -204,9 +206,8 @@ export default function Financeiro() {
         `${t.tipo === 'despesa' ? '-' : ''}${t.valor}`,
         t.status === 'pago' ? 'Pago' : 'Pendente'
       ]);
-      
-      // Adicionar estatísticas no topo
-      const statsRows = [
+
+      const lines = [
         ['RELATÓRIO FINANCEIRO'],
         ['Gerado em:', new Date().toLocaleString('pt-BR')],
         [],
@@ -217,27 +218,15 @@ export default function Financeiro() {
         ['Receitas Pendentes', stats.receitasPendentes],
         ['Despesas Pendentes', stats.despesasPendentes],
         [],
-        ['TRANSAÇÕES']
+        ['TRANSAÇÕES'],
+        headers,
+        ...rows
       ];
-      
-      const csvContent = [
-        ...statsRows.map(row => row.join(';')),
-        headers.join(';'),
-        ...rows.map(row => row.join(';'))
-      ].join('\n');
-      
-      // Adicionar BOM para UTF-8
-      const BOM = '\uFEFF';
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `financeiro_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+
+      downloadCsv({
+        filename: `financeiro_${new Date().toISOString().split('T')[0]}.csv`,
+        lines
+      });
       
       toast.success('Arquivo Excel exportado com sucesso');
     } catch (error) {
