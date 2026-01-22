@@ -15,6 +15,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { agendamentoService } from '../services/agendamento.service';
+import { pacienteService } from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
@@ -39,6 +40,12 @@ export default function Agenda() {
   const [editingId, setEditingId] = useState(null);
   const [filterTerm, setFilterTerm] = useState('');
   
+  // Pacientes state
+  const [pacientes, setPacientes] = useState([]);
+  const [pacienteSearch, setPacienteSearch] = useState('');
+  const [showPacienteDropdown, setShowPacienteDropdown] = useState(false);
+  const [selectedPaciente, setSelectedPaciente] = useState(null);
+  
   // Form State
   const [formData, setFormData] = useState({
     tipo: 'Compromisso',
@@ -52,7 +59,17 @@ export default function Agenda() {
 
   useEffect(() => {
     loadAgendamentos();
+    loadPacientes();
   }, []);
+
+  const loadPacientes = async () => {
+    try {
+      const data = await pacienteService.getAll();
+      setPacientes(data);
+    } catch (error) {
+      console.error('Erro ao carregar pacientes:', error);
+    }
+  };
 
   const loadAgendamentos = async () => {
     try {
@@ -153,6 +170,9 @@ export default function Agenda() {
       descricao: ''
     });
     setEditingId(null);
+    setPacienteSearch('');
+    setSelectedPaciente(null);
+    setShowPacienteDropdown(false);
   };
 
   const openModal = (tipo = 'Compromisso') => {
@@ -499,18 +519,83 @@ export default function Agenda() {
                   </div>
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Participante</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" size={18} />
                     <input
                       type="text"
                       className="input w-full pl-10"
                       placeholder="Nome do participante"
-                      value={formData.participante}
-                      onChange={e => setFormData({...formData, participante: e.target.value})}
+                      value={pacienteSearch || formData.participante}
+                      onChange={(e) => {
+                        setPacienteSearch(e.target.value);
+                        setShowPacienteDropdown(true);
+                        if (!e.target.value) {
+                          setSelectedPaciente(null);
+                          setFormData({...formData, participante: ''});
+                        }
+                      }}
+                      onFocus={() => setShowPacienteDropdown(true)}
                     />
                   </div>
+                  
+                  {/* Dropdown de pacientes */}
+                  {showPacienteDropdown && (
+                    <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-xl border border-slate-200 max-h-64 overflow-y-auto">
+                      {pacientes
+                        .filter(p => {
+                          const searchLower = (pacienteSearch || '').toLowerCase();
+                          return p.nome?.toLowerCase().includes(searchLower) || 
+                                 p.cpf?.includes(searchLower);
+                        })
+                        .slice(0, 10)
+                        .map((paciente) => (
+                          <button
+                            key={paciente.id}
+                            type="button"
+                            className="w-full px-4 py-3 text-left hover:bg-primary-50 border-b border-slate-100 last:border-0 transition-colors"
+                            onClick={() => {
+                              setSelectedPaciente(paciente);
+                              setPacienteSearch('');
+                              setFormData({...formData, participante: paciente.nome});
+                              setShowPacienteDropdown(false);
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-semibold">
+                                {paciente.nome?.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium text-slate-900">{paciente.nome}</p>
+                                <p className="text-sm text-slate-500">
+                                  {paciente.cpf ? `CPF: ${paciente.cpf}` : 'Sem CPF'}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      
+                      {pacientes.filter(p => {
+                        const searchLower = (pacienteSearch || '').toLowerCase();
+                        return p.nome?.toLowerCase().includes(searchLower) || 
+                               p.cpf?.includes(searchLower);
+                      }).length === 0 && (
+                        <div className="px-4 py-8 text-center text-slate-500">
+                          <User size={32} className="mx-auto mb-2 opacity-30" />
+                          <p className="text-sm">Nenhum paciente encontrado</p>
+                        </div>
+                      )}
+                      
+                      <button
+                        type="button"
+                        className="w-full px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 border-t border-slate-200 font-medium"
+                        onClick={() => setShowPacienteDropdown(false)}
+                      >
+                        Fechar
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div>
