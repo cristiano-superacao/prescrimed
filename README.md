@@ -7,8 +7,8 @@ Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e c
 [![Railway](https://img.shields.io/badge/Deploy-Railway-purple.svg)](https://railway.app/)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-blue.svg)](https://www.postgresql.org/)
 
-> **Última Atualização:** 17 de janeiro de 2026  
-> **Status do Sistema:** ✅ Operacional com logging aprimorado e troubleshooting de CORS/405
+> **Última Atualização:** 21 de janeiro de 2026  
+> **Status do Sistema:** ✅ Operacional | 📚 [Documentação Técnica Completa](DOCUMENTATION.md)
 
 ---
 
@@ -29,21 +29,26 @@ Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e c
 - Multi-tenant com isolamento por empresa
 
 ### 📋 Módulos Principais
-- **Dashboard:** Visão geral com métricas e indicadores
-- **Pacientes:** Cadastro completo com prontuário eletrônico
-- **Prescrições:** Medicamentosas, nutricionais e mistas
-- **Agenda:** Agendamentos e controle de consultas
+- **Dashboard:** Visão geral com métricas e indicadores em tempo real
+- **Pacientes:** Cadastro completo com prontuário eletrônico e busca avançada
+- **Prescrições:** Medicamentosas, nutricionais e mistas com controle de vigência
+- **Agenda:** Agendamentos e controle de consultas com notificações
+- **Evolução/Enfermagem:** Registros completos com sinais vitais e avaliação de riscos
+- **Estoque:** Controle de medicamentos, materiais e alertas de validade
+- **Financeiro:** Gestão de receitas e despesas com **exportação PDF/Excel**
+- **Usuários:** Controle de acesso com 9 níveis de permissão
+- **Empresas:** Gestão multi-tenant (Super Admin)
 - **Censo MP:** Mapa de leitos para casas de repouso
-- **Evolução:** Acompanhamento longitudinal de pacientes
-- **Estoque:** Controle de medicamentos e materiais
-- **Financeiro:** Gestão de receitas e despesas
-- **Cronograma:** Planejamento de atividades
+- **Cronograma:** Planejamento de atividades e procedimentos
 
 ### 🎨 Interface
-- **Layout responsivo e profissional** em todas as telas
-- Design moderno com Tailwind CSS
-- Tema escuro com gradientes e glassmorphism
-- Componentes acessíveis e otimizados para mobile
+- **Layout responsivo e profissional** em todas as telas (mobile, tablet, desktop)
+- Design moderno com Tailwind CSS e componentes padronizados
+- Botões de ação com gradientes, tooltips e estados de loading
+- Tema escuro com glassmorphism e transições suaves
+- Componentes acessíveis (WCAG) otimizados para touch e keyboard
+- Exportação de relatórios em PDF e Excel
+- Notificações toast personalizadas (sucesso, erro, aviso)
 
 ---
 
