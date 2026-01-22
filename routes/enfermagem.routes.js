@@ -1,0 +1,324 @@
+import express from 'express';
+import { Op } from 'sequelize';
+import { RegistroEnfermagem, Paciente, Usuario } from '../models/index.js';
+import { authenticateToken } from '../middleware/auth.middleware.js';
+
+const router = express.Router();
+
+// Listar todos os registros com filtros
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const { pacienteId, tipo, dataInicio, dataFim, prioridade, alerta } = req.query;
+    const empresaId = req.user.empresaId;
+
+    const where = { empresaId };
+
+    if (pacienteId) where.pacienteId = pacienteId;
+    if (tipo) where.tipo = tipo;
+    if (prioridade) where.prioridade = prioridade;
+    if (alerta !== undefined) where.alerta = alerta === 'true';
+
+    if (dataInicio && dataFim) {
+      where.createdAt = {
+        [Op.gte]: new Date(dataInicio),
+        [Op.lte]: new Date(dataFim)
+      };
+    }
+
+    const registros = await RegistroEnfermagem.findAll({
+      where,
+      include: [
+        {
+          model: Paciente,
+          as: 'paciente',
+          attributes: ['id', 'nome', 'cpf']
+        },
+        {
+          model: Usuario,
+          as: 'enfermeiro',
+          attributes: ['id', 'nome', 'papel']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json(registros);
+  } catch (error) {
+    console.error('Erro ao listar registros:', error);
+    res.status(500).json({ error: 'Erro ao listar registros de enfermagem' });
+  }
+});
+
+// Buscar registro por ID
+router.get('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const empresaId = req.user.empresaId;
+
+    const registro = await RegistroEnfermagem.findOne({
+      where: { id, empresaId },
+      include: [
+        {
+          model: Paciente,
+          as: 'paciente',
+          attributes: ['id', 'nome', 'cpf', 'dataNascimento']
+        },
+        {
+          model: Usuario,
+          as: 'enfermeiro',
+          attributes: ['id', 'nome', 'papel', 'email']
+        }
+      ]
+    });
+
+    if (!registro) {
+      return res.status(404).json({ error: 'Registro não encontrado' });
+    }
+
+    res.json(registro);
+  } catch (error) {
+    console.error('Erro ao buscar registro:', error);
+    res.status(500).json({ error: 'Erro ao buscar registro' });
+  }
+});
+
+// Criar novo registro
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const {
+      pacienteId,
+      tipo,
+      titulo,
+      descricao,
+      sinaisVitais,
+      riscoQueda,
+      riscoLesao,
+      estadoGeral,
+      alerta,
+      prioridade,
+      observacoes,
+      anexos
+    } = req.body;
+
+    const empresaId = req.user.empresaId;
+    const usuarioId = req.user.id;
+
+    // Validações
+    if (!pacienteId || !tipo || !titulo || !descricao) {
+      return res.status(400).json({ 
+        error: 'Campos obrigatórios: pacienteId, tipo, titulo, descricao' 
+      });
+    }
+
+    // Verificar se paciente existe e pertence à empresa
+    const paciente = await Paciente.findOne({
+      where: { id: pacienteId, empresaId }
+    });
+
+    if (!paciente) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    // Serializar sinaisVitais e anexos se forem objetos
+    const sinaisVitaisStr = sinaisVitais 
+      ? (typeof sinaisVitais === 'string' ? sinaisVitais : JSON.stringify(sinaisVitais))
+      : null;
+
+    const anexosStr = anexos
+      ? (typeof anexos === 'string' ? anexos : JSON.stringify(anexos))
+      : null;
+
+    const registro = await RegistroEnfermagem.create({
+      pacienteId,
+      usuarioId,
+      empresaId,
+      tipo,
+      titulo,
+      descricao,
+      sinaisVitais: sinaisVitaisStr,
+      riscoQueda,
+      riscoLesao,
+      estadoGeral,
+      alerta: alerta || false,
+      prioridade: prioridade || 'baixa',
+      observacoes,
+      anexos: anexosStr
+    });
+
+    // Buscar registro completo com relacionamentos
+    const registroCompleto = await RegistroEnfermagem.findByPk(registro.id, {
+      include: [
+        {
+          model: Paciente,
+          as: 'paciente',
+          attributes: ['id', 'nome', 'cpf']
+        },
+        {
+          model: Usuario,
+          as: 'enfermeiro',
+          attributes: ['id', 'nome', 'papel']
+        }
+      ]
+    });
+
+    res.status(201).json(registroCompleto);
+  } catch (error) {
+    console.error('Erro ao criar registro:', error);
+    res.status(500).json({ error: 'Erro ao criar registro de enfermagem' });
+  }
+});
+
+// Atualizar registro
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const empresaId = req.user.empresaId;
+
+    const registro = await RegistroEnfermagem.findOne({
+      where: { id, empresaId }
+    });
+
+    if (!registro) {
+      return res.status(404).json({ error: 'Registro não encontrado' });
+    }
+
+    const {
+      tipo,
+      titulo,
+      descricao,
+      sinaisVitais,
+      riscoQueda,
+      riscoLesao,
+      estadoGeral,
+      alerta,
+      prioridade,
+      observacoes,
+      anexos
+    } = req.body;
+
+    // Serializar objetos
+    const updateData = {
+      tipo,
+      titulo,
+      descricao,
+      riscoQueda,
+      riscoLesao,
+      estadoGeral,
+      alerta,
+      prioridade,
+      observacoes
+    };
+
+    if (sinaisVitais) {
+      updateData.sinaisVitais = typeof sinaisVitais === 'string' 
+        ? sinaisVitais 
+        : JSON.stringify(sinaisVitais);
+    }
+
+    if (anexos) {
+      updateData.anexos = typeof anexos === 'string'
+        ? anexos
+        : JSON.stringify(anexos);
+    }
+
+    await registro.update(updateData);
+
+    // Buscar registro atualizado com relacionamentos
+    const registroAtualizado = await RegistroEnfermagem.findByPk(id, {
+      include: [
+        {
+          model: Paciente,
+          as: 'paciente',
+          attributes: ['id', 'nome', 'cpf']
+        },
+        {
+          model: Usuario,
+          as: 'enfermeiro',
+          attributes: ['id', 'nome', 'papel']
+        }
+      ]
+    });
+
+    res.json(registroAtualizado);
+  } catch (error) {
+    console.error('Erro ao atualizar registro:', error);
+    res.status(500).json({ error: 'Erro ao atualizar registro' });
+  }
+});
+
+// Deletar registro
+router.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const empresaId = req.user.empresaId;
+
+    const registro = await RegistroEnfermagem.findOne({
+      where: { id, empresaId }
+    });
+
+    if (!registro) {
+      return res.status(404).json({ error: 'Registro não encontrado' });
+    }
+
+    await registro.destroy();
+    res.json({ message: 'Registro excluído com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar registro:', error);
+    res.status(500).json({ error: 'Erro ao deletar registro' });
+  }
+});
+
+// Estatísticas dos registros
+router.get('/stats/dashboard', authenticateToken, async (req, res) => {
+  try {
+    const empresaId = req.user.empresaId;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const registrosHoje = await RegistroEnfermagem.count({
+      where: {
+        empresaId,
+        createdAt: { [Op.gte]: hoje }
+      }
+    });
+
+    const pacientesComRegistroHoje = await RegistroEnfermagem.count({
+      where: {
+        empresaId,
+        createdAt: { [Op.gte]: hoje }
+      },
+      distinct: true,
+      col: 'pacienteId'
+    });
+
+    const riscoQuedaAlto = await RegistroEnfermagem.count({
+      where: {
+        empresaId,
+        riscoQueda: 'alto',
+        createdAt: { [Op.gte]: hoje }
+      },
+      distinct: true,
+      col: 'pacienteId'
+    });
+
+    const alertasCriticos = await RegistroEnfermagem.count({
+      where: {
+        empresaId,
+        alerta: true,
+        prioridade: ['alta', 'urgente']
+      }
+    });
+
+    res.json({
+      registrosHoje,
+      pacientesComRegistro: pacientesComRegistroHoje,
+      riscoQueda: riscoQuedaAlto,
+      alertasCriticos
+    });
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error);
+    res.status(500).json({ error: 'Erro ao buscar estatísticas' });
+  }
+});
+
+export default router;

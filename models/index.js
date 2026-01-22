@@ -10,6 +10,7 @@ import SessaoFisio from './SessaoFisio.js';
 import EstoqueItem from './EstoqueItem.js';
 import EstoqueMovimentacao from './EstoqueMovimentacao.js';
 import FinanceiroTransacao from './FinanceiroTransacao.js';
+import RegistroEnfermagem from './RegistroEnfermagem.js';
 
 // Relacionamentos
 Empresa.hasMany(Usuario, { foreignKey: 'empresaId', as: 'usuarios' });
@@ -67,4 +68,14 @@ FinanceiroTransacao.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' 
 Paciente.hasMany(FinanceiroTransacao, { foreignKey: 'pacienteId', as: 'transacoesFinanceiras' });
 FinanceiroTransacao.belongsTo(Paciente, { foreignKey: 'pacienteId', as: 'paciente' });
 
-export { sequelize, Usuario, Empresa, Paciente, Prescricao, Agendamento, CasaRepousoLeito, Pet, SessaoFisio, EstoqueItem, EstoqueMovimentacao, FinanceiroTransacao };
+// Registros de Enfermagem
+Empresa.hasMany(RegistroEnfermagem, { foreignKey: 'empresaId', as: 'registrosEnfermagem' });
+RegistroEnfermagem.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+Paciente.hasMany(RegistroEnfermagem, { foreignKey: 'pacienteId', as: 'registrosEnfermagem' });
+RegistroEnfermagem.belongsTo(Paciente, { foreignKey: 'pacienteId', as: 'paciente' });
+
+Usuario.hasMany(RegistroEnfermagem, { foreignKey: 'usuarioId', as: 'registrosEnfermagem' });
+RegistroEnfermagem.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'enfermeiro' });
+
+export { sequelize, Usuario, Empresa, Paciente, Prescricao, Agendamento, CasaRepousoLeito, Pet, SessaoFisio, EstoqueItem, EstoqueMovimentacao, FinanceiroTransacao, RegistroEnfermagem };
