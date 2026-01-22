@@ -57,6 +57,10 @@ export default function Agenda() {
     descricao: ''
   });
 
+  // Loading states for actions
+  const [deletingId, setDeletingId] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
   useEffect(() => {
     loadAgendamentos();
     loadPacientes();
@@ -123,14 +127,20 @@ export default function Agenda() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir este agendamento?')) return;
+  const handleDelete = async (id, titulo) => {
+    // Confirmação personalizada com informações do agendamento
+    const confirmMessage = `Tem certeza que deseja excluir o agendamento "${titulo}"?\n\nEsta ação não pode ser desfeita.`;
+    if (!window.confirm(confirmMessage)) return;
+    
     try {
+      setDeletingId(id);
       await agendamentoService.delete(id);
-      toast.success('Agendamento excluído');
+      toast.success(successMessage('delete', 'Agendamento'));
       loadAgendamentos();
     } catch (error) {
-      toast.error(errorMessage('delete', 'agendamento'));
+      toast.error(apiErrorMessage(error, errorMessage('delete', 'agendamento')));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -149,13 +159,18 @@ export default function Agenda() {
     setModalOpen(true);
   };
 
-  const handleStatusChange = async (id, newStatus) => {
+  const handleStatusChange = async (id, currentStatus, newStatus) => {
+    if (currentStatus === newStatus) return;
+    
     try {
+      setUpdatingStatusId(id);
       await agendamentoService.update(id, { status: newStatus });
-      toast.success('Status atualizado');
+      toast.success(successMessage('update', 'Status'));
       loadAgendamentos();
     } catch (error) {
-      toast.error(errorMessage('update', 'status'));
+      toast.error(apiErrorMessage(error, errorMessage('update', 'status')));
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -325,8 +340,9 @@ export default function Agenda() {
                     </div>
                     <select 
                       value={ag.status}
-                      onChange={(e) => handleStatusChange(ag.id || ag._id, e.target.value)}
-                      className={`text-xs font-bold px-2 py-1 rounded-full border-none focus:ring-2 focus:ring-primary-500 ${
+                      onChange={(e) => handleStatusChange(ag.id || ag._id, ag.status, e.target.value)}
+                      disabled={updatingStatusId === (ag.id || ag._id)}
+                      className={`text-xs font-bold px-2 py-1 rounded-full border-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed ${
                         ag.status === 'agendado' ? 'bg-primary-50 text-primary-700' : 
                         ag.status === 'confirmado' ? 'bg-emerald-50 text-emerald-700' : 
                         ag.status === 'cancelado' ? 'bg-red-50 text-red-700' : 'bg-slate-100 text-slate-700'
@@ -364,15 +380,30 @@ export default function Agenda() {
                   <div className="flex items-center justify-end gap-2 mt-3">
                     <button 
                       onClick={() => handleEdit(ag)}
-                      className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                      className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                      title="Editar agendamento"
+                      aria-label="Editar agendamento"
                     >
-                      <Edit size={16} />
+                      <Edit size={18} />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                        Editar
+                      </span>
                     </button>
                     <button 
-                      onClick={() => handleDelete(ag.id || ag._id)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      onClick={() => handleDelete(ag.id || ag._id, ag.titulo)}
+                      disabled={deletingId === (ag.id || ag._id)}
+                      className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Excluir agendamento"
+                      aria-label="Excluir agendamento"
                     >
-                      <Trash2 size={16} />
+                      {deletingId === (ag.id || ag._id) ? (
+                        <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                      ) : (
+                        <Trash2 size={18} />
+                      )}
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                        Excluir
+                      </span>
                     </button>
                   </div>
                 </MobileCard>
@@ -436,8 +467,9 @@ export default function Agenda() {
                     <Td>
                       <select 
                         value={ag.status}
-                        onChange={(e) => handleStatusChange(ag.id || ag._id, e.target.value)}
-                        className={`text-xs font-bold px-3 py-1 rounded-full border-none focus:ring-2 focus:ring-primary-500 cursor-pointer ${
+                        onChange={(e) => handleStatusChange(ag.id || ag._id, ag.status, e.target.value)}
+                        disabled={updatingStatusId === (ag.id || ag._id)}
+                        className={`text-xs font-bold px-3 py-1 rounded-full border-none focus:ring-2 focus:ring-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                           ag.status === 'agendado' ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-100' : 
                           ag.status === 'confirmado' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 
                           ag.status === 'cancelado' ? 'bg-red-50 text-red-700 ring-1 ring-red-100' : 'bg-slate-100 text-slate-700 ring-1 ring-slate-200'
@@ -453,15 +485,30 @@ export default function Agenda() {
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => handleEdit(ag)}
-                          className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                          title="Editar agendamento"
+                          aria-label="Editar agendamento"
                         >
-                          <Edit size={16} />
+                          <Edit size={18} />
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            Editar
+                          </span>
                         </button>
                         <button 
-                          onClick={() => handleDelete(ag.id || ag._id)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                          onClick={() => handleDelete(ag.id || ag._id, ag.titulo)}
+                          disabled={deletingId === (ag.id || ag._id)}
+                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Excluir agendamento"
+                          aria-label="Excluir agendamento"
                         >
-                          <Trash2 size={16} />
+                          {deletingId === (ag.id || ag._id) ? (
+                            <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
+                          ) : (
+                            <Trash2 size={18} />
+                          )}
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            Excluir
+                          </span>
                         </button>
                       </div>
                     </Td>
