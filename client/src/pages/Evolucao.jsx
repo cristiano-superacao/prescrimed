@@ -26,6 +26,7 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import ActionIconButton from '../components/common/ActionIconButton';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -420,27 +421,24 @@ export default function Evolucao() {
                   </p>
 
                   <div className="flex items-center justify-end gap-2 mt-3">
-                    <button 
+                    <ActionIconButton
                       onClick={() => handleEdit(registro)}
-                      className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                      icon={Edit}
+                      variant="primary"
+                      tooltip="Editar"
                       title="Editar registro"
-                      aria-label="Editar registro"
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button 
+                      ariaLabel="Editar registro"
+                    />
+                    <ActionIconButton
                       onClick={() => handleDelete(registro.id, registro.titulo)}
-                      disabled={deletingId === registro.id}
-                      className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      icon={Trash2}
+                      variant="danger"
+                      tooltip="Excluir"
                       title="Excluir registro"
-                      aria-label="Excluir registro"
-                    >
-                      {deletingId === registro.id ? (
-                        <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
-                      ) : (
-                        <Trash2 size={18} />
-                      )}
-                    </button>
+                      ariaLabel="Excluir registro"
+                      disabled={deletingId === registro.id}
+                      loading={deletingId === registro.id}
+                    />
                   </div>
                 </MobileCard>
               ))}
@@ -488,33 +486,24 @@ export default function Evolucao() {
                     </Td>
                     <Td className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <ActionIconButton
                           onClick={() => handleEdit(registro)}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                          icon={Edit}
+                          variant="primary"
+                          tooltip="Editar"
                           title="Editar registro"
-                          aria-label="Editar registro"
-                        >
-                          <Edit size={18} />
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Editar
-                          </span>
-                        </button>
-                        <button 
+                          ariaLabel="Editar registro"
+                        />
+                        <ActionIconButton
                           onClick={() => handleDelete(registro.id, registro.titulo)}
-                          disabled={deletingId === registro.id}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                          icon={Trash2}
+                          variant="danger"
+                          tooltip="Excluir"
                           title="Excluir registro"
-                          aria-label="Excluir registro"
-                        >
-                          {deletingId === registro.id ? (
-                            <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
-                          ) : (
-                            <Trash2 size={18} />
-                          )}
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Excluir
-                          </span>
-                        </button>
+                          ariaLabel="Excluir registro"
+                          disabled={deletingId === registro.id}
+                          loading={deletingId === registro.id}
+                        />
                       </div>
                     </Td>
                   </Tr>
@@ -654,7 +643,7 @@ export default function Evolucao() {
                   
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5 flex items-center gap-1">
+                      <label className="flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5">
                         <Heart size={14} /> PA (mmHg)
                       </label>
                       <input
@@ -667,7 +656,7 @@ export default function Evolucao() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5 flex items-center gap-1">
+                      <label className="flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5">
                         <Activity size={14} /> FC (bpm)
                       </label>
                       <input
@@ -680,7 +669,7 @@ export default function Evolucao() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5 flex items-center gap-1">
+                      <label className="flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5">
                         <Wind size={14} /> FR (irpm)
                       </label>
                       <input
@@ -693,7 +682,7 @@ export default function Evolucao() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5 flex items-center gap-1">
+                      <label className="flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5">
                         <Thermometer size={14} /> Temp (°C)
                       </label>
                       <input
@@ -707,7 +696,7 @@ export default function Evolucao() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5 flex items-center gap-1">
+                      <label className="flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5">
                         <Activity size={14} /> SatO2 (%)
                       </label>
                       <input
@@ -720,7 +709,7 @@ export default function Evolucao() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5 flex items-center gap-1">
+                      <label className="flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-gray-200 mb-1.5">
                         <Droplet size={14} /> Glicemia (mg/dL)
                       </label>
                       <input

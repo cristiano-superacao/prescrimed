@@ -9,6 +9,7 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import EmptyState from '../components/common/EmptyState';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
+import ActionIconButton from '../components/common/ActionIconButton';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -78,7 +79,6 @@ export default function Empresas() {
 
   return (
     <div className="space-y-8">
-      import ActionIconButton from '../components/common/ActionIconButton';
       <PageHeader
         label="Gestão"
         title="Empresas"
@@ -91,18 +91,8 @@ export default function Empresas() {
         >
           <RefreshCcw size={18} /> Atualizar lista
         </button>
-        <button
-                                <ActionIconButton
-                                  onClick={() => handleDelete(empresa.id, empresa.nome)}
-                                  icon={Trash2}
-                                  tooltip="Excluir"
-                                  ariaLabel="Excluir empresa"
-                                  variant="danger"
-                                  disabled={deletingId === empresa.id}
-                                  loading={deletingId === empresa.id}
-                                />
         <div className="hidden md:block"></div>
-      </div>
+      </PageHeader>
 
       <TableContainer
         title="Lista de Empresas"

@@ -22,6 +22,7 @@ import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
+import ActionIconButton from '../components/common/ActionIconButton';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -378,33 +379,24 @@ export default function Agenda() {
                     )}
                   </div>
                   <div className="flex items-center justify-end gap-2 mt-3">
-                    <button 
+                    <ActionIconButton
                       onClick={() => handleEdit(ag)}
-                      className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                      icon={Edit}
+                      variant="primary"
+                      tooltip="Editar"
                       title="Editar agendamento"
-                      aria-label="Editar agendamento"
-                    >
-                      <Edit size={18} />
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                        Editar
-                      </span>
-                    </button>
-                    <button 
+                      ariaLabel="Editar agendamento"
+                    />
+                    <ActionIconButton
                       onClick={() => handleDelete(ag.id || ag._id, ag.titulo)}
-                      disabled={deletingId === (ag.id || ag._id)}
-                      className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      icon={Trash2}
+                      variant="danger"
+                      tooltip="Excluir"
                       title="Excluir agendamento"
-                      aria-label="Excluir agendamento"
-                    >
-                      {deletingId === (ag.id || ag._id) ? (
-                        <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
-                      ) : (
-                        <Trash2 size={18} />
-                      )}
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                        Excluir
-                      </span>
-                    </button>
+                      ariaLabel="Excluir agendamento"
+                      disabled={deletingId === (ag.id || ag._id)}
+                      loading={deletingId === (ag.id || ag._id)}
+                    />
                   </div>
                 </MobileCard>
               ))}
@@ -483,33 +475,24 @@ export default function Agenda() {
                     </Td>
                     <Td className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <ActionIconButton
                           onClick={() => handleEdit(ag)}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                          icon={Edit}
+                          variant="primary"
+                          tooltip="Editar"
                           title="Editar agendamento"
-                          aria-label="Editar agendamento"
-                        >
-                          <Edit size={18} />
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Editar
-                          </span>
-                        </button>
-                        <button 
+                          ariaLabel="Editar agendamento"
+                        />
+                        <ActionIconButton
                           onClick={() => handleDelete(ag.id || ag._id, ag.titulo)}
-                          disabled={deletingId === (ag.id || ag._id)}
-                          className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                          icon={Trash2}
+                          variant="danger"
+                          tooltip="Excluir"
                           title="Excluir agendamento"
-                          aria-label="Excluir agendamento"
-                        >
-                          {deletingId === (ag.id || ag._id) ? (
-                            <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
-                          ) : (
-                            <Trash2 size={18} />
-                          )}
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            Excluir
-                          </span>
-                        </button>
+                          ariaLabel="Excluir agendamento"
+                          disabled={deletingId === (ag.id || ag._id)}
+                          loading={deletingId === (ag.id || ag._id)}
+                        />
                       </div>
                     </Td>
                   </Tr>
