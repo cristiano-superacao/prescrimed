@@ -176,64 +176,61 @@ router.get('/next-steps', async (req, res) => {
     const { empresaId } = req.query;
     const where = empresaId ? { empresaId } : {};
     
-    // Buscar prescrições pendentes ou que precisam revisão
-    const prescricoesPendentes = await Prescricao.count({
-      where: { ...where, status: 'pendente' }
+    // Buscar prescrições ativas
+    const prescricoesAtivas = await Prescricao.count({
+      where: { ...where, status: 'ativa' }
     });
     
     // Buscar pacientes sem prescrição ativa
-    const prescricoesAtivas = await Prescricao.findAll({
+    const totalPacientes = await Paciente.count({ where });
+    const pacientesComPrescricao = await Prescricao.findAll({
       where: { ...where, status: 'ativa' },
       attributes: ['pacienteId'],
       raw: true
     });
     
-    const pacientesComPrescricao = prescricoesAtivas.map(p => p.pacienteId);
+    const pacientesIds = pacientesComPrescricao.map(p => p.pacienteId);
     const pacientesSemPrescricao = await Paciente.count({
       where: {
         ...where,
-        ...(pacientesComPrescricao.length > 0 ? { id: { [Op.notIn]: pacientesComPrescricao } } : {})
+        ...(pacientesIds.length > 0 ? { id: { [Op.notIn]: pacientesIds } } : {})
       }
     });
-    
+
     const nextSteps = [];
-    
-    if (prescricoesPendentes > 0) {
-      nextSteps.push({
-        id: 'prescricoes-pendentes',
-        title: 'Prescrições Pendentes',
-        description: `${prescricoesPendentes} prescrição(ões) aguardando aprovação`,
-        action: 'Ver Prescrições',
-        link: '/prescricoes',
-        priority: 'high'
-      });
-    }
-    
+
     if (pacientesSemPrescricao > 0) {
       nextSteps.push({
         id: 'pacientes-sem-prescricao',
-        title: 'Pacientes sem Prescrição Ativa',
+        title: 'Pacientes sem Prescrição',
         description: `${pacientesSemPrescricao} paciente(s) sem prescrição ativa`,
-        action: 'Ver Pacientes',
-        link: '/pacientes',
-        priority: 'medium'
+        ctaLabel: 'Ver Pacientes',
+        ctaRoute: '/residentes'
+      });
+    }
+
+    if (prescricoesAtivas > 0) {
+      nextSteps.push({
+        id: 'prescricoes-ativas',
+        title: 'Prescrições Ativas',
+        description: `${prescricoesAtivas} prescrição(ões) em uso`,
+        ctaLabel: 'Ver Prescrições',
+        ctaRoute: '/prescricoes'
       });
     }
     
     // Sempre sugerir criar nova prescrição se houver pacientes
-    const totalPacientes = await Paciente.count({ where });
-    if (totalPacientes > 0 && nextSteps.length < 3) {
+    if (totalPacientes > 0) {
       nextSteps.push({
         id: 'criar-prescricao',
         title: 'Nova Prescrição',
-        description: 'Criar uma nova prescrição para paciente',
-        action: 'Criar Prescrição',
-        link: '/prescricoes/nova',
-        priority: 'low'
+        description: 'Criar prescrição para um paciente',
+        ctaLabel: 'Criar',
+        ctaRoute: '/prescricoes/nova'
       });
     }
     
-    res.json({ steps: nextSteps });
+    res.json({ nextSteps });
   } catch (error) {
     console.error('Erro ao buscar próximos passos:', error);
     res.status(500).json({ error: 'Erro ao buscar próximos passos' });

@@ -30,14 +30,14 @@ router.get('/', async (req, res) => {
     if (req.query?.status) where.status = req.query.status;
 
     if (req.query?.dataInicio || req.query?.dataFim) {
-      where.data = {};
-      if (req.query.dataInicio) where.data[Op.gte] = req.query.dataInicio;
-      if (req.query.dataFim) where.data[Op.lte] = req.query.dataFim;
+      where.dataVencimento = {};
+      if (req.query.dataInicio) where.dataVencimento[Op.gte] = req.query.dataInicio;
+      if (req.query.dataFim) where.dataVencimento[Op.lte] = req.query.dataFim;
     }
 
     const transacoes = await FinanceiroTransacao.findAll({
       where,
-      order: [['data', 'DESC'], ['createdAt', 'DESC']]
+      order: [['dataVencimento', 'DESC'], ['createdAt', 'DESC']]
     });
 
     res.json(transacoes.map(transacaoToClient));

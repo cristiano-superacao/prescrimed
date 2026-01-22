@@ -247,7 +247,7 @@ router.get('/movimentacoes', async (req, res) => {
     const movimentacoes = await EstoqueMovimentacao.findAll({
       where,
       include,
-      order: [['data', 'DESC']],
+      order: [['dataMovimentacao', 'DESC']],
       limit: 50
     });
 
