@@ -5,11 +5,14 @@ aptPkgs = []
 [phases.install]
 cmds = [
   "npm ci --production=false",
-  "cd client && npm ci --production=false && VITE_BASE=/ npm run build && cd .."
+  "cd client && npm ci --production=false && cd .."
 ]
 
 [phases.build]
-cmds = ["echo 'Build completed - Backend serves frontend from client/dist'"]
+cmds = [
+  "cd client && npm run build && cd ..",
+  "echo 'Build completed - Backend serves frontend from client/dist'"
+]
 
 [start]
 cmd = "node server.js"
