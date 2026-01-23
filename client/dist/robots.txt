@@ -1,4 +1,3 @@
 User-agent: *
-Allow: /
-
-Sitemap: https://prescrimed.netlify.app/sitemap.xml
+Disallow:
+Sitemap: https://prescrimed.up.railway.app/sitemap.xml
