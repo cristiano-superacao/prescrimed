@@ -5,7 +5,7 @@
  * Com admins, funcionários e residentes/pacientes/pets
  */
 
-const BASE_URL = process.env.API_BASE_URL || 'https://prescrimed-production.up.railway.app';
+const BASE_URL = process.env.API_BASE_URL || 'https://prescrimed.up.railway.app';
 
 // Dados das 3 empresas
 const empresas = [
