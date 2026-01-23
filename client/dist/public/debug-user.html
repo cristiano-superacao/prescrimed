@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Usuário - Prescrimed</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Debug de informações do usuário logado.">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="stylesheet" crossorigin href="../assets/index-T2o5QCC7.css">
+</head>
+<body>
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;">
+    <h1 style="font-size:2rem;color:#6366f1;">Debug Usuário</h1>
+    <pre id="userInfo" style="margin-top:2rem;background:#f3f4f6;padding:1rem;border-radius:8px;max-width:90vw;overflow-x:auto;"></pre>
+    <button onclick="location.reload(true)" style="margin-top:2rem;padding:1rem 2rem;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">Recarregar</button>
+  </div>
+  <script>
+    const user = localStorage.getItem('user');
+    document.getElementById('userInfo').textContent = user ? user : 'Nenhum usuário logado.';
+  </script>
+</body>
+</html>
