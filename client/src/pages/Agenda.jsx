@@ -54,6 +54,7 @@ export default function Agenda() {
     data: '',
     horario: '',
     participante: '',
+    pacienteId: '',
     local: '',
     descricao: ''
   });
@@ -99,17 +100,44 @@ export default function Agenda() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const dataInicio = new Date(`${formData.data}T${formData.horario}:00`);
-      const dataFim = new Date(dataInicio.getTime() + 60 * 60 * 1000); // Duração padrão de 1h
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const empresaId = user?.empresaId || '';
+      const dataHora = formData.data && formData.horario ? new Date(`${formData.data}T${formData.horario}:00`).toISOString() : '';
+
+      // Sempre garantir que pacienteId está correto
+      let pacienteId = formData.pacienteId;
+      if ((!pacienteId || pacienteId === '') && selectedPaciente && selectedPaciente.id) {
+        pacienteId = selectedPaciente.id;
+      }
+
+      // Debug visual
+      console.log('DEBUG SUBMIT', { pacienteId, empresaId, titulo: formData.titulo, dataHora });
+
+      if (!pacienteId) {
+        toast.error('Selecione um paciente da lista!');
+        return;
+      }
+      if (!empresaId) {
+        toast.error('Empresa não encontrada no usuário logado!');
+        return;
+      }
+      if (!formData.titulo) {
+        toast.error('Título é obrigatório!');
+        return;
+      }
+      if (!dataHora) {
+        toast.error('Data e horário obrigatórios!');
+        return;
+      }
 
       const payload = {
         titulo: formData.titulo,
         tipo: formData.tipo,
-        participante: formData.participante,
+        pacienteId,
+        empresaId,
         local: formData.local,
         observacoes: formData.descricao,
-        dataHoraInicio: dataInicio.toISOString(),
-        dataHoraFim: dataFim.toISOString()
+        dataHora
       };
 
       if (editingId) {
@@ -119,7 +147,6 @@ export default function Agenda() {
         await agendamentoService.create(payload);
         toast.success(successMessage('create', 'Agendamento'));
       }
-
       setModalOpen(false);
       resetForm();
       loadAgendamentos();
@@ -127,35 +154,6 @@ export default function Agenda() {
       toast.error(apiErrorMessage(error, errorMessage('save', 'agendamento')));
     }
   };
-
-  const handleDelete = async (id, titulo) => {
-    // Confirmação personalizada com informações do agendamento
-    const confirmMessage = `Tem certeza que deseja excluir o agendamento "${titulo}"?\n\nEsta ação não pode ser desfeita.`;
-    if (!window.confirm(confirmMessage)) return;
-    
-    try {
-      setDeletingId(id);
-      await agendamentoService.delete(id);
-      toast.success(successMessage('delete', 'Agendamento'));
-      loadAgendamentos();
-    } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('delete', 'agendamento')));
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const handleEdit = (agendamento) => {
-    const date = new Date(agendamento.dataHoraInicio);
-    setFormData({
-      tipo: agendamento.tipo,
-      titulo: agendamento.titulo,
-      data: date.toISOString().split('T')[0],
-      horario: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      participante: agendamento.participante || '',
-      local: agendamento.local || '',
-      descricao: agendamento.observacoes || ''
-    });
     setEditingId(agendamento.id || agendamento._id);
     setModalOpen(true);
   };
@@ -182,6 +180,7 @@ export default function Agenda() {
       data: '',
       horario: '',
       participante: '',
+      pacienteId: '',
       local: '',
       descricao: ''
     });
@@ -584,26 +583,39 @@ export default function Agenda() {
                 </div>
 
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Participante</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Participante *</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" size={18} />
                     <input
                       type="text"
-                      className="input w-full pl-10"
-                      placeholder="Nome do participante"
-                      value={pacienteSearch || formData.participante}
+                      className={`input w-full pl-10 ${!selectedPaciente && (!formData.pacienteId || formData.pacienteId === '') ? 'border-red-400' : ''}`}
+                      placeholder="Busque e selecione o paciente"
+                      value={pacienteSearch || (selectedPaciente ? selectedPaciente.nome : formData.participante)}
                       onChange={(e) => {
                         setPacienteSearch(e.target.value);
                         setShowPacienteDropdown(true);
                         if (!e.target.value) {
                           setSelectedPaciente(null);
-                          setFormData({...formData, participante: ''});
+                          setFormData({...formData, participante: '', pacienteId: ''});
                         }
                       }}
                       onFocus={() => setShowPacienteDropdown(true)}
+                      readOnly={false}
                     />
                   </div>
-                  
+                  {/* Mostra o paciente selecionado como um chip */}
+                  {selectedPaciente && (
+                    <div className="mt-2 mb-1 inline-flex items-center px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm font-medium">
+                      <User size={16} className="mr-1" />
+                      {selectedPaciente.nome}
+                      <button type="button" className="ml-2 text-primary-500 hover:text-red-500" onClick={() => {
+                        setSelectedPaciente(null);
+                        setFormData({...formData, participante: '', pacienteId: ''});
+                      }}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
                   {/* Dropdown de pacientes */}
                   {showPacienteDropdown && (
                     <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-xl border border-slate-200 max-h-64 overflow-y-auto">
@@ -622,7 +634,7 @@ export default function Agenda() {
                             onClick={() => {
                               setSelectedPaciente(paciente);
                               setPacienteSearch('');
-                              setFormData({...formData, participante: paciente.nome});
+                              setFormData({...formData, participante: paciente.nome, pacienteId: paciente.id});
                               setShowPacienteDropdown(false);
                             }}
                           >
@@ -639,7 +651,6 @@ export default function Agenda() {
                             </div>
                           </button>
                         ))}
-                      
                       {pacientes.filter(p => {
                         const searchLower = (pacienteSearch || '').toLowerCase();
                         return p.nome?.toLowerCase().includes(searchLower) || 
@@ -651,7 +662,6 @@ export default function Agenda() {
                           <p className="text-xs mt-1">Tente buscar por outro nome ou CPF</p>
                         </div>
                       )}
-                      
                       <button
                         type="button"
                         className="w-full px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 border-t border-slate-200 font-medium"

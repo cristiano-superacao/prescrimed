@@ -118,8 +118,11 @@ export default function Prescricoes() {
     e.preventDefault();
 
     try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const empresaId = user?.empresaId;
       await prescricaoService.create({
         pacienteId: selectedPaciente,
+        empresaId,
         tipo,
         medicamentos: medicamentos.filter(m => m.nome.trim() !== ''),
       });
