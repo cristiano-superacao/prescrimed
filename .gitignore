@@ -28,5 +28,9 @@ coverage
 # Banco local (SQLite)
 database.sqlite
 
+# Instalações locais de PostgreSQL
+pgsql/
+pgdata/
+
 # Estado local do Playwright MCP
 .playwright-mcp/
