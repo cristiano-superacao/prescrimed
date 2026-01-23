@@ -1,0 +1,3 @@
+User-agent: *
+Disallow:
+Sitemap: https://prescrimed.up.railway.app/sitemap.xml
