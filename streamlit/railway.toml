@@ -2,8 +2,8 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "python -m streamlit run app.py --server.port $PORT --server.address 0.0.0.0"
-healthcheckPath = "/"
-healthcheckTimeout = 100
+startCommand = "python -m streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --server.runOnSave false"
+healthcheckPath = "/_stcore/health"
+healthcheckTimeout = 180
 restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10
+restartPolicyMaxRetries = 3
