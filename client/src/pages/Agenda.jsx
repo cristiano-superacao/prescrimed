@@ -153,25 +153,7 @@ export default function Agenda() {
     } catch (error) {
       toast.error(apiErrorMessage(error, errorMessage('save', 'agendamento')));
     }
-  };
-    setEditingId(agendamento.id || agendamento._id);
-    setModalOpen(true);
-  };
-
-  const handleStatusChange = async (id, currentStatus, newStatus) => {
-    if (currentStatus === newStatus) return;
-    
-    try {
-      setUpdatingStatusId(id);
-      await agendamentoService.update(id, { status: newStatus });
-      toast.success(successMessage('update', 'Status'));
-      loadAgendamentos();
-    } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('update', 'status')));
-    } finally {
-      setUpdatingStatusId(null);
-    }
-  };
+  }
 
   const resetForm = () => {
     setFormData({
@@ -252,6 +234,21 @@ export default function Agenda() {
     }).length
   };
 
+  // Função de alteração de status (deve estar fora do JSX)
+  const handleStatusChange = async (id, currentStatus, newStatus) => {
+    if (currentStatus === newStatus) return;
+    try {
+      setUpdatingStatusId(id);
+      await agendamentoService.update(id, { status: newStatus });
+      toast.success(successMessage('update', 'Status'));
+      loadAgendamentos();
+    } catch (error) {
+      toast.error(apiErrorMessage(error, errorMessage('update', 'status')));
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -298,12 +295,12 @@ export default function Agenda() {
           color="orange"
         />
         <StatsCard
-          icon={Clock}
-          label="Hoje"
-          value={stats.hoje}
-          description="Eventos para hoje"
-          color="purple"
-        />
+        icon={Clock}
+        label="Hoje"
+        value={stats.hoje}
+        description="Eventos para hoje"
+        color="purple"
+      />
       </div>
 
       <SearchFilterBar
@@ -719,4 +716,4 @@ export default function Agenda() {
       )}
     </div>
   );
-}
+
