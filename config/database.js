@@ -49,47 +49,6 @@ if (process.env.MYSQL_HOST || process.env.MYSQL_URL) {
       }
     );
   }
-} else if (process.env.DATABASE_URL) {
-  // Railway ou Render fornece DATABASE_URL completa (PostgreSQL em produção)
-  console.log('📡 Usando DATABASE_URL do Railway/Render (PostgreSQL)');
-  // Verifica se usa conexão interna (railway.internal) que NÃO requer SSL
-  const isInternalConnection = process.env.DATABASE_URL.includes('railway.internal');
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    dialectOptions: isInternalConnection ? {} : {
-      ssl: { rejectUnauthorized: false }
-    },
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
-  });
-} else if (process.env.PGHOST) {
-  // Configuração local com PostgreSQL instalado
-  console.log('📦 Usando configuração local PostgreSQL');
-  sequelize = new Sequelize(
-    process.env.PGDATABASE || 'prescrimed',
-    process.env.PGUSER || 'postgres',
-    process.env.PGPASSWORD || 'postgres',
-    {
-      host: process.env.PGHOST,
-      port: parseInt(process.env.PGPORT || '5432', 10),
-      dialect: 'postgres',
-      dialectOptions: {
-        connectTimeout: 60000
-      },
-      logging: process.env.NODE_ENV === 'development' ? console.log : false,
-      pool: {
-        max: 10,
-        min: 2,
-        acquire: 60000,
-        idle: 10000,
-        evict: 10000
-      },
-      retry: {
-        max: 3,
-        timeout: 60000
-      }
-    }
-  );
 } else {
   // Desenvolvimento local sem PostgreSQL - usa SQLite
   console.log('💾 Usando SQLite para desenvolvimento local');
