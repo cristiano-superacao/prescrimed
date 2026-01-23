@@ -24,7 +24,10 @@
     "build": "cd client && npm install && npm run build",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
     "deploy": "node deploy.js",
-    "check:health": "node scripts/check-health.js"
+    "check:health": "node scripts/check-health.js",
+    "streamlit": "cd streamlit-app && streamlit run app.py",
+    "streamlit:install": "cd streamlit-app && pip install -r requirements.txt",
+    "dev:all": "concurrently \"npm run dev\" \"npm run client\" \"npm run streamlit\""
   },
   "engines": {
     "node": ">=20.0.0",

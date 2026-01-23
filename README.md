@@ -117,6 +117,33 @@ npm run client
 
 Frontend estará em [http://localhost:5173](http://localhost:5173)
 
+### 📊 Dashboard Analytics (Streamlit) - NOVO!
+
+O Prescrimed agora inclui um **dashboard interativo** desenvolvido com Streamlit para visualização de dados e análises avançadas:
+
+```bash
+# Instalar dependências Python
+npm run streamlit:install
+
+# Executar o dashboard
+npm run streamlit
+
+# Ou executar tudo junto (Backend + Frontend + Streamlit)
+npm run dev:all
+```
+
+Dashboard estará em [http://localhost:8501](http://localhost:8501)
+
+**Funcionalidades do Dashboard:**
+- 📊 Métricas em tempo real (pacientes, prescrições, receita)
+- 📈 Gráficos interativos com Plotly
+- 🔍 Filtros avançados por período e empresa
+- 📋 Tabelas dinâmicas
+- 🎨 Design responsivo e profissional
+- 🔌 Integração com API do backend
+
+📄 **Documentação completa:** [STREAMLIT_GUIDE.md](STREAMLIT_GUIDE.md)
+
 ---
 
 ## 🔧 Configuração
