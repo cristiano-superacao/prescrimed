@@ -246,6 +246,13 @@ app.options('/health', healthCors);
 app.get('/health', healthCors, (req, res) => {
   console.log('🔎 [HEALTH] Requisição recebida em /health');
   
+  // Garante CORS universal para o health (útil para UIs em domínios diferentes)
+  // Mesmo usando o middleware cors({ origin: true }), alguns proxies podem
+  // omitir o header. Forçamos aqui para evitar bloqueios de verificação.
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   // Responde imediatamente para evitar timeout do Railway
   res.status(200).json({ 
     status: 'ok',                              // Status do servidor
@@ -261,6 +268,11 @@ app.options('/api/health', healthCors);
 app.get('/api/health', healthCors, (req, res) => {
   console.log('🔎 [HEALTH] Requisição recebida em /api/health');
   
+  // Garante CORS universal para o health da API
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   // Responde imediatamente para evitar timeout
   res.status(200).json({ 
     status: 'ok',
