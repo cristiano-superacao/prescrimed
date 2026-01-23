@@ -72,16 +72,16 @@ export default function Layout() {
         />
         
         {/* Conteúdo principal - área onde as páginas são renderizadas */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
           {/* flex-1: ocupa espaço restante após header */}
           {/* overflow-y-auto: permite rolagem vertical */}
-          {/* p-4 lg:p-8: padding 1rem em mobile, 2rem em desktop */}
+          {/* padding responsivo: horizontal 1rem → 1.5rem (sm) → 2rem (lg); vertical 1rem → 1.5rem (lg) */}
           
           {/* Container centralizado com largura máxima e espaçamento entre elementos */}
-          <div className="max-w-6xl mx-auto space-y-6">
-            {/* max-w-6xl: largura máxima de 72rem (1152px) */}
+          <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
+            {/* max-w-7xl: limite de 1280px equilibra leitura e reduz espaços vazios em telas largas */}
             {/* mx-auto: centraliza horizontalmente */}
-            {/* space-y-6: espaçamento vertical de 1.5rem entre filhos */}
+            {/* espaçamento vertical: 1.5rem (space-y-6) e 2rem em telas grandes (lg:space-y-8) */}
             
             {/* Outlet renderiza o componente da rota ativa */}
             <Outlet />
