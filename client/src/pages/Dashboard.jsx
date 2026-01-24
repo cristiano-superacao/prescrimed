@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 
 // Importa serviço de API do dashboard
-import { dashboardService } from '../services/dashboard.service';
+import dashboardService from '../services/dashboard.service';
 
 // Importa componentes
 import SimpleChart from '../components/SimpleChart'; // Gráfico simples de linhas

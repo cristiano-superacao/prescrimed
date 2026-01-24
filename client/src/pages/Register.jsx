@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { UserPlus, Building2, Briefcase, ShieldCheck, Home, PawPrint, HeartPulse } from 'lucide-react';
 import HeroBackground from '../components/HeroBackground';
-import { authService } from '../services/auth.service';
+import authService from '../services/auth.service';
 import toast from 'react-hot-toast';
 import { errorMessage, customErrorMessage } from '../utils/toastMessages';
 

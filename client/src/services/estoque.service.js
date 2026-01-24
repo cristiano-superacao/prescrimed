@@ -1,6 +1,6 @@
 import { get, post } from './request';
 
-export const estoqueService = {
+const estoqueService = {
   // --- MEDICAMENTOS ---
   getMedicamentos: async () => {
     return get('/estoque/medicamentos');
@@ -39,3 +39,5 @@ export const estoqueService = {
     return get(url);
   }
 };
+
+export default estoqueService;

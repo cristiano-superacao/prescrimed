@@ -1,6 +1,6 @@
 import { get, post, put, del } from './request';
 
-export const empresaService = {
+const empresaService = {
   getAll: async () => {
     return get('/empresas');
   },
@@ -21,3 +21,5 @@ export const empresaService = {
     return put('/empresas/me', data);
   },
 };
+
+export default empresaService;

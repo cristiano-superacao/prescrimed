@@ -13,8 +13,8 @@ import {
   Filter,
   Info
 } from 'lucide-react';
-import { agendamentoService } from '../services/agendamento.service';
-import { prescricaoService } from '../services/prescricao.service';
+import agendamentoService from '../services/agendamento.service';
+import prescricaoService from '../services/prescricao.service';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';

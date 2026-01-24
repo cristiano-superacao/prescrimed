@@ -1,6 +1,6 @@
 import { get, buildQueryString } from './request';
 
-export const dashboardService = {
+const dashboardService = {
   getStats: async (dataInicio, dataFim) => {
     const qs = buildQueryString({ dataInicio, dataFim });
     return get(`/dashboard/stats${qs}`);
@@ -22,3 +22,5 @@ export const dashboardService = {
     return get('/dashboard/alerts');
   },
 };
+
+export default dashboardService;

@@ -4,14 +4,9 @@ import { Plus, Users, Clock, CheckCircle2, AlertCircle, CalendarIcon, Edit, Tras
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
-import TableContainer from '../components/common/TableContainer';
-import TableWrapper from '../components/common/TableWrapper';
-import TableHeader from '../components/common/TableHeader';
-import { TBody, Tr, Td } from '../components/common/TableElements';
+import { TableContainer, TableWrapper, TableHeader, TBody, Tr, Td, MobileCard, MobileGrid } from '../components/common/Table';
 import ActionIconButton from '../components/common/ActionIconButton';
 import EmptyState from '../components/common/EmptyState';
-import MobileCard from '../components/common/MobileCard';
-import MobileGrid from '../components/common/MobileGrid';
 import agendamentoService from '../services/agendamento.service';
 import pacienteService from '../services/paciente.service';
 

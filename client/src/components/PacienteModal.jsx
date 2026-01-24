@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, User, MapPin, Phone, AlertCircle } from 'lucide-react';
-import { pacienteService } from '../services/paciente.service';
+import pacienteService from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
 

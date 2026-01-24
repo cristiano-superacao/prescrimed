@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, RefreshCcw, Users, CheckCircle2, Search } from 'lucide-react';
-import { usuarioService } from '../services/usuario.service';
+import usuarioService from '../services/usuario.service';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, customErrorMessage } from '../utils/toastMessages';

@@ -14,7 +14,7 @@ import {
   FileDown,
   FileSpreadsheet
 } from 'lucide-react';
-import { financeiroService } from '../services/financeiro.service';
+import financeiroService from '../services/financeiro.service';
 import TransacaoModal from '../components/TransacaoModal';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';

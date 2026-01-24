@@ -14,7 +14,7 @@ import {
   FileDown,
   FileSpreadsheet
 } from 'lucide-react';
-import { estoqueService } from '../services/estoque.service';
+import estoqueService from '../services/estoque.service';
 import toast from 'react-hot-toast';
 import { errorMessage, apiErrorMessage } from '../utils/toastMessages';
 import { downloadCsv } from '../utils/exportCsv';

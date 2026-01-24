@@ -18,9 +18,9 @@ import {
   User
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { enfermagemService } from '../services/enfermagem.service';
-import { pacienteService } from '../services/paciente.service';
-import { estoqueService } from '../services/estoque.service';
+import enfermagemService from '../services/enfermagem.service';
+import pacienteService from '../services/paciente.service';
+import estoqueService from '../services/estoque.service';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';

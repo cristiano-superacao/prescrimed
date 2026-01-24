@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Save, Building, Lock, Bell, User } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { usuarioService } from '../services/usuario.service';
-import { empresaService } from '../services/empresa.service';
+import usuarioService from '../services/usuario.service';
+import empresaService from '../services/empresa.service';
 import toast from 'react-hot-toast';
 import { successMessage, customErrorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';

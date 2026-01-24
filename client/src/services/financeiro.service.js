@@ -1,6 +1,6 @@
 import { get, post, put, del, buildQueryString } from './request';
 
-export const financeiroService = {
+const financeiroService = {
   getAll: async (filters = {}) => {
     const qs = buildQueryString({
       tipo: filters.tipo,
@@ -29,3 +29,5 @@ export const financeiroService = {
     return del(`/financeiro/${id}`);
   }
 };
+
+export default financeiroService;

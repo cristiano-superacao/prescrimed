@@ -8,8 +8,8 @@ import {
   Inbox,
   CheckCircle2,
 } from 'lucide-react';
-import { prescricaoService } from '../services/prescricao.service';
-import { pacienteService } from '../services/paciente.service';
+import prescricaoService from '../services/prescricao.service';
+import pacienteService from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';

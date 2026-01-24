@@ -1,6 +1,6 @@
 import { post } from './request';
 
-export const authService = {
+const authService = {
   register: async (data) => {
     return post('/auth/register', data);
   },
@@ -31,3 +31,5 @@ export const authService = {
     }
   },
 };
+
+export default authService;

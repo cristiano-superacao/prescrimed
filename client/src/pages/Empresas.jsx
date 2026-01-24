@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, RefreshCcw, Building2, CheckCircle2 } from 'lucide-react';
-import { empresaService } from '../services/empresa.service';
+import empresaService from '../services/empresa.service';
 import { useAuthStore } from '../store/authStore';
 import EmpresaModal from '../components/EmpresaModal';
 import toast from 'react-hot-toast';

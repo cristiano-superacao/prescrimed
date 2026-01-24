@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { authService } from '../services/auth.service';
+import authService from '../services/auth.service';
 
 const getUser = () => {
   const user = authService.getCurrentUser();

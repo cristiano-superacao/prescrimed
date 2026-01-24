@@ -1,6 +1,6 @@
 import { get, post, put, del } from './request';
 
-export const pacienteService = {
+const pacienteService = {
   getAll: async (search = '') => {
     const url = search ? `/pacientes?${search}` : '/pacientes';
     return get(url);
@@ -26,3 +26,5 @@ export const pacienteService = {
     return del(`/pacientes/${id}`);
   },
 };
+
+export default pacienteService;

@@ -1,6 +1,6 @@
 import { get, post, put, del } from './request';
 
-export const usuarioService = {
+const usuarioService = {
   getAll: async () => {
     return get('/usuarios');
   },
@@ -41,3 +41,5 @@ export const usuarioService = {
     return put('/usuarios/me', data);
   },
 };
+
+export default usuarioService;

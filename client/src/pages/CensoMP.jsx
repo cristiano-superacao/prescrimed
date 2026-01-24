@@ -6,8 +6,8 @@ import {
   RefreshCcw,
   Pill
 } from 'lucide-react';
-import { pacienteService } from '../services/paciente.service';
-import { prescricaoService } from '../services/prescricao.service';
+import pacienteService from '../services/paciente.service';
+import prescricaoService from '../services/prescricao.service';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';

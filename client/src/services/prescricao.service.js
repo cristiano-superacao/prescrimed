@@ -1,6 +1,6 @@
 import { get, post, put, buildQueryString } from './request';
 
-export const prescricaoService = {
+const prescricaoService = {
   getAll: async (filters = {}) => {
     const qs = buildQueryString(filters);
     return get(`/prescricoes${qs}`);
@@ -26,3 +26,5 @@ export const prescricaoService = {
     return put(`/prescricoes/${id}/arquivar`);
   },
 };
+
+export default prescricaoService;

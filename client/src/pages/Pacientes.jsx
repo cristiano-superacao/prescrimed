@@ -15,7 +15,7 @@ import {
   Mail,
   MapPin
 } from 'lucide-react';
-import { pacienteService } from '../services/paciente.service';
+import pacienteService from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage } from '../utils/toastMessages';
 import PacienteModal from '../components/PacienteModalNew';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Save, DollarSign } from 'lucide-react';
-import { financeiroService } from '../services/financeiro.service';
+import financeiroService from '../services/financeiro.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage } from '../utils/toastMessages';
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { usuarioService } from '../services/usuario.service';
+import usuarioService from '../services/usuario.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, customErrorMessage, apiErrorMessage } from '../utils/toastMessages';
 

@@ -1,6 +1,6 @@
 import { get, post, put, del } from './request';
 
-export const agendamentoService = {
+const agendamentoService = {
   getAll: async (params) => {
     return get('/agendamentos', { params });
   },
@@ -17,3 +17,5 @@ export const agendamentoService = {
     return del(`/agendamentos/${id}`);
   },
 };
+
+export default agendamentoService;

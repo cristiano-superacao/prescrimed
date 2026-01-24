@@ -1,6 +1,6 @@
 import { get, post, put, del } from './request';
 
-export const enfermagemService = {
+const enfermagemService = {
   getAll: async (params) => {
     return get('/enfermagem', { params });
   },
@@ -25,3 +25,5 @@ export const enfermagemService = {
     return get('/enfermagem/stats/dashboard');
   }
 };
+
+export default enfermagemService;
