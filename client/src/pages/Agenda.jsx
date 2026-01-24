@@ -571,48 +571,113 @@ export default function Agenda() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Paciente *</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">
+                  Paciente/Residente *
+                </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" size={18} />
                   <input
                     type="text"
-                    className="input w-full pl-10"
-                    placeholder="Buscar paciente..."
+                    className="input w-full pl-10 pr-10"
+                    placeholder="Buscar residente cadastrado..."
                     value={pacienteSearch}
                     onChange={e => {
                       setPacienteSearch(e.target.value);
                       setShowPacienteDropdown(true);
+                      // Se limpar o campo, limpar a seleção
+                      if (e.target.value === '') {
+                        setSelectedPaciente(null);
+                        setFormData({ ...formData, pacienteId: '', participante: '' });
+                      }
                     }}
                     onFocus={() => setShowPacienteDropdown(true)}
+                    onBlur={() => {
+                      // Delay para permitir click no dropdown
+                      setTimeout(() => setShowPacienteDropdown(false), 200);
+                    }}
                     required
                   />
-                  {showPacienteDropdown && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
-                      {pacientes.filter(p =>
-                        p.nome.toLowerCase().includes(pacienteSearch.toLowerCase())
-                      ).map(p => (
-                        <div
-                          key={p.id}
-                          className={`px-4 py-2 cursor-pointer hover:bg-primary-50 dark:hover:bg-gray-600 ${selectedPaciente?.id === p.id ? 'bg-primary-100 dark:bg-gray-600' : ''}`}
-                          onClick={() => {
-                            setSelectedPaciente(p);
-                            setFormData({ ...formData, pacienteId: p.id, participante: p.nome });
-                            setPacienteSearch(p.nome);
-                            setShowPacienteDropdown(false);
-                          }}
-                        >
-                          <span className="font-medium text-slate-700 dark:text-gray-200">{p.nome}</span>
-                          {p.cpf && <span className="ml-2 text-xs text-slate-400 dark:text-gray-400">CPF: {p.cpf}</span>}
+                  {selectedPaciente && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                      <CheckCircle2 size={18} className="text-green-500" />
+                    </div>
+                  )}
+                  {showPacienteDropdown && pacienteSearch && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-600 rounded-lg shadow-xl z-20 max-h-72 overflow-y-auto">
+                      {pacientes.length === 0 ? (
+                        <div className="px-4 py-6 text-center">
+                          <AlertCircle className="mx-auto mb-2 text-slate-400" size={24} />
+                          <p className="text-sm text-slate-500 dark:text-gray-400">Nenhum residente cadastrado</p>
                         </div>
-                      ))}
-                      {pacientes.filter(p =>
-                        p.nome.toLowerCase().includes(pacienteSearch.toLowerCase())
-                      ).length === 0 && (
-                        <div className="px-4 py-2 text-slate-400 dark:text-gray-400">Nenhum paciente encontrado</div>
+                      ) : (
+                        <>
+                          {pacientes.filter(p =>
+                            p.nome.toLowerCase().includes(pacienteSearch.toLowerCase()) ||
+                            p.cpf?.includes(pacienteSearch)
+                          ).map(p => (
+                            <div
+                              key={p.id}
+                              className={`px-4 py-3 cursor-pointer hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors border-b border-slate-100 dark:border-gray-700 last:border-0 ${
+                                selectedPaciente?.id === p.id ? 'bg-primary-100 dark:bg-gray-700' : ''
+                              }`}
+                              onClick={() => {
+                                setSelectedPaciente(p);
+                                setFormData({ ...formData, pacienteId: p.id, participante: p.nome });
+                                setPacienteSearch(p.nome);
+                                setShowPacienteDropdown(false);
+                              }}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-600 dark:text-primary-300 font-bold text-sm flex-shrink-0">
+                                  {p.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-slate-700 dark:text-gray-200 truncate">{p.nome}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {p.cpf && (
+                                      <span className="text-xs text-slate-500 dark:text-gray-400">
+                                        CPF: {p.cpf}
+                                      </span>
+                                    )}
+                                    {p.idade && (
+                                      <span className="text-xs text-slate-500 dark:text-gray-400">
+                                        • {p.idade} anos
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          {pacientes.filter(p =>
+                            p.nome.toLowerCase().includes(pacienteSearch.toLowerCase()) ||
+                            p.cpf?.includes(pacienteSearch)
+                          ).length === 0 && (
+                            <div className="px-4 py-6 text-center">
+                              <AlertCircle className="mx-auto mb-2 text-slate-400" size={24} />
+                              <p className="text-sm text-slate-500 dark:text-gray-400 mb-1">
+                                Nenhum residente encontrado
+                              </p>
+                              <p className="text-xs text-slate-400 dark:text-gray-500">
+                                Tente buscar por nome ou CPF
+                              </p>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
                 </div>
+                {selectedPaciente && (
+                  <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 size={16} className="text-green-600 dark:text-green-400 flex-shrink-0" />
+                      <span className="font-medium text-green-700 dark:text-green-300">
+                        Residente selecionado: {selectedPaciente.nome}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Local</label>
