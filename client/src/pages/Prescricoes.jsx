@@ -175,9 +175,9 @@ export default function Prescricoes() {
              date.getMonth() === now.getMonth() && 
              date.getFullYear() === now.getFullYear();
     }).length
-  };
+    }
 
-  return (
+    return (
     <div className="space-y-8">
       <PageHeader
         label="Operação Clínica"
@@ -218,7 +218,7 @@ export default function Prescricoes() {
           icon={Inbox}
           label="Controladas"
           value={stats.controladas}
-          description="Medicamentos especiais"
+          description="Medicamentos controlados"
           color="orange"
         />
         <StatsCard
