@@ -1,165 +1,51 @@
 import axios from 'axios';
 
-// Fallback padrão para produção quando variáveis não estão presentes
-const DEFAULT_RAILWAY_ROOT = 'https://prescrimed-backend-production.up.railway.app';
-const DEFAULT_RAILWAY_API = `${DEFAULT_RAILWAY_ROOT}/api`;
-
-const isLocalhostUrl = (value) =>
-  typeof value === 'string' && /localhost|127\.0\.0\.1/.test(value);
+// URL do Railway onde backend e frontend estão no MESMO serviço
+const RAILWAY_URL = 'https://prescrimed.up.railway.app';
 
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
-  // Detectar se está em ambiente hospedado (Railway/Netlify/Pages)
-  const isHostedProd = import.meta.env.PROD && (
-    window.location.hostname.includes('railway.app') ||
-    window.location.hostname.includes('github.io')
-  );
-
+  // Detectar se está no Railway
   const isRailwayHost = window.location.hostname.includes('railway.app');
-
-  // Detecta se este host é o próprio backend padrão do Railway
-  // (quando backend e frontend estiverem servidos pelo mesmo serviço)
-  const defaultBackendHost = new URL(DEFAULT_RAILWAY_ROOT).hostname;
-  const isOnDefaultBackendHost = window.location.hostname === defaultBackendHost;
-
-  // Se VITE_API_URL estiver definida, usa ela (prioridade máxima)
-  if (import.meta.env.VITE_API_URL) {
-    const value = import.meta.env.VITE_API_URL;
-
-    // Em Railway, se estivermos num domínio que NÃO é o backend,
-    // usar '/api' (ou URL na mesma origem) cai no serviço de frontend e gera 405.
-    const looksSameOriginApi = (() => {
-      try {
-        if (typeof value !== 'string') return false;
-        if (value.startsWith('/')) return true; // relativo => mesma origem
-        return new URL(value).origin === window.location.origin;
-      } catch {
-        return false;
-      }
-    })();
-
-    if (isHostedProd && isRailwayHost && looksSameOriginApi && !isOnDefaultBackendHost) {
-      console.warn('⚠️ Ignorando VITE_API_URL na mesma origem (domínio do frontend). Usando backend Railway padrão para evitar 405 em /api/*');
-    } else if (isHostedProd && isRailwayHost && isLocalhostUrl(value)) {
-      console.warn('⚠️ Ignorando VITE_API_URL apontando para localhost em produção Railway.');
-    } else {
-      return value;
-    }
+  
+  // Se está no Railway, sempre usar /api (mesmo serviço)
+  if (isRailwayHost && import.meta.env.PROD) {
+    console.log('🚂 Railway detectado - usando /api (mesmo serviço)');
+    return '/api';
   }
 
-  // Fallback: se BACKEND_ROOT estiver definido, monta /api a partir dele
-  if (import.meta.env.VITE_BACKEND_ROOT) {
-    if (isHostedProd && isRailwayHost && isLocalhostUrl(import.meta.env.VITE_BACKEND_ROOT)) {
-      console.warn('⚠️ Ignorando VITE_BACKEND_ROOT apontando para localhost em produção Railway.');
-    } else {
-      const root = import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
-
-      // Se o frontend está hospedado num domínio Railway diferente do backend,
-      // e VITE_BACKEND_ROOT foi configurado como o mesmo domínio do frontend,
-      // então bater em `${root}/api` vai atingir o serviço de frontend (static) e gerar 405.
-      // Neste caso, ignoramos esse root e usamos o fallback público do backend.
-      const sameOriginRoot = (() => {
-        try {
-          return new URL(root).origin === window.location.origin;
-        } catch {
-          return false;
-        }
-      })();
-
-      if (isHostedProd && isRailwayHost && sameOriginRoot && !isOnDefaultBackendHost) {
-        console.warn('⚠️ VITE_BACKEND_ROOT aponta para o domínio do frontend. Usando backend Railway padrão para evitar 405 em /api/*');
-      } else {
-        return `${root}/api`;
-      }
-    }
-  }
-
-  // Em produção hospedada SEM variáveis configuradas
-  if (isHostedProd) {
-    // Se estivermos no host do backend (mesmo domínio), use proxy relativo
-    if (isOnDefaultBackendHost) {
-      return '/api';
-    }
-
-    // Em Railway: por padrão, ASSUMA serviços separados.
-    // Usar '/api' na mesma origem só funciona se o domínio estiver no backend.
-    // Caso contrário, cai no serviço de frontend e retorna 405/404.
-    if (isRailwayHost) {
-      return DEFAULT_RAILWAY_API;
-    }
-
-    // Caso contrário (ex.: GitHub Pages), use o backend público padrão no Railway
-    console.warn('⚠️ VITE_* não configurada. Usando fallback para Railway backend público.');
-    return DEFAULT_RAILWAY_API;
+  // Se está no GitHub Pages
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  if (isGitHubPages && import.meta.env.PROD) {
+    console.log('📄 GitHub Pages detectado - conectando ao Railway');
+    return `${RAILWAY_URL}/api`;
   }
 
   // Em desenvolvimento local
-  return 'http://localhost:3000/api';
+  console.log('💻 Desenvolvimento local - usando http://localhost:8000/api');
+  return 'http://localhost:8000/api';
 };
 
 // Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
 export const getApiRootUrl = () => {
-  // Prioridade 1: variável explícita
-  if (import.meta.env.VITE_BACKEND_ROOT) {
-    const root = import.meta.env.VITE_BACKEND_ROOT.replace(/\/$/, '');
-    const isHostedProd = import.meta.env.PROD && (
-      window.location.hostname.includes('railway.app') ||
-      window.location.hostname.includes('github.io')
-    );
-    const isRailwayHost = window.location.hostname.includes('railway.app');
-    const defaultBackendHost = new URL(DEFAULT_RAILWAY_ROOT).hostname;
-    const isOnDefaultBackendHost = window.location.hostname === defaultBackendHost;
-
-    const sameOriginRoot = (() => {
-      try {
-        return new URL(root).origin === window.location.origin;
-      } catch {
-        return false;
-      }
-    })();
-
-    if (isHostedProd && isRailwayHost && sameOriginRoot && !isOnDefaultBackendHost) {
-      // VITE_BACKEND_ROOT está apontando para o frontend; use o backend padrão.
-      return DEFAULT_RAILWAY_ROOT;
-    }
-
-    return root;
+  // Se está no Railway
+  const isRailwayHost = window.location.hostname.includes('railway.app');
+  if (isRailwayHost && import.meta.env.PROD) {
+    return ''; // Mesma origem
   }
 
-  // Prioridade 2: derivar de VITE_API_URL
-  if (import.meta.env.VITE_API_URL) {
-    const value = import.meta.env.VITE_API_URL;
-    const isHostedProd = import.meta.env.PROD && (
-      window.location.hostname.includes('railway.app') ||
-      window.location.hostname.includes('github.io')
-    );
-    const isRailwayHost = window.location.hostname.includes('railway.app');
-    const defaultBackendHost = new URL(DEFAULT_RAILWAY_ROOT).hostname;
-    const isOnDefaultBackendHost = window.location.hostname === defaultBackendHost;
-
-    // Se VITE_API_URL é relativo (ex.: '/api') em Railway e não estamos no backend,
-    // isso aponta para o frontend. Use o backend padrão.
-    if (
-      isHostedProd &&
-      isRailwayHost &&
-      typeof value === 'string' &&
-      value.startsWith('/') &&
-      !isOnDefaultBackendHost
-    ) {
-      return DEFAULT_RAILWAY_ROOT;
-    }
-
-    return value.replace(/\/api$/, '');
+  // Se está no GitHub Pages
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  if (isGitHubPages && import.meta.env.PROD) {
+    return RAILWAY_URL;
   }
 
-  // Fallback: tentar derivar do getApiUrl
-  const base = getApiUrl();
-  if (base === '/api') return '';
-
-  if (base === DEFAULT_RAILWAY_API) return DEFAULT_RAILWAY_ROOT;
-  
-  return base.replace(/\/api$/, '');
+  // Em desenvolvimento local
+  return 'http://localhost:8000';
 };
+
+console.log('🌐 API URL configurada:', getApiUrl());
+console.log('🏠 API Root URL:', getApiRootUrl());
 
 const API_URL = getApiUrl();
 
