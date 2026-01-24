@@ -509,211 +509,140 @@ export default function Agenda() {
 
       {/* Modal de Novo/Editar Agendamento */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-start bg-slate-50/50 shrink-0">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-start bg-slate-50/50">
               <div>
-                <h3 className="font-bold text-xl text-slate-800">
-                  {editingId ? 'Editar Agendamento' : 'Novo Agendamento'}
-                </h3>
+                <h3 className="font-bold text-xl text-slate-800">{editingId ? 'Editar Agendamento' : 'Novo Agendamento'}</h3>
                 <p className="text-sm text-slate-500 mt-1">Preencha os dados do compromisso.</p>
               </div>
-              <button 
-                onClick={() => setModalOpen(false)} 
-                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition"
-              >
+              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition">
                 <X size={24} />
               </button>
             </div>
-            
-            <div className="overflow-y-auto p-6 custom-scrollbar">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                
+            <form className="overflow-y-auto p-6 space-y-5 custom-scrollbar" onSubmit={handleSubmit}>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tipo</label>
+                <select
+                  className="input w-full"
+                  value={formData.tipo}
+                  onChange={e => setFormData({ ...formData, tipo: e.target.value })}
+                >
+                  <option>Compromisso</option>
+                  <option>Reunião</option>
+                  <option>Consulta</option>
+                  <option>Exame</option>
+                  <option>Outro</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tipo</label>
-                  <select
-                    className="input w-full"
-                    value={formData.tipo}
-                    onChange={e => setFormData({...formData, tipo: e.target.value})}
-                  >
-                    <option value="Compromisso">Compromisso</option>
-                    <option value="Reunião">Reunião</option>
-                    <option value="Consulta">Consulta</option>
-                    <option value="Exame">Exame</option>
-                    <option value="Outro">Outro</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Título *</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Data *</label>
                   <input
-                    type="text"
+                    type="date"
                     required
                     className="input w-full"
-                    placeholder="Ex: Reunião de Equipe"
-                    value={formData.titulo}
-                    onChange={e => setFormData({...formData, titulo: e.target.value})}
+                    value={formData.data}
+                    onChange={e => setFormData({ ...formData, data: e.target.value })}
                   />
                 </div>
-
-                <div className="grid grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Data *</label>
-                    <input
-                      type="date"
-                      required
-                      className="input w-full"
-                      value={formData.data}
-                      onChange={e => setFormData({...formData, data: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Horário *</label>
-                    <input
-                      type="time"
-                      required
-                      className="input w-full"
-                      value={formData.horario}
-                      onChange={e => setFormData({...formData, horario: e.target.value})}
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Horário *</label>
+                  <input
+                    type="time"
+                    required
+                    className="input w-full"
+                    value={formData.horario}
+                    onChange={e => setFormData({ ...formData, horario: e.target.value })}
+                  />
                 </div>
-
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Paciente *</label>
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Participante *</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" size={18} />
-                    <input
-                      type="text"
-                      className={`input w-full pl-10 ${!selectedPaciente && (!formData.pacienteId || formData.pacienteId === '') ? 'border-red-400' : ''}`}
-                      placeholder="Busque e selecione o paciente"
-                      value={pacienteSearch || (selectedPaciente ? selectedPaciente.nome : formData.participante)}
-                      onChange={(e) => {
-                        setPacienteSearch(e.target.value);
-                        setShowPacienteDropdown(true);
-                        if (!e.target.value) {
-                          setSelectedPaciente(null);
-                          setFormData({...formData, participante: '', pacienteId: ''});
-                        }
-                      }}
-                      onFocus={() => setShowPacienteDropdown(true)}
-                      readOnly={false}
-                    />
-                  </div>
-                  {/* Mostra o paciente selecionado como um chip */}
-                  {selectedPaciente && (
-                    <div className="mt-2 mb-1 inline-flex items-center px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm font-medium">
-                      <User size={16} className="mr-1" />
-                      {selectedPaciente.nome}
-                      <button type="button" className="ml-2 text-primary-500 hover:text-red-500" onClick={() => {
-                        setSelectedPaciente(null);
-                        setFormData({...formData, participante: '', pacienteId: ''});
-                      }}>
-                        <X size={14} />
-                      </button>
-                    </div>
-                  )}
-                  {/* Dropdown de pacientes */}
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" size={18} />
+                  <input
+                    type="text"
+                    className="input w-full pl-10"
+                    placeholder="Buscar paciente..."
+                    value={pacienteSearch}
+                    onChange={e => {
+                      setPacienteSearch(e.target.value);
+                      setShowPacienteDropdown(true);
+                    }}
+                    onFocus={() => setShowPacienteDropdown(true)}
+                    required
+                  />
                   {showPacienteDropdown && (
-                    <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-xl border border-slate-200 max-h-64 overflow-y-auto">
-                      {pacientes
-                        .filter(p => {
-                          const searchLower = (pacienteSearch || '').toLowerCase();
-                          return p.nome?.toLowerCase().includes(searchLower) || 
-                                 p.cpf?.includes(searchLower);
-                        })
-                        .slice(0, 10)
-                        .map((paciente) => (
-                          <button
-                            key={paciente.id}
-                            type="button"
-                            className="w-full px-4 py-3 text-left hover:bg-primary-50 border-b border-slate-100 last:border-0 transition-colors"
-                            onClick={() => {
-                              setSelectedPaciente(paciente);
-                              setPacienteSearch('');
-                              setFormData({...formData, participante: paciente.nome, pacienteId: paciente.id});
-                              setShowPacienteDropdown(false);
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-semibold">
-                                {paciente.nome?.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium text-slate-900">{paciente.nome}</p>
-                                <p className="text-sm text-slate-500">
-                                  {paciente.cpf ? `CPF: ${paciente.cpf}` : 'Sem CPF'}
-                                </p>
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      {pacientes.filter(p => {
-                        const searchLower = (pacienteSearch || '').toLowerCase();
-                        return p.nome?.toLowerCase().includes(searchLower) || 
-                               p.cpf?.includes(searchLower);
-                      }).length === 0 && (
-                        <div className="px-4 py-8 text-center text-slate-500">
-                          <User size={32} className="mx-auto mb-2 opacity-30" />
-                          <p className="text-sm font-medium">Nenhum paciente encontrado</p>
-                          <p className="text-xs mt-1">Tente buscar por outro nome ou CPF</p>
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
+                      {pacientes.filter(p =>
+                        p.nome.toLowerCase().includes(pacienteSearch.toLowerCase())
+                      ).map(p => (
+                        <div
+                          key={p.id}
+                          className={`px-4 py-2 cursor-pointer hover:bg-primary-50 ${selectedPaciente?.id === p.id ? 'bg-primary-100' : ''}`}
+                          onClick={() => {
+                            setSelectedPaciente(p);
+                            setFormData({ ...formData, pacienteId: p.id, participante: p.nome });
+                            setPacienteSearch(p.nome);
+                            setShowPacienteDropdown(false);
+                          }}
+                        >
+                          <span className="font-medium">{p.nome}</span>
+                          {p.cpf && <span className="ml-2 text-xs text-slate-400">CPF: {p.cpf}</span>}
                         </div>
+                      ))}
+                      {pacientes.filter(p =>
+                        p.nome.toLowerCase().includes(pacienteSearch.toLowerCase())
+                      ).length === 0 && (
+                        <div className="px-4 py-2 text-slate-400">Nenhum paciente encontrado</div>
                       )}
-                      <button
-                        type="button"
-                        className="w-full px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 border-t border-slate-200 font-medium"
-                        onClick={() => setShowPacienteDropdown(false)}
-                      >
-                        Fechar
-                      </button>
                     </div>
                   )}
                 </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Local</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input
-                      type="text"
-                      className="input w-full pl-10"
-                      placeholder="Local do evento"
-                      value={formData.local}
-                      onChange={e => setFormData({...formData, local: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Descrição</label>
-                  <textarea
-                    className="input w-full min-h-[100px] py-3"
-                    placeholder="Detalhes adicionais..."
-                    value={formData.descricao}
-                    onChange={e => setFormData({...formData, descricao: e.target.value})}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Local</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input
+                    type="text"
+                    className="input w-full pl-10"
+                    placeholder="Local do evento"
+                    value={formData.local}
+                    onChange={e => setFormData({ ...formData, local: e.target.value })}
                   />
                 </div>
-
-                <div className="pt-4 flex gap-3 border-t border-slate-100 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="btn btn-secondary flex-1 py-2.5"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary flex-1 py-2.5 shadow-lg shadow-primary-500/20"
-                  >
-                    {editingId ? 'Salvar Alterações' : 'Agendar'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Descrição</label>
+                <textarea
+                  className="input w-full min-h-[100px] py-3"
+                  placeholder="Detalhes adicionais..."
+                  value={formData.descricao}
+                  onChange={e => setFormData({ ...formData, descricao: e.target.value })}
+                />
+              </div>
+              <div className="pt-4 flex gap-3 border-t border-slate-100 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="btn btn-secondary flex-1 py-2.5"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary flex-1 py-2.5 shadow-lg shadow-primary-500/20"
+                >
+                  {editingId ? 'Salvar Alterações' : 'Agendar'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
     </div>
   );
+}
 

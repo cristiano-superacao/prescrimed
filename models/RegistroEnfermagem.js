@@ -96,6 +96,7 @@ const RegistroEnfermagem = sequelize.define('RegistroEnfermagem', {
     allowNull: true,
     comment: 'JSON array de URLs de arquivos/imagens'
   }
+
 }, {
   tableName: 'RegistrosEnfermagem',
   timestamps: true

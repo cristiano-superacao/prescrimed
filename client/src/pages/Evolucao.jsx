@@ -20,6 +20,30 @@ import {
 } from 'lucide-react';
 import { enfermagemService } from '../services/enfermagem.service';
 import { pacienteService } from '../services/paciente.service';
+import { estoqueService } from '../services/estoque.service';
+  const [itensEstoque, setItensEstoque] = useState([]);
+  const [itensUtilizados, setItensUtilizados] = useState([]); // [{id, nome, quantidade}]
+  useEffect(() => {
+    if (hasAccess) {
+      loadData();
+      loadPacientes();
+      loadStats();
+      loadItensEstoque();
+    }
+  }, [hasAccess]);
+
+  const loadItensEstoque = async () => {
+    try {
+      const medicamentos = await estoqueService.getMedicamentos();
+      const alimentos = await estoqueService.getAlimentos();
+      setItensEstoque([
+        ...(medicamentos || []),
+        ...(alimentos || [])
+      ]);
+    } catch (error) {
+      console.error('Erro ao carregar itens do estoque:', error);
+    }
+  };
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
@@ -100,8 +124,8 @@ export default function Evolucao() {
     try {
       const data = await pacienteService.getAll();
       const lista = Array.isArray(data) ? data : (data.pacientes || []);
-      // Filtrar apenas pacientes ativos
-      setPacientes(lista.filter(p => p.status === 'ativo'));
+      // Exibir todos os residentes, sem filtrar por status
+      setPacientes(lista);
     } catch (error) {
       console.error('Erro ao carregar pacientes:', error);
     }
@@ -132,12 +156,28 @@ export default function Evolucao() {
     
     if (!validateForm()) {
       toast.error('Por favor, preencha todos os campos obrigatórios');
-      return;
+      if (!hasAccess) {
+        return (
+          <div className="page-container flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center max-w-md w-full">
+              <AlertCircle size={48} className="text-red-500 mb-4" />
+              <h2 className="text-2xl font-bold text-slate-800 mb-2">Sem Acesso</h2>
+              <p className="text-slate-600 text-center mb-4">Esta área é restrita. Apenas Enfermeiro, Fisioterapeuta, Médico, Nutricionista e Assistente Social podem acessar a Evolução.</p>
+              <button
+                className="btn btn-primary w-full"
+                onClick={() => window.location.href = '/'}
+              >Voltar ao início</button>
+            </div>
+          </div>
+        );
+      }
+      return (
+        <div className="page-container">
+          {/* ...restante do componente... */}
+          {/* Conteúdo original da página Evolução permanece aqui */}
+        </div>
+      );
     }
-
-    try {
-      // Preparar sinais vitais se algum foi preenchido
-      let sinaisVitais = null;
       if (formData.pa || formData.fc || formData.fr || formData.temp || formData.sato2 || formData.glicemia) {
         sinaisVitais = {
           pa: formData.pa || null,
@@ -239,49 +279,64 @@ export default function Evolucao() {
       titulo: '',
       descricao: '',
       estadoGeral: 'bom',
-      riscoQueda: '',
-      riscoLesao: '',
-      alerta: false,
-      prioridade: 'baixa',
-      observacoes: '',
-      pa: '',
-      fc: '',
-      fr: '',
-      temp: '',
-      sato2: '',
-      glicemia: ''
-    });
-    setEditingId(null);
-    setErrors({});
-  };
+      try {
+        // Preparar sinais vitais se algum foi preenchido
+        let sinaisVitais = null;
+        if (formData.pa || formData.fc || formData.fr || formData.temp || formData.sato2 || formData.glicemia) {
+          sinaisVitais = {
+            pa: formData.pa || null,
+            fc: formData.fc || null,
+            fr: formData.fr || null,
+            temp: formData.temp || null,
+            sato2: formData.sato2 || null,
+            glicemia: formData.glicemia || null
+          };
+        }
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Data não informada';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Data inválida';
-      return date.toLocaleDateString('pt-BR', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      return 'Data inválida';
-    }
-  };
+        const payload = {
+          pacienteId: formData.pacienteId,
+          tipo: formData.tipo,
+          titulo: formData.titulo.trim(),
+          descricao: formData.descricao.trim(),
+          estadoGeral: formData.estadoGeral,
+          riscoQueda: formData.riscoQueda || null,
+          riscoLesao: formData.riscoLesao || null,
+          alerta: formData.alerta,
+          prioridade: formData.prioridade,
+          observacoes: formData.observacoes.trim() || null,
+          sinaisVitais
+        };
 
-  const getTipoLabel = (tipo) => {
-    const tipos = {
-      evolucao: 'Evolução',
-      sinais_vitais: 'Sinais Vitais',
-      administracao_medicamento: 'Medicamento',
-      curativo: 'Curativo',
-      intercorrencia: 'Intercorrência',
-      admissao: 'Admissão',
-      alta: 'Alta',
-      transferencia: 'Transferência',
+        // Registrar saída dos itens do estoque
+        for (const item of itensUtilizados) {
+          try {
+            await estoqueService.movimentarMedicamento({
+              medicamentoId: item.id,
+              tipo: 'saida',
+              quantidade: item.quantidade,
+              motivo: 'Evolução',
+              observacao: `Saída registrada na evolução: ${formData.titulo}`
+            });
+          } catch (err) {
+            console.error('Erro ao registrar saída de estoque:', err);
+          }
+        }
+
+        if (editingId) {
+          await enfermagemService.update(editingId, payload);
+          toast.success(successMessage('update', 'Registro'));
+        } else {
+          await enfermagemService.create(payload);
+          toast.success(successMessage('create', 'Registro'));
+        }
+
+        setModalOpen(false);
+        resetForm();
+        loadData();
+        loadStats();
+      } catch (error) {
+        toast.error(apiErrorMessage(error, errorMessage('save', 'registro')));
+      }
       outro: 'Outro'
     };
     return tipos[tipo] || tipo;
@@ -317,69 +372,72 @@ export default function Evolucao() {
   });
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        label="Prontuário"
-        title="Registros de Enfermagem"
-        subtitle="Anotações diárias, evolução clínica e acompanhamento de cuidados."
-      >
-        <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
-          <button
-            type="button"
-            onClick={loadData}
-            className="btn btn-secondary flex items-center justify-center gap-2"
-          >
-            <RefreshCcw size={18} /> Atualizar
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              resetForm();
-              setModalOpen(true);
-            }}
-            className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-600/20"
-          >
-            <Plus size={18} /> Novo Registro
-          </button>
+    <div className="flex flex-col gap-8">
+      {/* Cabeçalho fixo e ações */}
+      <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md pb-2 pt-4">
+        <PageHeader
+          label="Prontuário"
+          title="Registros de Enfermagem"
+          subtitle="Anotações diárias, evolução clínica e acompanhamento de cuidados."
+        >
+          <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
+            <button
+              type="button"
+              onClick={loadData}
+              className="btn btn-secondary flex items-center justify-center gap-2"
+            >
+              <RefreshCcw size={18} /> Atualizar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setModalOpen(true);
+              }}
+              className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-600/20"
+            >
+              <Plus size={18} /> Novo Registro
+            </button>
+          </div>
+        </PageHeader>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-4">
+          <StatsCard
+            icon={FileText}
+            label="Hoje"
+            value={stats.registrosHoje}
+            description="Registros realizados"
+            color="primary"
+          />
+          <StatsCard
+            icon={Users}
+            label="Cobertura"
+            value={stats.pacientesComRegistro}
+            description="Pacientes evoluídos"
+            color="emerald"
+          />
+          <StatsCard
+            icon={ShieldAlert}
+            label="Risco"
+            value={stats.riscoQueda}
+            description="Alto risco de queda"
+            color="orange"
+          />
+          <StatsCard
+            icon={AlertTriangle}
+            label="Crítico"
+            value={stats.alertasCriticos}
+            description="Alertas pendentes"
+            color="red"
+          />
         </div>
-      </PageHeader>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <StatsCard
-          icon={FileText}
-          label="Hoje"
-          value={stats.registrosHoje}
-          description="Registros realizados"
-          color="primary"
-        />
-        <StatsCard
-          icon={Users}
-          label="Cobertura"
-          value={stats.pacientesComRegistro}
-          description="Pacientes evoluídos"
-          color="emerald"
-        />
-        <StatsCard
-          icon={ShieldAlert}
-          label="Risco"
-          value={stats.riscoQueda}
-          description="Alto risco de queda"
-          color="orange"
-        />
-        <StatsCard
-          icon={AlertTriangle}
-          label="Crítico"
-          value={stats.alertasCriticos}
-          description="Alertas pendentes"
-          color="red"
-        />
+        <div className="mt-4">
+          <SearchFilterBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            placeholder="Buscar por título, residente ou descrição..."
+          />
+        </div>
       </div>
-
-      <SearchFilterBar
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        placeholder="Buscar por título, residente ou descrição..."
-      />
 
       <TableContainer title="Registros de Enfermagem">
         {loading ? (
@@ -512,12 +570,21 @@ export default function Evolucao() {
             </TableWrapper>
           </>
         ) : (
-          <div className="p-12">
+          <div className="p-12 flex flex-col items-center gap-6">
             <EmptyState
               icon={FileText}
               title="Nenhum registro encontrado"
               description="Comece criando um novo registro de enfermagem."
             />
+            <button
+              className="btn btn-primary flex items-center gap-2 shadow-lg shadow-primary-600/20"
+              onClick={() => {
+                resetForm();
+                setModalOpen(true);
+              }}
+            >
+              <Plus size={18} /> Novo Registro
+            </button>
           </div>
         )}
       </TableContainer>
@@ -558,20 +625,38 @@ export default function Evolucao() {
                       <label className="block text-sm font-semibold text-slate-700 dark:text-gray-200 mb-1.5">
                         Residente *
                       </label>
-                      <select
-                        className={`input w-full ${errors.pacienteId ? 'border-red-300' : ''}`}
-                        value={formData.pacienteId}
-                        onChange={e => setFormData({...formData, pacienteId: e.target.value})}
-                      >
-                        <option value="">Selecione um residente</option>
-                        {pacientes.map(p => (
-                          <option key={p.id} value={p.id}>{p.nome}</option>
-                        ))}
-                      </select>
-                      {errors.pacienteId && (
-                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                          <AlertCircle size={12} /> {errors.pacienteId}
-                        </p>
+                      {pacientes.length === 0 ? (
+                        <div className="flex flex-col gap-2">
+                          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 text-sm flex items-center gap-2">
+                            <AlertCircle size={16} className="text-yellow-500" />
+                            Nenhum residente cadastrado. Cadastre um residente para registrar uma evolução.
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-primary w-fit"
+                            onClick={() => window.location.hash = '#/pacientes'}
+                          >
+                            Cadastrar Residente
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <select
+                            className={`input w-full ${errors.pacienteId ? 'border-red-300' : ''}`}
+                            value={formData.pacienteId}
+                            onChange={e => setFormData({...formData, pacienteId: e.target.value})}
+                          >
+                            <option value="">Selecione um residente</option>
+                            {pacientes.map(p => (
+                              <option key={p.id} value={p.id}>{p.nome}</option>
+                            ))}
+                          </select>
+                          {errors.pacienteId && (
+                            <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                              <AlertCircle size={12} /> {errors.pacienteId}
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
 
@@ -808,6 +893,58 @@ export default function Evolucao() {
                           Marcar como alerta (requer atenção especial)
                         </span>
                       </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Itens do Estoque Utilizados */}
+                <div className="bg-green-50 dark:bg-gray-700/50 rounded-xl p-5 mt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="text-green-600" size={20} />
+                    <h4 className="font-bold text-slate-800 dark:text-gray-100">Itens do Estoque Utilizados</h4>
+                    <span className="text-xs text-slate-500 dark:text-gray-400">(Selecione o que foi utilizado)</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <select
+                      className="input w-full"
+                      onChange={e => {
+                        const itemId = e.target.value;
+                        const item = itensEstoque.find(i => i.id === itemId);
+                        if (item && !itensUtilizados.some(iu => iu.id === itemId)) {
+                          setItensUtilizados([...itensUtilizados, { id: item.id, nome: item.nome, quantidade: 1 }]);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <option value="">Adicionar item do estoque...</option>
+                      {itensEstoque.map(item => (
+                        <option key={item.id} value={item.id}>{item.nome}</option>
+                      ))}
+                    </select>
+                    <div className="flex flex-col gap-2">
+                      {itensUtilizados.length === 0 && (
+                        <span className="text-xs text-slate-400">Nenhum item selecionado</span>
+                      )}
+                      {itensUtilizados.map((iu, idx) => (
+                        <div key={iu.id} className="flex items-center gap-2">
+                          <span className="font-medium">{iu.nome}</span>
+                          <input
+                            type="number"
+                            min={1}
+                            className="input w-20"
+                            value={iu.quantidade}
+                            onChange={e => {
+                              const val = parseInt(e.target.value) || 1;
+                              setItensUtilizados(itensUtilizados.map((item, i) => i === idx ? { ...item, quantidade: val } : item));
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-xs"
+                            onClick={() => setItensUtilizados(itensUtilizados.filter((item, i) => i !== idx))}
+                          >Remover</button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>

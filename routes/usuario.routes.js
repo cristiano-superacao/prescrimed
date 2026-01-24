@@ -271,20 +271,31 @@ router.post('/', async (req, res) => {
       dados.contato = dados.telefone;
     }
     delete dados.telefone;
-    
+
     const permissoes = normalizePermissoes(dados.permissoes);
     delete dados.permissoes;
 
-    const usuario = await Usuario.create({
-      ...dados,
-      permissoes,
-      senha: senhaHash
-    });
-    
-    res.status(201).json(stripSenha(usuario));
+    try {
+      const usuario = await Usuario.create({
+        ...dados,
+        permissoes,
+        senha: senhaHash
+      });
+      res.status(201).json(stripSenha(usuario));
+    } catch (dbError) {
+      // Log detalhado do erro do Sequelize
+      console.error('Erro Sequelize ao criar usuário:', dbError);
+      if (dbError.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({ error: 'E-mail já cadastrado' });
+      }
+      if (dbError.name === 'SequelizeValidationError') {
+        return res.status(400).json({ error: dbError.errors?.[0]?.message || 'Erro de validação' });
+      }
+      return res.status(500).json({ error: dbError.message || 'Erro desconhecido ao criar usuário' });
+    }
   } catch (error) {
-    console.error('Erro ao criar usuário:', error);
-    res.status(500).json({ error: 'Erro ao criar usuário' });
+    console.error('Erro inesperado ao criar usuário:', error);
+    res.status(500).json({ error: 'Erro inesperado ao criar usuário' });
   }
 });
 

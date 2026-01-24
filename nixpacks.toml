@@ -14,5 +14,9 @@ cmds = [
   "echo 'Build completed - Backend serves frontend from client/dist'"
 ]
 
+
 [start]
 cmd = "node server.js"
+
+[env]
+TZ = "America/Sao_Paulo"
