@@ -402,6 +402,13 @@ app.head('/api/*', (req, res) => {
 });
 
 /**
+ * Body Parser - DEVE VIR ANTES das rotas
+ * Permite que Express processe requisições com corpo JSON e URL-encoded
+ */
+app.use(express.json()); // Parse de JSON no corpo da requisição
+app.use(express.urlencoded({ extended: true })); // Parse de formulários
+
+/**
  * Middleware de validação de métodos HTTP
  * Garante que apenas métodos permitidos sejam aceitos
  */
@@ -415,13 +422,6 @@ app.use('/api', (req, res, next) => {
   }
   next();
 });
-
-/**
- * Body Parser
- * Permite que Express processe requisições com corpo JSON e URL-encoded
- */
-app.use(express.json()); // Parse de JSON no corpo da requisição
-app.use(express.urlencoded({ extended: true })); // Parse de formulários
 
 /**
  * Registro de Rotas da API
