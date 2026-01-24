@@ -24,7 +24,21 @@ if (missingDbConfigInProd && !allowSqliteInProd) {
   );
 }
 
-if (process.env.MYSQL_HOST || process.env.MYSQL_URL) {
+// Prioriza DATABASE_URL (PostgreSQL) quando disponível, mesmo que haja variáveis de MySQL presentes
+if (process.env.DATABASE_URL) {
+  // Railway ou Render fornece DATABASE_URL completa (PostgreSQL em produção)
+  console.log('📡 Usando DATABASE_URL do Railway/Render (PostgreSQL)');
+  // Verifica se usa conexão interna (railway.internal) que NÃO requer SSL
+  const isInternalConnection = process.env.DATABASE_URL.includes('railway.internal');
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    dialectOptions: isInternalConnection ? {} : {
+      ssl: { rejectUnauthorized: false }
+    },
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
+  });
+} else if (process.env.MYSQL_HOST || process.env.MYSQL_URL) {
   // Ambiente Locaweb ou MySQL local
   const mysqlUrl = process.env.MYSQL_URL || null;
   if (mysqlUrl) {
@@ -49,19 +63,6 @@ if (process.env.MYSQL_HOST || process.env.MYSQL_URL) {
       }
     );
   }
-} else if (process.env.DATABASE_URL) {
-  // Railway ou Render fornece DATABASE_URL completa (PostgreSQL em produção)
-  console.log('📡 Usando DATABASE_URL do Railway/Render (PostgreSQL)');
-  // Verifica se usa conexão interna (railway.internal) que NÃO requer SSL
-  const isInternalConnection = process.env.DATABASE_URL.includes('railway.internal');
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    dialectOptions: isInternalConnection ? {} : {
-      ssl: { rejectUnauthorized: false }
-    },
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
-  });
 } else if (process.env.PGHOST) {
   // Configuração local com PostgreSQL instalado
   console.log('📦 Usando configuração local PostgreSQL');

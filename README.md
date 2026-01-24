@@ -183,6 +183,18 @@ SEED_PASSWORD=Prescri@2026
 # FAIL_FAST_DB=true
 ```
 
+#### Configuração rápida do `DATABASE_URL` (Railway)
+
+- Foi criado um arquivo local de exemplo com a URL real em `.env.local` (não será commitado).
+- Para produção no Railway, copie a URL do serviço Postgres para a variável `DATABASE_URL` nas Variables do serviço backend.
+- Forma recomendada e profissional de composição (portável):
+
+```env
+DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${PGHOST}:${PGPORT}/${POSTGRES_DB}
+```
+
+Isso mantém o layout limpo e permite trocar host/porta/credenciais sem editar a URL diretamente.
+
 **Gere secrets seguros:**
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
@@ -223,6 +235,8 @@ npm run build            # Alias para build:client
 npm start                # Inicia servidor (produção)
 npm run railway:build    # Build para Railway
 npm run railway:start    # Start no Railway
+npm run predeploy:check  # Verifica Variables (Railway/local)
+npm run predeploy        # Pré-check + build automático
 ```
 
 ### Utilitários
