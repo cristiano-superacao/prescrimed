@@ -1,6 +1,33 @@
-// ...existing code...
+import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
+import { Plus, Users, Clock, CheckCircle2, AlertCircle, CalendarIcon, Edit, Trash2, User, MapPin, X, Stethoscope, FileText } from 'lucide-react';
+import PageHeader from '../components/common/PageHeader';
+import StatsCard from '../components/common/StatsCard';
+import SearchFilterBar from '../components/common/SearchFilterBar';
+import TableContainer from '../components/common/TableContainer';
+import TableWrapper from '../components/common/TableWrapper';
+import TableHeader from '../components/common/TableHeader';
+import { TBody, Tr, Td } from '../components/common/TableElements';
+import ActionIconButton from '../components/common/ActionIconButton';
+import EmptyState from '../components/common/EmptyState';
+import MobileCard from '../components/common/MobileCard';
+import MobileGrid from '../components/common/MobileGrid';
+import agendamentoService from '../services/agendamento.service';
+import pacienteService from '../services/paciente.service';
+
 export default function Agenda() {
-  // ...existing code...
+  const [agendamentos, setAgendamentos] = useState([]);
+  const [pacientes, setPacientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterTerm, setFilterTerm] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+  const [pacienteSearch, setPacienteSearch] = useState('');
+  const [selectedPaciente, setSelectedPaciente] = useState(null);
+  const [showPacienteDropdown, setShowPacienteDropdown] = useState(false);
+  
   const [formData, setFormData] = useState({
     tipo: 'Compromisso',
     titulo: '',
@@ -11,7 +38,77 @@ export default function Agenda() {
     local: '',
     descricao: ''
   });
-  // ...existing code...
+
+  useEffect(() => {
+    loadAgendamentos();
+    loadPacientes();
+  }, []);
+
+  const loadAgendamentos = async () => {
+    try {
+      setLoading(true);
+      const data = await agendamentoService.getAll();
+      setAgendamentos(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos:', error);
+      toast.error('Erro ao carregar agendamentos');
+      setAgendamentos([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadPacientes = async () => {
+    try {
+      const data = await pacienteService.getAll();
+      setPacientes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao carregar pacientes:', error);
+      setPacientes([]);
+    }
+  };
+
+  const handleEdit = (agendamento) => {
+    const dataHora = agendamento.dataHoraInicio ? new Date(agendamento.dataHoraInicio) : new Date();
+    const data = dataHora.toISOString().split('T')[0];
+    const horario = dataHora.toTimeString().split(' ')[0].substring(0, 5);
+    
+    const paciente = pacientes.find(p => p.id === agendamento.pacienteId);
+    
+    setFormData({
+      tipo: agendamento.tipo || 'Compromisso',
+      titulo: agendamento.titulo || '',
+      data: data,
+      horario: horario,
+      participante: agendamento.participante || paciente?.nome || '',
+      pacienteId: agendamento.pacienteId || '',
+      local: agendamento.local || '',
+      descricao: agendamento.observacoes || ''
+    });
+    
+    if (paciente) {
+      setSelectedPaciente(paciente);
+      setPacienteSearch(paciente.nome);
+    }
+    
+    setEditingId(agendamento.id || agendamento._id);
+    setModalOpen(true);
+  };
+
+  const handleDelete = async (id, titulo) => {
+    if (!window.confirm(`Deseja realmente excluir "${titulo}"?`)) return;
+    try {
+      setDeletingId(id);
+      await agendamentoService.delete(id);
+      toast.success('Agendamento excluído com sucesso!');
+      loadAgendamentos();
+    } catch (error) {
+      toast.error('Erro ao excluir agendamento');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -19,14 +116,10 @@ export default function Agenda() {
       const empresaId = user?.empresaId || '';
       const dataHora = formData.data && formData.horario ? new Date(`${formData.data}T${formData.horario}:00`).toISOString() : '';
 
-      // Sempre garantir que pacienteId está correto
       let pacienteId = formData.pacienteId;
       if ((!pacienteId || pacienteId === '') && selectedPaciente && selectedPaciente.id) {
         pacienteId = selectedPaciente.id;
       }
-
-      // Debug visual
-      console.log('DEBUG SUBMIT', { pacienteId, empresaId, titulo: formData.titulo, dataHora });
 
       if (!pacienteId) {
         toast.error('Selecione um paciente da lista!');
@@ -57,18 +150,18 @@ export default function Agenda() {
 
       if (editingId) {
         await agendamentoService.update(editingId, payload);
-        toast.success(successMessage('update', 'Agendamento'));
+        toast.success('Agendamento atualizado com sucesso!');
       } else {
         await agendamentoService.create(payload);
-        toast.success(successMessage('create', 'Agendamento'));
+        toast.success('Agendamento criado com sucesso!');
       }
       setModalOpen(false);
       resetForm();
       loadAgendamentos();
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('save', 'agendamento')));
+      toast.error('Erro ao salvar agendamento');
     }
-  }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -149,16 +242,15 @@ export default function Agenda() {
     }).length
   };
 
-  // Função de alteração de status (deve estar fora do JSX)
   const handleStatusChange = async (id, currentStatus, newStatus) => {
     if (currentStatus === newStatus) return;
     try {
       setUpdatingStatusId(id);
       await agendamentoService.update(id, { status: newStatus });
-      toast.success(successMessage('update', 'Status'));
+      toast.success('Status atualizado com sucesso!');
       loadAgendamentos();
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('update', 'status')));
+      toast.error('Erro ao atualizar status');
     } finally {
       setUpdatingStatusId(null);
     }
@@ -210,12 +302,12 @@ export default function Agenda() {
           color="orange"
         />
         <StatsCard
-        icon={Clock}
-        label="Hoje"
-        value={stats.hoje}
-        description="Eventos para hoje"
-        color="purple"
-      />
+          icon={Clock}
+          label="Hoje"
+          value={stats.hoje}
+          description="Eventos para hoje"
+          color="purple"
+        />
       </div>
 
       <SearchFilterBar
@@ -425,19 +517,19 @@ export default function Agenda() {
       {/* Modal de Novo/Editar Agendamento */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-start bg-slate-50/50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="px-6 py-5 border-b border-slate-100 dark:border-gray-700 flex justify-between items-start bg-slate-50/50 dark:bg-gray-700/50">
               <div>
-                <h3 className="font-bold text-xl text-slate-800">{editingId ? 'Editar Agendamento' : 'Novo Agendamento'}</h3>
-                <p className="text-sm text-slate-500 mt-1">Preencha os dados do compromisso.</p>
+                <h3 className="font-bold text-xl text-slate-800 dark:text-gray-100">{editingId ? 'Editar Agendamento' : 'Novo Agendamento'}</h3>
+                <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">Preencha os dados do compromisso.</p>
               </div>
-              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition">
+              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 p-1 hover:bg-slate-100 dark:hover:bg-gray-600 rounded-lg transition">
                 <X size={24} />
               </button>
             </div>
             <form className="overflow-y-auto p-6 space-y-5 custom-scrollbar" onSubmit={handleSubmit}>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tipo</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Tipo</label>
                 <select
                   className="input w-full"
                   value={formData.tipo}
@@ -450,9 +542,20 @@ export default function Agenda() {
                   <option>Outro</option>
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Título *</label>
+                <input
+                  type="text"
+                  required
+                  className="input w-full"
+                  placeholder="Título do compromisso"
+                  value={formData.titulo}
+                  onChange={e => setFormData({ ...formData, titulo: e.target.value })}
+                />
+              </div>
               <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Data *</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Data *</label>
                   <input
                     type="date"
                     required
@@ -462,7 +565,7 @@ export default function Agenda() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Horário *</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Horário *</label>
                   <input
                     type="time"
                     required
@@ -473,7 +576,7 @@ export default function Agenda() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Paciente *</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Paciente *</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" size={18} />
                   <input
@@ -489,13 +592,13 @@ export default function Agenda() {
                     required
                   />
                   {showPacienteDropdown && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
                       {pacientes.filter(p =>
                         p.nome.toLowerCase().includes(pacienteSearch.toLowerCase())
                       ).map(p => (
                         <div
                           key={p.id}
-                          className={`px-4 py-2 cursor-pointer hover:bg-primary-50 ${selectedPaciente?.id === p.id ? 'bg-primary-100' : ''}`}
+                          className={`px-4 py-2 cursor-pointer hover:bg-primary-50 dark:hover:bg-gray-600 ${selectedPaciente?.id === p.id ? 'bg-primary-100 dark:bg-gray-600' : ''}`}
                           onClick={() => {
                             setSelectedPaciente(p);
                             setFormData({ ...formData, pacienteId: p.id, participante: p.nome });
@@ -503,21 +606,21 @@ export default function Agenda() {
                             setShowPacienteDropdown(false);
                           }}
                         >
-                          <span className="font-medium">{p.nome}</span>
-                          {p.cpf && <span className="ml-2 text-xs text-slate-400">CPF: {p.cpf}</span>}
+                          <span className="font-medium text-slate-700 dark:text-gray-200">{p.nome}</span>
+                          {p.cpf && <span className="ml-2 text-xs text-slate-400 dark:text-gray-400">CPF: {p.cpf}</span>}
                         </div>
                       ))}
                       {pacientes.filter(p =>
                         p.nome.toLowerCase().includes(pacienteSearch.toLowerCase())
                       ).length === 0 && (
-                        <div className="px-4 py-2 text-slate-400">Nenhum paciente encontrado</div>
+                        <div className="px-4 py-2 text-slate-400 dark:text-gray-400">Nenhum paciente encontrado</div>
                       )}
                     </div>
                   )}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Local</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Local</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
@@ -530,7 +633,7 @@ export default function Agenda() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Descrição</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Descrição</label>
                 <textarea
                   className="input w-full min-h-[100px] py-3"
                   placeholder="Detalhes adicionais..."
@@ -538,7 +641,7 @@ export default function Agenda() {
                   onChange={e => setFormData({ ...formData, descricao: e.target.value })}
                 />
               </div>
-              <div className="pt-4 flex gap-3 border-t border-slate-100 mt-2">
+              <div className="pt-4 flex gap-3 border-t border-slate-100 dark:border-gray-700 mt-2">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}

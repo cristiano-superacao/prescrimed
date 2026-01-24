@@ -36,7 +36,7 @@ router.get('/', authenticate, async (req, res) => {
         {
           model: Usuario,
           as: 'enfermeiro',
-          attributes: ['id', 'nome', 'papel']
+          attributes: ['id', 'nome', 'role']
         }
       ],
       order: [['createdAt', 'DESC']]
@@ -66,7 +66,7 @@ router.get('/:id', authenticate, async (req, res) => {
         {
           model: Usuario,
           as: 'enfermeiro',
-          attributes: ['id', 'nome', 'papel', 'email']
+          attributes: ['id', 'nome', 'role', 'email']
         }
       ]
     });
@@ -156,7 +156,7 @@ router.post('/', authenticate, async (req, res) => {
         {
           model: Usuario,
           as: 'enfermeiro',
-          attributes: ['id', 'nome', 'papel']
+          attributes: ['id', 'nome', 'role']
         }
       ]
     });
@@ -234,7 +234,7 @@ router.put('/:id', authenticate, async (req, res) => {
         {
           model: Usuario,
           as: 'enfermeiro',
-          attributes: ['id', 'nome', 'papel']
+          attributes: ['id', 'nome', 'role']
         }
       ]
     });
