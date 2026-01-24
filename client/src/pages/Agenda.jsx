@@ -1,53 +1,6 @@
-import { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Calendar as CalendarIcon, 
-  Clock, 
-  MapPin,
-  User, 
-  Stethoscope,
-  Users,
-  FileText,
-  Trash2,
-  Edit,
-  X,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react';
-import { agendamentoService } from '../services/agendamento.service';
-import { pacienteService } from '../services/paciente.service';
-import toast from 'react-hot-toast';
-import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
-import PageHeader from '../components/common/PageHeader';
-import StatsCard from '../components/common/StatsCard';
-import SearchFilterBar from '../components/common/SearchFilterBar';
-import EmptyState from '../components/common/EmptyState';
-import ActionIconButton from '../components/common/ActionIconButton';
-import { 
-  TableContainer, 
-  MobileGrid, 
-  MobileCard, 
-  TableWrapper, 
-  TableHeader, 
-  TBody, 
-  Tr, 
-  Td 
-} from '../components/common/Table';
-
+// ...existing code...
 export default function Agenda() {
-  const [agendamentos, setAgendamentos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [filterTerm, setFilterTerm] = useState('');
-  
-  // Pacientes state
-  const [pacientes, setPacientes] = useState([]);
-  const [pacienteSearch, setPacienteSearch] = useState('');
-  const [showPacienteDropdown, setShowPacienteDropdown] = useState(false);
-  const [selectedPaciente, setSelectedPaciente] = useState(null);
-  
-  // Form State
+  // ...existing code...
   const [formData, setFormData] = useState({
     tipo: 'Compromisso',
     titulo: '',
@@ -58,45 +11,7 @@ export default function Agenda() {
     local: '',
     descricao: ''
   });
-
-  // Loading states for actions
-  const [deletingId, setDeletingId] = useState(null);
-  const [updatingStatusId, setUpdatingStatusId] = useState(null);
-
-  useEffect(() => {
-    loadAgendamentos();
-    loadPacientes();
-  }, []);
-
-  const loadPacientes = async () => {
-    try {
-      const data = await pacienteService.getAll();
-      setPacientes(data);
-    } catch (error) {
-      console.error('Erro ao carregar pacientes:', error);
-    }
-  };
-
-  const loadAgendamentos = async () => {
-    try {
-      setLoading(true);
-      // Carregar agendamentos futuros (próximos 3 meses por padrão para esta visualização de lista)
-      const today = new Date();
-      const futureDate = new Date();
-      futureDate.setMonth(today.getMonth() + 3);
-
-      const data = await agendamentoService.getAll({
-        dataInicio: today.toISOString(),
-        dataFim: futureDate.toISOString()
-      });
-      setAgendamentos(data);
-    } catch (error) {
-      toast.error(errorMessage('load', 'agenda'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // ...existing code...
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -645,4 +560,5 @@ export default function Agenda() {
     </div>
   );
 }
+
 

@@ -120,5 +120,4 @@ CREATE TABLE IF NOT EXISTS RegistrosEnfermagem (
   CONSTRAINT fk_enfermagem_usuario FOREIGN KEY (usuarioId) REFERENCES usuarios(id) ON DELETE SET NULL,
   CONSTRAINT fk_enfermagem_empresa FOREIGN KEY (empresaId) REFERENCES empresas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- Adicione outras tabelas conforme necessário seguindo o mesmo padrão.

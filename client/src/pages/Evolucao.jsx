@@ -79,28 +79,26 @@ export default function Evolucao() {
     alertasCriticos: 0
   });
 
-  // Form state
-  const [formData, setFormData] = useState({
-    pacienteId: '',
-    tipo: 'evolucao',
-    titulo: '',
-    descricao: '',
-    estadoGeral: 'bom',
-    riscoQueda: '',
-    riscoLesao: '',
-    alerta: false,
-    prioridade: 'baixa',
-    observacoes: '',
-    // Sinais Vitais
-    pa: '',
-    fc: '',
-    fr: '',
-    temp: '',
-    sato2: '',
-    glicemia: ''
+    setFormData({
+      pacienteId: '',
+      tipo: 'evolucao',
+      titulo: '',
+      descricao: '',
+      estadoGeral: 'bom',
+      riscoQueda: '',
+      riscoLesao: '',
+      alerta: false,
+      prioridade: 'baixa',
+      observacoes: '',
+      pa: '',
+      fc: '',
+      fr: '',
+      temp: '',
+      sato2: '',
+      glicemia: ''
   });
-
-  const [errors, setErrors] = useState({});
+    setEditingId(null);
+    setModalOpen(false);
 
   useEffect(() => {
     loadData();
@@ -153,42 +151,25 @@ export default function Evolucao() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      toast.error('Por favor, preencha todos os campos obrigatórios');
-      if (!hasAccess) {
-        return (
-          <div className="page-container flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center max-w-md w-full">
-              <AlertCircle size={48} className="text-red-500 mb-4" />
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">Sem Acesso</h2>
-              <p className="text-slate-600 text-center mb-4">Esta área é restrita. Apenas Enfermeiro, Fisioterapeuta, Médico, Nutricionista e Assistente Social podem acessar a Evolução.</p>
-              <button
-                className="btn btn-primary w-full"
-                onClick={() => window.location.href = '/'}
-              >Voltar ao início</button>
-            </div>
-          </div>
-        );
-      }
-      return (
-        <div className="page-container">
-          {/* ...restante do componente... */}
-          {/* Conteúdo original da página Evolução permanece aqui */}
-        </div>
-      );
-    }
-      if (formData.pa || formData.fc || formData.fr || formData.temp || formData.sato2 || formData.glicemia) {
+    try {
+      let sinaisVitais = null;
+      if (
+        formData.pa ||
+        formData.fc ||
+        formData.fr ||
+        formData.temp ||
+        formData.sato2 ||
+        formData.glicemia
+      ) {
         sinaisVitais = {
           pa: formData.pa || null,
           fc: formData.fc || null,
           fr: formData.fr || null,
           temp: formData.temp || null,
           sato2: formData.sato2 || null,
-          glicemia: formData.glicemia || null
+          glicemia: formData.glicemia || null,
         };
       }
-
       const payload = {
         pacienteId: formData.pacienteId,
         tipo: formData.tipo,
@@ -200,9 +181,8 @@ export default function Evolucao() {
         alerta: formData.alerta,
         prioridade: formData.prioridade,
         observacoes: formData.observacoes.trim() || null,
-        sinaisVitais
+        sinaisVitais,
       };
-
       if (editingId) {
         await enfermagemService.update(editingId, payload);
         toast.success(successMessage('update', 'Registro'));
@@ -210,7 +190,6 @@ export default function Evolucao() {
         await enfermagemService.create(payload);
         toast.success(successMessage('create', 'Registro'));
       }
-
       setModalOpen(false);
       resetForm();
       loadData();
@@ -220,127 +199,9 @@ export default function Evolucao() {
     }
   };
 
-  const handleEdit = (registro) => {
-    // Parse sinais vitais se existir
-    let sinaisVitais = {};
-    if (registro.sinaisVitais) {
-      try {
-        sinaisVitais = typeof registro.sinaisVitais === 'string' 
-          ? JSON.parse(registro.sinaisVitais)
-          : registro.sinaisVitais;
-      } catch (e) {
-        console.error('Erro ao parsear sinais vitais:', e);
-      }
-    }
 
-    setFormData({
-      pacienteId: registro.pacienteId,
-      tipo: registro.tipo,
-      titulo: registro.titulo,
-      descricao: registro.descricao,
-      estadoGeral: registro.estadoGeral || 'bom',
-      riscoQueda: registro.riscoQueda || '',
-      riscoLesao: registro.riscoLesao || '',
-      alerta: registro.alerta || false,
-      prioridade: registro.prioridade || 'baixa',
-      observacoes: registro.observacoes || '',
-      pa: sinaisVitais.pa || '',
-      fc: sinaisVitais.fc || '',
-      fr: sinaisVitais.fr || '',
-      temp: sinaisVitais.temp || '',
-      sato2: sinaisVitais.sato2 || '',
-      glicemia: sinaisVitais.glicemia || ''
-    });
-    setEditingId(registro.id);
-    setModalOpen(true);
-  };
 
-  const handleDelete = async (id, titulo) => {
-    const confirmMessage = `Tem certeza que deseja excluir o registro "${titulo}"?\n\nEsta ação não pode ser desfeita.`;
-    if (!window.confirm(confirmMessage)) return;
-    
-    try {
-      setDeletingId(id);
-      await enfermagemService.delete(id);
-      toast.success(successMessage('delete', 'Registro'));
-      loadData();
-      loadStats();
-    } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('delete', 'registro')));
-    } finally {
-      setDeletingId(null);
-    }
-  };
 
-  const resetForm = () => {
-    setFormData({
-      pacienteId: '',
-      tipo: 'evolucao',
-      titulo: '',
-      descricao: '',
-      estadoGeral: 'bom',
-      try {
-        // Preparar sinais vitais se algum foi preenchido
-        let sinaisVitais = null;
-        if (formData.pa || formData.fc || formData.fr || formData.temp || formData.sato2 || formData.glicemia) {
-          sinaisVitais = {
-            pa: formData.pa || null,
-            fc: formData.fc || null,
-            fr: formData.fr || null,
-            temp: formData.temp || null,
-            sato2: formData.sato2 || null,
-            glicemia: formData.glicemia || null
-          };
-        }
-
-        const payload = {
-          pacienteId: formData.pacienteId,
-          tipo: formData.tipo,
-          titulo: formData.titulo.trim(),
-          descricao: formData.descricao.trim(),
-          estadoGeral: formData.estadoGeral,
-          riscoQueda: formData.riscoQueda || null,
-          riscoLesao: formData.riscoLesao || null,
-          alerta: formData.alerta,
-          prioridade: formData.prioridade,
-          observacoes: formData.observacoes.trim() || null,
-          sinaisVitais
-        };
-
-        // Registrar saída dos itens do estoque
-        for (const item of itensUtilizados) {
-          try {
-            await estoqueService.movimentarMedicamento({
-              medicamentoId: item.id,
-              tipo: 'saida',
-              quantidade: item.quantidade,
-              motivo: 'Evolução',
-              observacao: `Saída registrada na evolução: ${formData.titulo}`
-            });
-          } catch (err) {
-            console.error('Erro ao registrar saída de estoque:', err);
-          }
-        }
-
-        if (editingId) {
-          await enfermagemService.update(editingId, payload);
-          toast.success(successMessage('update', 'Registro'));
-        } else {
-          await enfermagemService.create(payload);
-          toast.success(successMessage('create', 'Registro'));
-        }
-
-        setModalOpen(false);
-        resetForm();
-        loadData();
-        loadStats();
-      } catch (error) {
-        toast.error(apiErrorMessage(error, errorMessage('save', 'registro')));
-      }
-      outro: 'Outro'
-    };
-    return tipos[tipo] || tipo;
-  };
 
   const getEstadoGeralColor = (estado) => {
     const cores = {

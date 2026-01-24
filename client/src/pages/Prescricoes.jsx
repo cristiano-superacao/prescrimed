@@ -116,7 +116,6 @@ export default function Prescricoes() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const empresaId = user?.empresaId;
@@ -126,7 +125,6 @@ export default function Prescricoes() {
         tipo,
         medicamentos: medicamentos.filter(m => m.nome.trim() !== ''),
       });
-
       toast.success(successMessage('create', 'Prescrição', { gender: 'f' }));
       setModalOpen(false);
       setSelectedPaciente('');
@@ -143,7 +141,6 @@ export default function Prescricoes() {
     if (!window.confirm('Tem certeza que deseja cancelar esta prescrição?')) {
       return;
     }
-
     try {
       await prescricaoService.cancelar(id);
       toast.success('Prescrição cancelada');
@@ -178,18 +175,18 @@ export default function Prescricoes() {
     }
 
     return (
-    <div className="space-y-8">
-      <PageHeader
-        label="Operação Clínica"
-        title="Prescrições"
-        subtitle="Controle total das prescrições emitidas, status em tempo real e histórico completo."
-      >
-        <button
-          onClick={() => setModalOpen(true)}
-          className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
+      <div className="space-y-8">
+        <PageHeader
+          label="Operação Clínica"
+          title="Prescrições"
+          subtitle="Controle total das prescrições emitidas, status em tempo real e histórico completo."
         >
-          <Plus size={18} /> Nova Prescrição
-        </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
+          >
+            <Plus size={18} /> Nova Prescrição
+          </button>
         <button
           type="button"
           onClick={loadData}
@@ -593,3 +590,4 @@ export default function Prescricoes() {
     </div>
   );
 }
+
