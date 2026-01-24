@@ -48,4 +48,24 @@ try {
   exit 1
 }
 
+Write-Host "🔧 Ajustando coluna 'tipo' em agendamentos…" -ForegroundColor Yellow
+try {
+  node "scripts/alter-agendamento-tipo.js"
+  if ($LASTEXITCODE -ne 0) { throw "Alter retornou código $LASTEXITCODE" }
+  Write-Host "✅ Coluna 'tipo' ajustada." -ForegroundColor Green
+} catch {
+  Write-Error "❌ Alter da coluna 'tipo' falhou: $_"
+  exit 1
+}
+
+Write-Host "🗓️ Inserindo agendamentos para todos os tipos…" -ForegroundColor Yellow
+try {
+  node "scripts/seed-agendamentos-tipos.js"
+  if ($LASTEXITCODE -ne 0) { throw "Seed tipos retornou código $LASTEXITCODE" }
+  Write-Host "✅ Agendamentos por tipo criados no Railway." -ForegroundColor Green
+} catch {
+  Write-Error "❌ Seed de agendamentos por tipo falhou: $_"
+  exit 1
+}
+
 Write-Host "🩺 Verifique sua aplicação: https://prescrimed.up.railway.app/health" -ForegroundColor Cyan

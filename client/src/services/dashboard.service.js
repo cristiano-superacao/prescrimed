@@ -1,25 +1,29 @@
 import { get, buildQueryString } from './request';
 
 const dashboardService = {
-  getStats: async (dataInicio, dataFim) => {
-    const qs = buildQueryString({ dataInicio, dataFim });
+  getStats: async (dataInicio, dataFim, empresaId) => {
+    const qs = buildQueryString({ dataInicio, dataFim, empresaId });
     return get(`/dashboard/stats${qs}`);
   },
 
-  getPrescricoesRecentes: async () => {
-    return get('/dashboard/prescricoes-recentes');
+  getPrescricoesRecentes: async (empresaId) => {
+    const qs = buildQueryString({ empresaId });
+    return get(`/dashboard/prescricoes-recentes${qs}`);
   },
 
-  getPacientesRecentes: async () => {
-    return get('/dashboard/pacientes-recentes');
+  getPacientesRecentes: async (empresaId) => {
+    const qs = buildQueryString({ empresaId });
+    return get(`/dashboard/pacientes-recentes${qs}`);
   },
 
-  getNextSteps: async () => {
-    return get('/dashboard/next-steps');
+  getNextSteps: async (empresaId) => {
+    const qs = buildQueryString({ empresaId });
+    return get(`/dashboard/next-steps${qs}`);
   },
 
-  getPriorityAlerts: async () => {
-    return get('/dashboard/alerts');
+  getPriorityAlerts: async (empresaId) => {
+    const qs = buildQueryString({ empresaId });
+    return get(`/dashboard/alerts${qs}`);
   },
 };
 

@@ -117,6 +117,9 @@ router.post('/', async (req, res) => {
     const empresaId = req.body.empresaId;
     
     // Validações básicas
+    const allowedTipos = ['Compromisso','Reunião','Consulta','Exame','Outro'];
+    const allowedStatus = ['agendado','confirmado','cancelado','concluido'];
+
     if (!pacienteId || !empresaId || !titulo || !dataHora) {
       return res.status(400).json({ 
         error: 'Campos obrigatórios: pacienteId, empresaId, titulo, dataHora' 
@@ -132,16 +135,25 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Paciente não encontrado ou não pertence a esta empresa' });
     }
     
+    // Normaliza campos
+    const normalizedTipo = allowedTipos.includes(tipo) ? tipo : 'Compromisso';
+    const normalizedStatus = allowedStatus.includes(status) ? status : 'agendado';
+    const parsedDataHora = new Date(dataHora);
+
+    if (isNaN(parsedDataHora.getTime())) {
+      return res.status(400).json({ error: 'dataHora inválida' });
+    }
+
     const agendamento = await Agendamento.create({
       pacienteId,
       empresaId,
       usuarioId,
       titulo,
       descricao,
-      dataHora: new Date(dataHora),
+      dataHora: parsedDataHora,
       duracao: duracao || 60,
-      tipo: tipo || 'Compromisso',
-      status: status || 'agendado',
+      tipo: normalizedTipo,
+      status: normalizedStatus,
       observacoes,
       local,
       participante
@@ -158,8 +170,8 @@ router.post('/', async (req, res) => {
     
     res.status(201).json(agendamentoCriado);
   } catch (error) {
-    console.error('Erro ao criar agendamento:', error);
-    res.status(500).json({ error: 'Erro ao criar agendamento' });
+    console.error('Erro ao criar agendamento:', error?.message || error);
+    res.status(500).json({ error: 'Erro ao criar agendamento', detail: error?.message });
   }
 });
 
@@ -217,8 +229,8 @@ router.put('/:id', async (req, res) => {
     
     res.json(agendamentoAtualizado);
   } catch (error) {
-    console.error('Erro ao atualizar agendamento:', error);
-    res.status(500).json({ error: 'Erro ao atualizar agendamento' });
+    console.error('Erro ao atualizar agendamento:', error?.message || error);
+    res.status(500).json({ error: 'Erro ao atualizar agendamento', detail: error?.message });
   }
 });
 

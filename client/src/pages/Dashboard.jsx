@@ -76,6 +76,7 @@ export default function Dashboard() {
   
   // Estado de carregamento (exibe spinner enquanto busca dados)
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
   
   // Hook de navegação para redirecionar usuário entre páginas
   const navigate = useNavigate();
@@ -89,6 +90,10 @@ export default function Dashboard() {
    */
   useEffect(() => {
     loadData();
+    const interval = setInterval(() => {
+      loadData();
+    }, 30000); // atualiza a cada 30s
+    return () => clearInterval(interval);
   }, []); // Array vazio = executa apenas uma vez ao montar
 
   /**
@@ -103,12 +108,13 @@ export default function Dashboard() {
     
     try {
       // Executa todas as requisições em paralelo para otimizar tempo de carregamento
+      const empresaId = user?.empresaId;
       const [statsResponse, prescricoesResponse, pacientesResponse, nextStepsResponse, alertsResponse] = await Promise.all([
-        dashboardService.getStats(),              // Busca estatísticas gerais
-        dashboardService.getPrescricoesRecentes(), // Busca prescrições recentes
-        dashboardService.getPacientesRecentes(),   // Busca pacientes recentes
-        dashboardService.getNextSteps(),           // Busca próximas ações sugeridas
-        dashboardService.getPriorityAlerts(),      // Busca alertas prioritários
+        dashboardService.getStats(undefined, undefined, empresaId),              // estatísticas gerais
+        dashboardService.getPrescricoesRecentes(empresaId), // prescrições recentes
+        dashboardService.getPacientesRecentes(empresaId),   // pacientes recentes
+        dashboardService.getNextSteps(empresaId),           // próximas ações sugeridas
+        dashboardService.getPriorityAlerts(empresaId),      // alertas prioritários
       ]);
 
       // Atualiza estados com os dados recebidos
@@ -132,6 +138,7 @@ export default function Dashboard() {
         }));
         setChartData(chartPoints);
       }
+      setLastUpdated(new Date());
     } catch (error) {
       // Exibe mensagem de erro em caso de falha na requisição
       toast.error(errorMessage('load', 'dados do dashboard'));
@@ -248,7 +255,7 @@ export default function Dashboard() {
       <PageHeader
         label="Visão Geral"
         title="Dashboard"
-        subtitle="Acompanhe em tempo real pacientes, prescrições e equipes para manter a operação segura e eficiente."
+        subtitle={`Acompanhe em tempo real pacientes, prescrições e equipes para manter a operação segura e eficiente.${lastUpdated ? ' Atualizado ' + lastUpdated.toLocaleTimeString('pt-BR') : ''}`}
       >
         <button
           onClick={handleRefresh}
