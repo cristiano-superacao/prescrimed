@@ -1,0 +1,41 @@
+Param(
+  [string]$DatabaseUrl
+)
+
+Write-Host "🚂 Seed em Railway (Postgres)" -ForegroundColor Cyan
+
+if (-not $DatabaseUrl -and -not $env:DATABASE_URL) {
+  $DatabaseUrl = Read-Host "Cole sua DATABASE_URL (Railway)"
+}
+
+if (-not $DatabaseUrl -and -not $env:DATABASE_URL) {
+  Write-Error "DATABASE_URL não informada. Passe via parâmetro -DatabaseUrl ou defina no ambiente."
+  exit 1
+}
+
+if ($DatabaseUrl) {
+  $env:DATABASE_URL = $DatabaseUrl
+}
+
+Write-Host "🔑 DATABASE_URL definida (tamanho: $($env:DATABASE_URL.Length))" -ForegroundColor Green
+
+Write-Host "🔍 Testando acesso Postgres (ping simples via Sequelize)…" -ForegroundColor Yellow
+
+try {
+  node -e "import('../config/database.js').then(m=>m.sequelize.authenticate().then(()=>console.log('OK')).catch(e=>{console.error('FAIL');process.exit(1)}))" | Out-String | Write-Host
+} catch {
+  Write-Error "Falha ao autenticar no Postgres: $_"
+  exit 1
+}
+
+Write-Host "📦 Executando seed multi-empresa…" -ForegroundColor Yellow
+try {
+  node "scripts/seed-multi-company.js"
+  if ($LASTEXITCODE -ne 0) { throw "Seed retornou código $LASTEXITCODE" }
+  Write-Host "✅ Seed concluído com sucesso no Railway." -ForegroundColor Green
+} catch {
+  Write-Error "❌ Seed falhou: $_"
+  exit 1
+}
+
+Write-Host "🩺 Verifique sua aplicação: https://prescrimed.up.railway.app/health" -ForegroundColor Cyan
