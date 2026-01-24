@@ -69,7 +69,7 @@ export default function Agenda() {
   };
 
   const handleEdit = (agendamento) => {
-    const dataHora = agendamento.dataHoraInicio ? new Date(agendamento.dataHoraInicio) : new Date();
+    const dataHora = agendamento.dataHora ? new Date(agendamento.dataHora) : new Date();
     const data = dataHora.toISOString().split('T')[0];
     const horario = dataHora.toTimeString().split(' ')[0].substring(0, 5);
     
@@ -234,7 +234,7 @@ export default function Agenda() {
     confirmados: agendamentos.filter(a => a.status === 'confirmado').length,
     pendentes: agendamentos.filter(a => a.status === 'agendado').length,
     hoje: agendamentos.filter(a => {
-      const date = new Date(a.dataHoraInicio);
+      const date = new Date(a.dataHora);
       const now = new Date();
       return date.getDate() === now.getDate() && 
              date.getMonth() === now.getMonth() && 
@@ -361,7 +361,7 @@ export default function Agenda() {
                   <div className="mt-3 space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300">
                       <Clock size={14} />
-                      <span>{formatDate(ag.dataHoraInicio)} às {formatTime(ag.dataHoraInicio)}</span>
+                      <span>{formatDate(ag.dataHora)} às {formatTime(ag.dataHora)}</span>
                     </div>
                     {ag.participante ? (
                       <div className="flex items-center gap-2 text-slate-600 dark:text-gray-300">
@@ -430,10 +430,10 @@ export default function Agenda() {
                     <Td>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-700 dark:text-gray-200">
-                          {formatDate(ag.dataHoraInicio)}
+                          {formatDate(ag.dataHora)}
                         </span>
                         <span className="text-xs text-slate-500 dark:text-gray-400">
-                          {formatTime(ag.dataHoraInicio)}
+                          {formatTime(ag.dataHora)}
                         </span>
                       </div>
                     </Td>

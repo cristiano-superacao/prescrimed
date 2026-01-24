@@ -108,7 +108,9 @@ router.post('/', async (req, res) => {
       duracao, 
       tipo, 
       status, 
-      observacoes 
+      observacoes,
+      local,
+      participante
     } = req.body;
     
     // empresaId já foi forçado pelo middleware tenantIsolation
@@ -138,9 +140,11 @@ router.post('/', async (req, res) => {
       descricao,
       dataHora: new Date(dataHora),
       duracao: duracao || 60,
-      tipo: tipo || 'consulta',
+      tipo: tipo || 'Compromisso',
       status: status || 'agendado',
-      observacoes
+      observacoes,
+      local,
+      participante
     });
     
     // Retornar com relacionamentos
@@ -183,7 +187,9 @@ router.put('/:id', async (req, res) => {
       tipo, 
       status, 
       observacoes,
-      usuarioId
+      usuarioId,
+      local,
+      participante
     } = req.body;
     
     // Remove empresaId do body para evitar alteração
@@ -195,7 +201,9 @@ router.put('/:id', async (req, res) => {
       ...(tipo && { tipo }),
       ...(status && { status }),
       ...(observacoes !== undefined && { observacoes }),
-      ...(usuarioId !== undefined && { usuarioId })
+      ...(usuarioId !== undefined && { usuarioId }),
+      ...(local !== undefined && { local }),
+      ...(participante !== undefined && { participante })
     });
     
     // Retornar com relacionamentos

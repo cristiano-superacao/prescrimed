@@ -49,12 +49,22 @@ const Agendamento = sequelize.define('Agendamento', {
     comment: 'Duração em minutos'
   },
   tipo: {
-    type: DataTypes.ENUM('consulta', 'retorno', 'avaliacao', 'procedimento', 'outro'),
-    defaultValue: 'consulta'
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'Compromisso'
   },
   status: {
-    type: DataTypes.ENUM('agendado', 'confirmado', 'cancelado', 'concluido', 'falta'),
+    type: DataTypes.STRING,
+    allowNull: false,
     defaultValue: 'agendado'
+  },
+  local: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  participante: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   observacoes: {
     type: DataTypes.TEXT,
