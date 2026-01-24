@@ -76,25 +76,9 @@ if (process.env.MYSQL_HOST || process.env.MYSQL_URL) {
       dialectOptions: {
         connectTimeout: 60000
       },
->>>>>>> f8df367ce1ca1ff650c477905d008af90ee9fc68
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
       pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
     });
-  } else {
-    console.log('🐬 Usando configuração MySQL (Locaweb ou local)');
-    sequelize = new Sequelize(
-      process.env.MYSQL_DATABASE || 'prescrimed',
-      process.env.MYSQL_USER || 'root',
-      process.env.MYSQL_PASSWORD || '',
-      {
-        host: process.env.MYSQL_HOST,
-        port: parseInt(process.env.MYSQL_PORT || '3306', 10),
-        dialect: 'mysql',
-        logging: process.env.NODE_ENV === 'development' ? console.log : false,
-        pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
-      }
-    );
-  }
 } else {
   // Desenvolvimento local sem PostgreSQL - usa SQLite
   console.log('💾 Usando SQLite para desenvolvimento local');

@@ -5,7 +5,6 @@ import {
   Users, 
   ShieldAlert, 
   AlertTriangle, 
-  Eye, 
   AlertCircle,
   RefreshCcw,
   Edit,
@@ -18,33 +17,10 @@ import {
   Droplet,
   User
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { enfermagemService } from '../services/enfermagem.service';
 import { pacienteService } from '../services/paciente.service';
 import { estoqueService } from '../services/estoque.service';
-  const [itensEstoque, setItensEstoque] = useState([]);
-  const [itensUtilizados, setItensUtilizados] = useState([]); // [{id, nome, quantidade}]
-  useEffect(() => {
-    if (hasAccess) {
-      loadData();
-      loadPacientes();
-      loadStats();
-      loadItensEstoque();
-    }
-  }, [hasAccess]);
-
-  const loadItensEstoque = async () => {
-    try {
-      const medicamentos = await estoqueService.getMedicamentos();
-      const alimentos = await estoqueService.getAlimentos();
-      setItensEstoque([
-        ...(medicamentos || []),
-        ...(alimentos || [])
-      ]);
-    } catch (error) {
-      console.error('Erro ao carregar itens do estoque:', error);
-    }
-  };
-import toast from 'react-hot-toast';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
@@ -63,6 +39,7 @@ import {
 } from '../components/common/Table';
 
 export default function Evolucao() {
+  // Estados principais
   const [registros, setRegistros] = useState([]);
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,8 +47,10 @@ export default function Evolucao() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [itensEstoque, setItensEstoque] = useState([]);
+  const [itensUtilizados, setItensUtilizados] = useState([]); // [{id, nome, quantidade}]
   
-  // Stats
+  // Estatísticas
   const [stats, setStats] = useState({
     registrosHoje: 0,
     pacientesComRegistro: 0,
@@ -79,33 +58,38 @@ export default function Evolucao() {
     alertasCriticos: 0
   });
 
-    setFormData({
-      pacienteId: '',
-      tipo: 'evolucao',
-      titulo: '',
-      descricao: '',
-      estadoGeral: 'bom',
-      riscoQueda: '',
-      riscoLesao: '',
-      alerta: false,
-      prioridade: 'baixa',
-      observacoes: '',
-      pa: '',
-      fc: '',
-      fr: '',
-      temp: '',
-      sato2: '',
-      glicemia: ''
+  // Estado do formulário
+  const [formData, setFormData] = useState({
+    pacienteId: '',
+    tipo: 'evolucao',
+    titulo: '',
+    descricao: '',
+    estadoGeral: 'bom',
+    riscoQueda: '',
+    riscoLesao: '',
+    alerta: false,
+    prioridade: 'baixa',
+    observacoes: '',
+    pa: '',
+    fc: '',
+    fr: '',
+    temp: '',
+    sato2: '',
+    glicemia: ''
   });
-    setEditingId(null);
-    setModalOpen(false);
 
+  // Erros de validação
+  const [errors, setErrors] = useState({});
+
+  // Carregar dados ao montar o componente
   useEffect(() => {
     loadData();
     loadPacientes();
     loadStats();
+    loadItensEstoque();
   }, []);
 
+  // Função para carregar registros de enfermagem
   const loadData = async () => {
     try {
       setLoading(true);
@@ -118,17 +102,18 @@ export default function Evolucao() {
     }
   };
 
+  // Função para carregar pacientes
   const loadPacientes = async () => {
     try {
       const data = await pacienteService.getAll();
       const lista = Array.isArray(data) ? data : (data.pacientes || []);
-      // Exibir todos os residentes, sem filtrar por status
       setPacientes(lista);
     } catch (error) {
       console.error('Erro ao carregar pacientes:', error);
     }
   };
 
+  // Função para carregar estatísticas
   const loadStats = async () => {
     try {
       const data = await enfermagemService.getStats();
@@ -138,6 +123,21 @@ export default function Evolucao() {
     }
   };
 
+  // Função para carregar itens do estoque
+  const loadItensEstoque = async () => {
+    try {
+      const medicamentos = await estoqueService.getMedicamentos();
+      const alimentos = await estoqueService.getAlimentos();
+      setItensEstoque([
+        ...(medicamentos || []),
+        ...(alimentos || [])
+      ]);
+    } catch (error) {
+      console.error('Erro ao carregar itens do estoque:', error);
+    }
+  };
+
+  // Função para validar formulário
   const validateForm = () => {
     const newErrors = {};
     
@@ -149,8 +149,12 @@ export default function Evolucao() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Função para salvar registro (criar ou atualizar)
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+
     try {
       let sinaisVitais = null;
       if (
@@ -170,6 +174,7 @@ export default function Evolucao() {
           glicemia: formData.glicemia || null,
         };
       }
+
       const payload = {
         pacienteId: formData.pacienteId,
         tipo: formData.tipo,
@@ -183,6 +188,7 @@ export default function Evolucao() {
         observacoes: formData.observacoes.trim() || null,
         sinaisVitais,
       };
+
       if (editingId) {
         await enfermagemService.update(editingId, payload);
         toast.success(successMessage('update', 'Registro'));
@@ -190,6 +196,7 @@ export default function Evolucao() {
         await enfermagemService.create(payload);
         toast.success(successMessage('create', 'Registro'));
       }
+
       setModalOpen(false);
       resetForm();
       loadData();
@@ -199,10 +206,102 @@ export default function Evolucao() {
     }
   };
 
+  // Função para editar registro
+  const handleEdit = (registro) => {
+    setEditingId(registro.id);
+    setFormData({
+      pacienteId: registro.pacienteId || '',
+      tipo: registro.tipo || 'evolucao',
+      titulo: registro.titulo || '',
+      descricao: registro.descricao || '',
+      estadoGeral: registro.estadoGeral || 'bom',
+      riscoQueda: registro.riscoQueda || '',
+      riscoLesao: registro.riscoLesao || '',
+      alerta: registro.alerta || false,
+      prioridade: registro.prioridade || 'baixa',
+      observacoes: registro.observacoes || '',
+      pa: registro.sinaisVitais?.pa || '',
+      fc: registro.sinaisVitais?.fc || '',
+      fr: registro.sinaisVitais?.fr || '',
+      temp: registro.sinaisVitais?.temp || '',
+      sato2: registro.sinaisVitais?.sato2 || '',
+      glicemia: registro.sinaisVitais?.glicemia || ''
+    });
+    setModalOpen(true);
+  };
 
+  // Função para deletar registro
+  const handleDelete = async (id, titulo) => {
+    if (!confirm(`Deseja realmente excluir o registro "${titulo}"?`)) return;
+    
+    try {
+      setDeletingId(id);
+      await enfermagemService.delete(id);
+      toast.success(successMessage('delete', 'Registro'));
+      loadData();
+      loadStats();
+    } catch (error) {
+      toast.error(apiErrorMessage(error, errorMessage('delete', 'registro')));
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
+  // Função para resetar formulário
+  const resetForm = () => {
+    setFormData({
+      pacienteId: '',
+      tipo: 'evolucao',
+      titulo: '',
+      descricao: '',
+      estadoGeral: 'bom',
+      riscoQueda: '',
+      riscoLesao: '',
+      alerta: false,
+      prioridade: 'baixa',
+      observacoes: '',
+      pa: '',
+      fc: '',
+      fr: '',
+      temp: '',
+      sato2: '',
+      glicemia: ''
+    });
+    setErrors({});
+    setEditingId(null);
+    setItensUtilizados([]);
+  };
 
+  // Função para formatar data
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
+  // Função para obter label do tipo
+  const getTipoLabel = (tipo) => {
+    const tipos = {
+      evolucao: 'Evolução',
+      sinais_vitais: 'Sinais Vitais',
+      administracao_medicamento: 'Medicamento',
+      curativo: 'Curativo',
+      intercorrencia: 'Intercorrência',
+      admissao: 'Admissão',
+      alta: 'Alta',
+      transferencia: 'Transferência',
+      outro: 'Outro'
+    };
+    return tipos[tipo] || tipo;
+  };
+
+  // Função para obter cor do estado geral
   const getEstadoGeralColor = (estado) => {
     const cores = {
       bom: 'bg-emerald-50 text-emerald-700 border-emerald-100',
@@ -213,6 +312,7 @@ export default function Evolucao() {
     return cores[estado] || cores.bom;
   };
 
+  // Função para obter cor da prioridade
   const getPrioridadeColor = (prioridade) => {
     const cores = {
       baixa: 'bg-slate-100 text-slate-700',
@@ -223,6 +323,7 @@ export default function Evolucao() {
     return cores[prioridade] || cores.baixa;
   };
 
+  // Filtrar registros por busca
   const filteredRegistros = registros.filter(r => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -759,13 +860,14 @@ export default function Evolucao() {
                 </div>
 
                 {/* Itens do Estoque Utilizados */}
-                <div className="bg-green-50 dark:bg-gray-700/50 rounded-xl p-5 mt-6">
+                <div className="bg-green-50 dark:bg-gray-700/50 rounded-xl p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <FileText className="text-green-600" size={20} />
                     <h4 className="font-bold text-slate-800 dark:text-gray-100">Itens do Estoque Utilizados</h4>
-                    <span className="text-xs text-slate-500 dark:text-gray-400">(Selecione o que foi utilizado)</span>
+                    <span className="text-xs text-slate-500 dark:text-gray-400">(Opcional)</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  <div className="space-y-4">
                     <select
                       className="input w-full"
                       onChange={e => {
@@ -774,38 +876,43 @@ export default function Evolucao() {
                         if (item && !itensUtilizados.some(iu => iu.id === itemId)) {
                           setItensUtilizados([...itensUtilizados, { id: item.id, nome: item.nome, quantidade: 1 }]);
                         }
+                        e.target.value = '';
                       }}
-                      defaultValue=""
+                      value=""
                     >
                       <option value="">Adicionar item do estoque...</option>
                       {itensEstoque.map(item => (
                         <option key={item.id} value={item.id}>{item.nome}</option>
                       ))}
                     </select>
+                    
                     <div className="flex flex-col gap-2">
-                      {itensUtilizados.length === 0 && (
+                      {itensUtilizados.length === 0 ? (
                         <span className="text-xs text-slate-400">Nenhum item selecionado</span>
+                      ) : (
+                        itensUtilizados.map((iu, idx) => (
+                          <div key={iu.id} className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
+                            <span className="font-medium flex-1">{iu.nome}</span>
+                            <input
+                              type="number"
+                              min={1}
+                              className="input w-20"
+                              value={iu.quantidade}
+                              onChange={e => {
+                                const val = parseInt(e.target.value) || 1;
+                                setItensUtilizados(itensUtilizados.map((item, i) => i === idx ? { ...item, quantidade: val } : item));
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-sm"
+                              onClick={() => setItensUtilizados(itensUtilizados.filter((item, i) => i !== idx))}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))
                       )}
-                      {itensUtilizados.map((iu, idx) => (
-                        <div key={iu.id} className="flex items-center gap-2">
-                          <span className="font-medium">{iu.nome}</span>
-                          <input
-                            type="number"
-                            min={1}
-                            className="input w-20"
-                            value={iu.quantidade}
-                            onChange={e => {
-                              const val = parseInt(e.target.value) || 1;
-                              setItensUtilizados(itensUtilizados.map((item, i) => i === idx ? { ...item, quantidade: val } : item));
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-danger btn-xs"
-                            onClick={() => setItensUtilizados(itensUtilizados.filter((item, i) => i !== idx))}
-                          >Remover</button>
-                        </div>
-                      ))}
                     </div>
                   </div>
                 </div>
@@ -835,6 +942,7 @@ export default function Evolucao() {
                   <button
                     type="submit"
                     className="btn btn-primary flex-1 py-2.5 shadow-lg shadow-primary-500/20"
+                    disabled={pacientes.length === 0}
                   >
                     {editingId ? 'Salvar Alterações' : 'Criar Registro'}
                   </button>
