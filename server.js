@@ -412,14 +412,9 @@ app.use(express.urlencoded({ extended: true })); // Parse de formulários
  * Middleware de validação de métodos HTTP
  * Garante que apenas métodos permitidos sejam aceitos
  */
-const allowedApiMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD']);
-// Log detalhado de requisições na API
+// Log detalhado de requisições na API (sem bloquear métodos incomuns)
 app.use('/api', (req, res, next) => {
   console.log(`[API] ${req.method} ${req.originalUrl}`);
-  if (!allowedApiMethods.has(req.method)) {
-    console.warn(`[API] 405 Method Not Allowed: ${req.method} ${req.originalUrl}`);
-    return res.status(405).json({ error: 'Método HTTP não permitido' });
-  }
   next();
 });
 
