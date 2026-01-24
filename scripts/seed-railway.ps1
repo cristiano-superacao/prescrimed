@@ -38,4 +38,14 @@ try {
   exit 1
 }
 
+Write-Host "🧪 Executando cenários reais (Prescrições, Estoque, Evolução, Financeiro)…" -ForegroundColor Yellow
+try {
+  node "scripts/seed-domain-scenarios.js"
+  if ($LASTEXITCODE -ne 0) { throw "Cenários retornaram código $LASTEXITCODE" }
+  Write-Host "✅ Cenários concluídos com sucesso no Railway." -ForegroundColor Green
+} catch {
+  Write-Error "❌ Cenários falharam: $_"
+  exit 1
+}
+
 Write-Host "🩺 Verifique sua aplicação: https://prescrimed.up.railway.app/health" -ForegroundColor Cyan
