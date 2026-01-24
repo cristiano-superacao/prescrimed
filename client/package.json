@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "build:netlify": "vite build",
     "build:railway": "vite build --mode railway",
-    "build:github": "vite build",
+    "build:github": "vite build --mode github",
     "start:railway": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",
     "lint": "echo 'Linting skipped'"
   },
