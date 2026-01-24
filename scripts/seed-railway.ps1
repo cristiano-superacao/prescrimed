@@ -22,7 +22,7 @@ Write-Host "🔑 DATABASE_URL definida (tamanho: $($env:DATABASE_URL.Length))" -
 Write-Host "🔍 Testando acesso Postgres (ping simples via Sequelize)…" -ForegroundColor Yellow
 
 try {
-  node -e "import('../config/database.js').then(m=>m.sequelize.authenticate().then(()=>console.log('OK')).catch(e=>{console.error('FAIL');process.exit(1)}))" | Out-String | Write-Host
+  node -e "import('../config/database.js').then(m=>m.default.authenticate().then(()=>console.log('OK')).catch(e=>{console.error('FAIL');process.exit(1)}))" | Out-String | Write-Host
 } catch {
   Write-Error "Falha ao autenticar no Postgres: $_"
   exit 1

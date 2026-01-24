@@ -464,72 +464,70 @@ export default function Evolucao() {
               ))}
             </MobileGrid>
 
-            {/* Desktop */}
-            <TableWrapper>
-              <TableHeader columns={["Data/Hora", "Tipo", "Título", "Residente", "Estado", "Ações"]} />
-              <TBody>
-                {filteredRegistros.map((registro) => (
-                  <Tr key={registro.id}>
-                    <Td>
-                      <span className="text-sm text-slate-600 dark:text-gray-300">
+            {/* Desktop: Grid em duas colunas */}
+            <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 p-2 md:p-4">
+              {filteredRegistros.map((registro) => (
+                <div
+                  key={registro.id}
+                  className="rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${getPrioridadeColor(registro.prioridade)}`}>
+                        {getTipoLabel(registro.tipo)}
+                      </span>
+                      {registro.alerta && (
+                        <AlertTriangle size={16} className="text-red-500" title="Alerta ativo" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500 dark:text-gray-400">
                         {formatDate(registro.createdAt)}
                       </span>
-                    </Td>
-                    <Td>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${getPrioridadeColor(registro.prioridade)}`}>
-                          {getTipoLabel(registro.tipo)}
-                        </span>
-                        {registro.alerta && (
-                          <AlertTriangle size={14} className="text-red-500" title="Alerta ativo" />
-                        )}
-                      </div>
-                    </Td>
-                    <Td>
-                      <p className="font-semibold text-slate-900 dark:text-gray-100">{registro.titulo}</p>
-                      <p className="text-xs text-slate-500 dark:text-gray-400 line-clamp-1">{registro.descricao}</p>
-                    </Td>
-                    <Td>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm">
-                          {registro.paciente?.nome?.charAt(0) || '?'}
-                        </div>
-                        <span className="text-sm text-slate-600 dark:text-gray-300">
-                          {registro.paciente?.nome || 'N/A'}
-                        </span>
-                      </div>
-                    </Td>
-                    <Td>
                       <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${getEstadoGeralColor(registro.estadoGeral)}`}>
                         {registro.estadoGeral}
                       </span>
-                    </Td>
-                    <Td className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <ActionIconButton
-                          onClick={() => handleEdit(registro)}
-                          icon={Edit}
-                          variant="primary"
-                          tooltip="Editar"
-                          title="Editar registro"
-                          ariaLabel="Editar registro"
-                        />
-                        <ActionIconButton
-                          onClick={() => handleDelete(registro.id, registro.titulo)}
-                          icon={Trash2}
-                          variant="danger"
-                          tooltip="Excluir"
-                          title="Excluir registro"
-                          ariaLabel="Excluir registro"
-                          disabled={deletingId === registro.id}
-                          loading={deletingId === registro.id}
-                        />
+                    </div>
+                  </div>
+
+                  <div className="mt-3">
+                    <p className="font-semibold text-slate-900 dark:text-gray-100">{registro.titulo}</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm">
+                        {registro.paciente?.nome?.charAt(0) || '?'}
                       </div>
-                    </Td>
-                  </Tr>
-                ))}
-              </TBody>
-            </TableWrapper>
+                      <span className="text-sm text-slate-700 dark:text-gray-300">
+                        {registro.paciente?.nome || 'Paciente não identificado'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-gray-300 mt-2 line-clamp-3">
+                      {registro.descricao}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-end gap-2">
+                    <ActionIconButton
+                      onClick={() => handleEdit(registro)}
+                      icon={Edit}
+                      variant="primary"
+                      tooltip="Editar"
+                      title="Editar registro"
+                      ariaLabel="Editar registro"
+                    />
+                    <ActionIconButton
+                      onClick={() => handleDelete(registro.id, registro.titulo)}
+                      icon={Trash2}
+                      variant="danger"
+                      tooltip="Excluir"
+                      title="Excluir registro"
+                      ariaLabel="Excluir registro"
+                      disabled={deletingId === registro.id}
+                      loading={deletingId === registro.id}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </>
         ) : (
           <div className="p-12 flex flex-col items-center gap-6">
