@@ -109,6 +109,24 @@ async function connectDB(retryCount = 0) {
     try {
       const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : undefined;
       if (dialect === 'postgres') {
+        // Pré-limpeza: remover artefatos com nomes iniciados em maiúscula que causam erro de relação
+        try {
+          await sequelize.query(`DO $$
+            BEGIN
+              IF to_regclass('public."Usuarios"') IS NOT NULL THEN
+                EXECUTE 'DROP TABLE IF EXISTS "Usuarios" CASCADE';
+              END IF;
+              IF to_regclass('public."Pacientes"') IS NOT NULL THEN
+                EXECUTE 'DROP TABLE IF EXISTS "Pacientes" CASCADE';
+              END IF;
+              IF to_regclass('public."Empresas"') IS NOT NULL THEN
+                EXECUTE 'DROP TABLE IF EXISTS "Empresas" CASCADE';
+              END IF;
+            END $$;`);
+        } catch (cleanupErr) {
+          console.warn('⚠️ Falha ao limpar artefatos com maiúsculas:', cleanupErr?.message || cleanupErr);
+        }
+
         const qi = sequelize.getQueryInterface();
         const enumTypeName = 'enum_usuarios_role';
         const roleValues = [
@@ -141,6 +159,16 @@ async function connectDB(retryCount = 0) {
             END $$;`
           );
         }
+        // Se o tipo enum não existir, cria com todos os valores
+        await qi.sequelize.query(
+          `DO $$
+           BEGIN
+             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '${enumTypeName}') THEN
+               EXECUTE 'CREATE TYPE ${enumTypeName} AS ENUM (' ||
+                 ${JSON.stringify(roleValues).replace(/\[/,'').replace(/\]/,'')} || ')';
+             END IF;
+           END $$;`
+        ).catch(() => {});
       }
     } catch (e) {
       console.warn('⚠️ Não foi possível garantir valores do ENUM usuarios.role:', e?.message || e);
