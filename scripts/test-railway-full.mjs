@@ -1,17 +1,34 @@
 /* Teste completo Railway: health + login/registro + listagens principais */
-const BASE = process.env.BASE_URL;
+const BASE = process.env.BASE_URL || process.argv[2] || 'http://localhost:8000';
 
-if (!BASE) {
-  console.error('❌ BASE_URL não definida. Use: BASE_URL=https://seu-servico.up.railway.app node scripts/test-railway-full.mjs');
-  process.exit(1);
+// Permite passar BASE via env ou como primeiro argumento CLI.
+
+import http from 'node:http';
+import https from 'node:https';
+
+function tryParse(jsonText) {
+  try { return JSON.parse(jsonText); } catch { return jsonText; }
 }
 
-async function fetchJson(url, opts) {
-  const res = await fetch(url, opts);
-  const txt = await res.text();
-  let data;
-  try { data = JSON.parse(txt); } catch { data = txt; }
-  return { ok: res.ok, status: res.status, data };
+async function fetchJson(url, opts = {}) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const lib = u.protocol === 'https:' ? https : http;
+    const options = {
+      method: opts.method || 'GET',
+      headers: opts.headers || {},
+    };
+    const req = lib.request(u, options, (res) => {
+      let txt = '';
+      res.on('data', (chunk) => { txt += chunk; });
+      res.on('end', () => {
+        resolve({ ok: res.statusCode >= 200 && res.statusCode < 300, status: res.statusCode, data: tryParse(txt) });
+      });
+    });
+    req.on('error', reject);
+    if (opts.body) req.write(opts.body);
+    req.end();
+  });
 }
 
 async function main() {
@@ -88,4 +105,4 @@ async function main() {
   console.log('\n🎉 Teste completo Railway concluído.');
 }
 
-main().catch(err => { console.error('❌ Erro:', err.message); process.exit(1); });
+main().catch(err => { console.error('❌ Erro:', err?.message || err); console.error(err?.stack || ''); process.exit(1); });
