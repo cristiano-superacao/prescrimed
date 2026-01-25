@@ -52,6 +52,13 @@ O `nixpacks.toml` define o processo de build:
    - Volta para raiz
 3. **Start**: Executa `node server.js`
 
+## Atualização (2026-01-25)
+
+- A rota de enfermagem (`/api/enfermagem`) foi atualizada para incluir um fallback SQL direto sobre a tabela `"RegistrosEnfermagem"` quando o ORM não retornar resultados. Para que isso reflita em produção, garanta que o serviço na Railway faça rebuild e redeploy com a última versão do branch `main`.
+- Se o serviço estiver conectado ao GitHub com auto-deploy, um `git push` em `main` dispara automaticamente o rebuild. Após o redeploy, valide:
+   - `GET /health` deve retornar `database: connected`.
+   - `GET /api/enfermagem` autenticado deve retornar os registros importados (esperado: 4 registros conforme importação).
+
 ### Diferença entre Railway e GitHub Pages
 
 | Aspecto | Railway | GitHub Pages |
