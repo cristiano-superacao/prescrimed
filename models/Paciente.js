@@ -38,7 +38,7 @@ const Paciente = sequelize.define('Paciente', {
     type: DataTypes.TEXT
   }
 }, {
-  tableName: 'Pacientes',
+  tableName: 'pacientes',
   timestamps: true
 });
 
