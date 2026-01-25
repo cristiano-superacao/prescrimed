@@ -167,9 +167,13 @@ async function connectDB(retryCount = 0) {
       await sequelize.sync({ force: false, alter: devAlter });
       console.log(`✅ Tabelas sincronizadas (modo desenvolvimento${devAlter ? ' com ALTER' : ''})`);
     } else {
-      // PRODUÇÃO: usa alter apenas se FORCE_SYNC=true
-      // Útil para primeira implantação ou atualizações de schema
-      let useAlter = process.env.FORCE_SYNC === 'true';
+        // PRODUÇÃO: controla sync via variáveis
+        // SYNC_FORCE=true: recria schema do zero (DROP + CREATE)
+        // FORCE_SYNC=true: aplica ALTER para atualizar/crear tabelas sem dropar
+        const useForce = process.env.SYNC_FORCE === 'true';
+        let useAlter = process.env.FORCE_SYNC === 'true';
+
+        console.log(`⚙️ Sync flags → SYNC_FORCE=${process.env.SYNC_FORCE} | FORCE_SYNC=${process.env.FORCE_SYNC}`);
 
       // Se for uma atualização incremental (ex.: adicionamos novas colunas),
       // tenta detectar schema desatualizado e aplicar alter automaticamente.
@@ -187,7 +191,11 @@ async function connectDB(retryCount = 0) {
           useAlter = true;
         }
       }
-      if (useAlter) {
+      if (useForce) {
+        console.log('🔨 SYNC_FORCE ativado - recriando schema (DROP + CREATE) ...');
+        await sequelize.sync({ force: true });
+        console.log('✅ Schema recriado com sucesso (produção com SYNC_FORCE)');
+      } else if (useAlter) {
         const alterReason = process.env.FORCE_SYNC === 'true' ? 'FORCE_SYNC' : 'ALTER';
         console.log(`🔧 ${alterReason} ativado - criando/atualizando tabelas...`);
         await sequelize.sync({ alter: true }); // Altera estrutura existente
