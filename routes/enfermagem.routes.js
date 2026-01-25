@@ -29,18 +29,6 @@ router.get('/', authenticate, async (req, res) => {
 
     const registros = await RegistroEnfermagem.findAll({
       where,
-      include: [
-        {
-          model: Paciente,
-          as: 'paciente',
-          attributes: ['id', 'nome', 'cpf']
-        },
-        {
-          model: Usuario,
-          as: 'enfermeiro',
-          attributes: ['id', 'nome', 'role']
-        }
-      ],
       order: [['createdAt', 'DESC']]
     });
 
