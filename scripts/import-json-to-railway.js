@@ -15,12 +15,15 @@ async function tableExists(client, table) {
   }
 }
 
-function buildUpsertSQL(table, columns) {
+function buildUpsertSQL(table, columns, jsonColumns = []) {
   const colList = columns.map(c => `"${c}"`).join(', ');
-  const placeholders = columns.map((_, i) => `$${i+1}`).join(', ');
+  const placeholders = columns.map((c, i) => jsonColumns.includes(c) ? `$${i+1}::json` : `$${i+1}`).join(', ');
   const updateList = columns
     .filter(c => c !== 'id')
-    .map(c => `"${c}" = EXCLUDED."${c}"`) // usa EXCLUDED para ON CONFLICT
+    .map(c => jsonColumns.includes(c)
+      ? `"${c}" = EXCLUDED."${c}"::json`
+      : `"${c}" = EXCLUDED."${c}"`
+    ) // usa EXCLUDED para ON CONFLICT
     .join(', ');
   return `INSERT INTO "${table}" (${colList}) VALUES (${placeholders}) ON CONFLICT ("id") DO UPDATE SET ${updateList}`;
 }
@@ -61,13 +64,20 @@ async function importTable(client, dir, table) {
 
   // Determina colunas a partir do primeiro registro
   const columns = Object.keys(rows[0]);
-  const sql = buildUpsertSQL(table, columns);
+  const jsonColumns = table === 'prescricoes' ? ['itens'] : [];
+  const sql = buildUpsertSQL(table, columns, jsonColumns);
 
   let imported = 0;
   for (const row of rows) {
     // Converter JSON quando necessário
     const coerced = coerceJsonForTable(table, { ...row });
-    const values = columns.map(c => coerced[c] === null ? null : coerced[c]);
+    const values = columns.map(c => {
+      const v = coerced[c] === null ? null : coerced[c];
+      if (jsonColumns.includes(c)) {
+        return v == null ? '[]' : (typeof v === 'string' ? v : JSON.stringify(v));
+      }
+      return v;
+    });
     try {
       await client.query(sql, values);
       imported++;
