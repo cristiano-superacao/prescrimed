@@ -1,0 +1,77 @@
+[
+  {
+    "id": "a79f9969-70e7-46c6-9481-4b2e3edb700d",
+    "pacienteId": "a969d824-ba80-4d06-8792-c2c1a21c04f8",
+    "nutricionistaId": "bb73efc5-a536-4f36-bb19-24df42ee99e9",
+    "empresaId": "cdda7f02-5f0c-43be-815b-4d1b39414e12",
+    "tipo": "mista",
+    "descricao": "Plano inicial de cuidados e medicação",
+    "observacoes": "Reavaliar em 7 dias",
+    "itens": [
+      {
+        "nome": "Paracetamol 750mg",
+        "tipo": "medicamento",
+        "posologia": "1 comprimido de 8/8h",
+        "duracaoDias": 5
+      },
+      {
+        "nome": "Dieta branda",
+        "tipo": "dieta",
+        "observacao": "Fracionar em 5x ao dia"
+      }
+    ],
+    "status": "ativa",
+    "createdAt": "2026-01-24T18:52:19.000Z",
+    "updatedAt": "2026-01-24T18:52:19.000Z"
+  },
+  {
+    "id": "ae249417-f6b8-4d52-96d1-703c195883f9",
+    "pacienteId": "01ca2de1-d44a-4588-bc63-a095037d8150",
+    "nutricionistaId": "58148f62-76fa-4d89-a268-c2670beee48f",
+    "empresaId": "181c5405-348a-4ec6-8657-371bac432dac",
+    "tipo": "mista",
+    "descricao": "Plano inicial de cuidados e medicação",
+    "observacoes": "Reavaliar em 7 dias",
+    "itens": [
+      {
+        "nome": "Paracetamol 750mg",
+        "tipo": "medicamento",
+        "posologia": "1 comprimido de 8/8h",
+        "duracaoDias": 5
+      },
+      {
+        "nome": "Dieta branda",
+        "tipo": "dieta",
+        "observacao": "Fracionar em 5x ao dia"
+      }
+    ],
+    "status": "ativa",
+    "createdAt": "2026-01-24T18:52:19.000Z",
+    "updatedAt": "2026-01-24T18:52:19.000Z"
+  },
+  {
+    "id": "d9d9bc5f-4e00-4b23-afab-e4c5ac99bf2d",
+    "pacienteId": "1c8f3dba-9c39-45af-9ee7-1a8e9874a5e7",
+    "nutricionistaId": "64c78daa-8e08-4a6b-b89f-db3b45c7a276",
+    "empresaId": "48af86f2-ee44-446c-a34e-4471bab2e03e",
+    "tipo": "mista",
+    "descricao": "Plano inicial de cuidados e medicação",
+    "observacoes": "Reavaliar em 7 dias",
+    "itens": [
+      {
+        "nome": "Paracetamol 750mg",
+        "tipo": "medicamento",
+        "posologia": "1 comprimido de 8/8h",
+        "duracaoDias": 5
+      },
+      {
+        "nome": "Dieta branda",
+        "tipo": "dieta",
+        "observacao": "Fracionar em 5x ao dia"
+      }
+    ],
+    "status": "ativa",
+    "createdAt": "2026-01-24T18:52:19.000Z",
+    "updatedAt": "2026-01-24T18:52:19.000Z"
+  }
+]

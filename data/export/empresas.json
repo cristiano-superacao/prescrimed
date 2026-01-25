@@ -1,0 +1,67 @@
+[
+  {
+    "id": "181c5405-348a-4ec6-8657-371bac432dac",
+    "nome": "Clínica Movimento",
+    "tipoSistema": "fisioterapia",
+    "cnpj": "23.456.789/0001-02",
+    "email": "contato@movimento.com",
+    "telefone": "(71) 98876-5432",
+    "endereco": null,
+    "plano": "basico",
+    "ativo": 1,
+    "createdAt": "2026-01-24T18:29:57.000Z",
+    "updatedAt": "2026-01-24T18:29:57.000Z"
+  },
+  {
+    "id": "48af86f2-ee44-446c-a34e-4471bab2e03e",
+    "nome": "Casa de Repouso Vida Plena",
+    "tipoSistema": "casa-repouso",
+    "cnpj": "12.345.678/0001-99",
+    "email": "contato@vidaplena.com.br",
+    "telefone": "(11) 3456-7890",
+    "endereco": "Rua das Palmeiras, 1000",
+    "plano": "basico",
+    "ativo": 1,
+    "createdAt": "2026-01-24T17:00:46.000Z",
+    "updatedAt": "2026-01-24T17:00:46.000Z"
+  },
+  {
+    "id": "83590d00-7dc2-4628-9a9c-bf8fecf01cc1",
+    "nome": "Petshop Amigo Fiel",
+    "tipoSistema": "petshop",
+    "cnpj": "34.567.890/0001-03",
+    "email": "contato@amigofiel.com",
+    "telefone": "(71) 98987-6543",
+    "endereco": null,
+    "plano": "basico",
+    "ativo": 1,
+    "createdAt": "2026-01-24T18:29:58.000Z",
+    "updatedAt": "2026-01-24T18:29:58.000Z"
+  },
+  {
+    "id": "92a2f99e-7500-47b9-b20f-de9139f44789",
+    "nome": "Prescrimed",
+    "tipoSistema": "casa-repouso",
+    "cnpj": "00000000000000",
+    "email": "contato@prescrimed.com",
+    "telefone": "(00) 0000-0000",
+    "endereco": "Endereço padrão",
+    "plano": "basico",
+    "ativo": 1,
+    "createdAt": "2026-01-24T17:03:21.000Z",
+    "updatedAt": "2026-01-24T17:03:21.000Z"
+  },
+  {
+    "id": "cdda7f02-5f0c-43be-815b-4d1b39414e12",
+    "nome": "Fisio Brail",
+    "tipoSistema": "fisioterapia",
+    "cnpj": "56.034.087/0001-72",
+    "email": "adminfisio@prescrimed.com",
+    "telefone": "71993546919",
+    "endereco": null,
+    "plano": "basico",
+    "ativo": 1,
+    "createdAt": "2026-01-24T17:10:42.000Z",
+    "updatedAt": "2026-01-24T17:10:42.000Z"
+  }
+]

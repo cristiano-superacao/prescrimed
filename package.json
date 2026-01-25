@@ -31,7 +31,9 @@
     "streamlit": "cd streamlit-app && streamlit run app.py",
     "streamlit:install": "cd streamlit-app && pip install -r requirements.txt",
     "dev:all": "concurrently \"npm run dev\" \"npm run client\" \"npm run streamlit\"",
-    "smoke:railway": "node scripts/smoke-railway.mjs"
+    "smoke:railway": "node scripts/smoke-railway.mjs",
+    "export:mysql": "node scripts/export-mysql-data.js",
+    "import:railway": "node scripts/import-json-to-railway.js"
   },
   "engines": {
     "node": ">=20.0.0",

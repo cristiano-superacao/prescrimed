@@ -1,0 +1,65 @@
+{
+  "at": "2026-01-25T01:18:08.871Z",
+  "summary": [
+    {
+      "table": "empresas",
+      "count": 5,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\empresas.json"
+    },
+    {
+      "table": "usuarios",
+      "count": 22,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\usuarios.json"
+    },
+    {
+      "table": "pacientes",
+      "count": 12,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\pacientes.json"
+    },
+    {
+      "table": "EstoqueItens",
+      "count": 6,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\EstoqueItens.json"
+    },
+    {
+      "table": "EstoqueMovimentacoes",
+      "count": 9,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\EstoqueMovimentacoes.json"
+    },
+    {
+      "table": "FinanceiroTransacoes",
+      "count": 6,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\FinanceiroTransacoes.json"
+    },
+    {
+      "table": "prescricoes",
+      "count": 3,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\prescricoes.json"
+    },
+    {
+      "table": "agendamentos",
+      "count": 11,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\agendamentos.json"
+    },
+    {
+      "table": "cr_leitos",
+      "count": 0,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\cr_leitos.json"
+    },
+    {
+      "table": "petshop_pets",
+      "count": 3,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\petshop_pets.json"
+    },
+    {
+      "table": "fisio_sessoes",
+      "count": 0,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\fisio_sessoes.json"
+    },
+    {
+      "table": "RegistrosEnfermagem",
+      "count": 4,
+      "file": "C:\\Users\\Superação\\Desktop\\Sistema\\prescrimed-main\\data\\export\\RegistrosEnfermagem.json"
+    }
+  ]
+}

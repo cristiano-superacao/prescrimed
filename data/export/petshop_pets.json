@@ -1,0 +1,35 @@
+[
+  {
+    "id": "4fc57d63-1bb5-4007-988b-77e78a43105d",
+    "empresaId": "83590d00-7dc2-4628-9a9c-bf8fecf01cc1",
+    "nome": "Thor",
+    "especie": "Cachorro",
+    "raca": "Pastor Alemão",
+    "tutorNome": "Eduardo Dias",
+    "observacoes": null,
+    "createdAt": "2026-01-24T18:29:58.000Z",
+    "updatedAt": "2026-01-24T18:29:58.000Z"
+  },
+  {
+    "id": "6db64a62-ddcd-443b-9dbc-e37ff86c7366",
+    "empresaId": "83590d00-7dc2-4628-9a9c-bf8fecf01cc1",
+    "nome": "Mimi",
+    "especie": "Gato",
+    "raca": "Siamês",
+    "tutorNome": "Beatriz Rocha",
+    "observacoes": null,
+    "createdAt": "2026-01-24T18:29:58.000Z",
+    "updatedAt": "2026-01-24T18:29:58.000Z"
+  },
+  {
+    "id": "8feb2f54-f8cf-4445-8ee2-8f197b2b0687",
+    "empresaId": "83590d00-7dc2-4628-9a9c-bf8fecf01cc1",
+    "nome": "Rex",
+    "especie": "Cachorro",
+    "raca": "Labrador",
+    "tutorNome": "Carlos Mendes",
+    "observacoes": null,
+    "createdAt": "2026-01-24T18:29:58.000Z",
+    "updatedAt": "2026-01-24T18:29:58.000Z"
+  }
+]
