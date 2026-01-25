@@ -14,11 +14,26 @@ async function fetchJson(url, opts={}) {
 (async () => {
   try {
     console.log('🔎 BASE_URL =', BASE);
-    const login = await fetchJson(`${BASE}/api/auth/login`, {
+    let login = await fetchJson(`${BASE}/api/auth/login`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: EMAIL, senha: SENHA })
     });
-    if (!login.ok) throw new Error(`Login falhou (${login.status}): ${typeof login.data==='string'?login.data:JSON.stringify(login.data)}`);
+    if (!login.ok) {
+      console.log('ℹ️ Login falhou, tentando registrar empresa/admin demo...');
+      const register = await fetchJson(`${BASE}/api/auth/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nomeEmpresa: 'Clínica Demo', tipoSistema: 'casa-repouso', cnpj: '12345678000199',
+          nomeAdmin: 'Jean Soares', email: EMAIL, senha: SENHA, cpf: '12345678900', contato: '(71) 99658-2310'
+        })
+      });
+      if (!register.ok) throw new Error(`Registro falhou (${register.status}): ${typeof register.data==='string'?register.data:JSON.stringify(register.data)}`);
+      login = await fetchJson(`${BASE}/api/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: EMAIL, senha: SENHA })
+      });
+      if (!login.ok) throw new Error(`Login falhou (${login.status}): ${typeof login.data==='string'?login.data:JSON.stringify(login.data)}`);
+    }
     const token = login.data.token;
     console.log('🔐 Login OK');
 

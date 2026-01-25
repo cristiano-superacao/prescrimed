@@ -9,9 +9,11 @@ const router = express.Router();
 router.get('/', authenticate, async (req, res) => {
   try {
     const { pacienteId, tipo, dataInicio, dataFim, prioridade, alerta } = req.query;
-    const empresaId = req.user.empresaId;
-
-    const where = { empresaId };
+    const where = {};
+    // Aplica isolamento por empresa apenas se não for superadmin
+    if (req.user?.role !== 'superadmin') {
+      where.empresaId = req.user.empresaId;
+    }
 
     if (pacienteId) where.pacienteId = pacienteId;
     if (tipo) where.tipo = tipo;
@@ -55,8 +57,12 @@ router.get('/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     const empresaId = req.user.empresaId;
 
+    const where = { id };
+    if (req.user?.role !== 'superadmin') {
+      where.empresaId = req.user.empresaId;
+    }
     const registro = await RegistroEnfermagem.findOne({
-      where: { id, empresaId },
+      where,
       include: [
         {
           model: Paciente,
