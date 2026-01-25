@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-// URL do Railway onde backend e frontend estão no MESMO serviço
-const RAILWAY_URL = 'https://prescrimed.up.railway.app';
+// Raiz do backend em produção (configurável via Vite)
+const VITE_BACKEND_ROOT = import.meta.env.VITE_BACKEND_ROOT;
+// Fallback para domínio padrão caso variável não esteja definida
+const DEFAULT_RAILWAY_URL = 'https://prescrimed-backend-production.up.railway.app';
+const RAILWAY_URL = VITE_BACKEND_ROOT || DEFAULT_RAILWAY_URL;
 
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
@@ -17,7 +20,7 @@ export const getApiUrl = () => {
   // Se está no GitHub Pages
   const isGitHubPages = window.location.hostname.includes('github.io');
   if (isGitHubPages && import.meta.env.PROD) {
-    console.log('📄 GitHub Pages detectado - conectando ao Railway');
+    console.log('📄 GitHub Pages detectado - conectando ao backend configurado');
     return `${RAILWAY_URL}/api`;
   }
 
