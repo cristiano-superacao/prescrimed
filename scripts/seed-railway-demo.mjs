@@ -74,22 +74,34 @@ async function main() {
   if (!meEmpresa.ok) { console.error('❌ Empresa do usuário não disponível:', meEmpresa.status, meEmpresa.data); process.exit(1); }
   const empresaId = meEmpresa.data.id;
 
-  // Criar paciente
-  const newPaciente = await fetchJson(api('/pacientes'), {
-    method: 'POST', headers,
-    body: JSON.stringify({
-      nome: 'Maria de Souza',
-      cpf: '123.456.789-10',
-      dataNascimento: '1943-05-12',
-      email: 'maria.souza@example.com',
-      telefone: '(11) 98888-7777',
-      endereco: 'Rua das Flores, 123 - São Paulo',
-      observacoes: 'Hipertensão controlada'
-    })
-  });
-  if (!newPaciente.ok) { console.error('❌ Criar paciente:', newPaciente.status, newPaciente.data); process.exit(1); }
-  const pacienteId = newPaciente.data.id;
-  console.log('👥 Paciente criado:', pacienteId);
+  // Criar paciente (ou reutilizar se já existir por CPF)
+  const listaPacientes = await fetchJson(api(`/pacientes?empresaId=${empresaId}`), { headers: { Authorization: `Bearer ${token}` } });
+  let pacienteId;
+  const cpfDemo = '123.456.789-10';
+  if (listaPacientes.ok && Array.isArray(listaPacientes.data)) {
+    const existente = listaPacientes.data.find(p => (p.cpf || '').trim() === cpfDemo);
+    if (existente) pacienteId = existente.id;
+  }
+  if (!pacienteId) {
+    const novo = await fetchJson(api('/pacientes'), {
+      method: 'POST', headers,
+      body: JSON.stringify({
+        empresaId,
+        nome: 'Maria de Souza',
+        cpf: cpfDemo,
+        dataNascimento: '1943-05-12',
+        email: 'maria.souza@example.com',
+        telefone: '(11) 98888-7777',
+        endereco: 'Rua das Flores, 123 - São Paulo',
+        observacoes: 'Hipertensão controlada'
+      })
+    });
+    if (!novo.ok) { console.error('❌ Criar paciente:', novo.status, novo.data); process.exit(1); }
+    pacienteId = novo.data.id;
+    console.log('👥 Paciente criado:', pacienteId);
+  } else {
+    console.log('👥 Paciente existente reutilizado:', pacienteId);
+  }
 
   // Criar prescrição
   const newPrescricao = await fetchJson(api('/prescricoes'), {
