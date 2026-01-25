@@ -92,7 +92,7 @@ async function importTable(client, dir, table) {
 }
 
 async function main() {
-  const { DATABASE_URL } = process.env;
+  const DATABASE_URL = process.env.DATABASE_URL_OVERRIDE || process.env.DATABASE_URL;
   if (!DATABASE_URL) {
     console.error('❌ DATABASE_URL não definido. Este script deve rodar dentro do ambiente Railway (ou com URL externa válida).');
     process.exit(1);
