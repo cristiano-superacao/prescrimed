@@ -41,8 +41,8 @@ async function main() {
 
   // Tentar login com admin demo
   let token = null;
-  let userEmail = 'jeansoares@gmail.com';
-  let userPass = '123456';
+  let userEmail = 'admin.demo@prescrimed.com';
+  let userPass = 'Demo@123456';
 
   const login1 = await fetchJson(api('/auth/login'), {
     method: 'POST',
@@ -55,10 +55,10 @@ async function main() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        nomeEmpresa: 'Clínica Demo',
+        nomeEmpresa: 'Casa Repouso Demo',
         tipoSistema: 'casa-repouso',
-        cnpj: '12345678000199',
-        nomeAdmin: 'Jean Soares',
+        cnpj: '11222333000144',
+        nomeAdmin: 'Admin Demo',
         email: userEmail,
         senha: userPass,
         cpf: '12345678900',

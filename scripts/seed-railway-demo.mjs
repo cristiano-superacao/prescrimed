@@ -69,6 +69,11 @@ async function main() {
   const token = login.data.token;
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
+  // Obter empresa do usuário
+  const meEmpresa = await fetchJson(api('/empresas/me'), { headers: { Authorization: `Bearer ${token}` } });
+  if (!meEmpresa.ok) { console.error('❌ Empresa do usuário não disponível:', meEmpresa.status, meEmpresa.data); process.exit(1); }
+  const empresaId = meEmpresa.data.id;
+
   // Criar paciente
   const newPaciente = await fetchJson(api('/pacientes'), {
     method: 'POST', headers,
@@ -108,9 +113,12 @@ async function main() {
     method: 'POST', headers,
     body: JSON.stringify({
       pacienteId,
-      tipo: 'consulta',
-      data: new Date().toISOString(),
+      empresaId,
+      titulo: 'Consulta inicial',
       descricao: 'Consulta de acompanhamento',
+      dataHora: new Date(Date.now() + 24*60*60*1000).toISOString(),
+      tipo: 'Consulta',
+      status: 'agendado'
     })
   });
   if (!newAgendamento.ok) { console.error('❌ Criar agendamento:', newAgendamento.status, newAgendamento.data); process.exit(1); }
