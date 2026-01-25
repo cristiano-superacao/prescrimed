@@ -1,0 +1,41 @@
+{
+  "at": "2026-01-25T02:49:17.615Z",
+  "summary": [
+    {
+      "table": "empresas",
+      "imported": 5
+    },
+    {
+      "table": "usuarios",
+      "imported": 22
+    },
+    {
+      "table": "pacientes",
+      "imported": 12
+    },
+    {
+      "table": "prescricoes",
+      "imported": 3
+    },
+    {
+      "table": "agendamentos",
+      "imported": 11
+    },
+    {
+      "table": "RegistrosEnfermagem",
+      "imported": 4
+    },
+    {
+      "table": "cr_leitos",
+      "imported": 0
+    },
+    {
+      "table": "petshop_pets",
+      "imported": 3
+    },
+    {
+      "table": "fisio_sessoes",
+      "imported": 0
+    }
+  ]
+}
