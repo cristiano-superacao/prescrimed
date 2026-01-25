@@ -1,6 +1,6 @@
 import express from 'express';
-import { Op } from 'sequelize';
-import { RegistroEnfermagem, Paciente, Usuario } from '../models/index.js';
+import { Op, QueryTypes } from 'sequelize';
+import { RegistroEnfermagem, Paciente, Usuario, sequelize } from '../models/index.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -27,10 +27,16 @@ router.get('/', authenticate, async (req, res) => {
       };
     }
 
-    const registros = await RegistroEnfermagem.findAll({
-      where,
-      order: [['createdAt', 'DESC']]
-    });
+    let registros = await RegistroEnfermagem.findAll({ where, order: [['createdAt', 'DESC']] });
+    // Fallback: se vazio, consultar via SQL direto (possível diferença de mapeamento de tabela)
+    if (!registros || (Array.isArray(registros) && registros.length === 0)) {
+      try {
+        const raw = await sequelize.query('SELECT * FROM "RegistrosEnfermagem" ORDER BY "createdAt" DESC', { type: QueryTypes.SELECT });
+        registros = raw;
+      } catch (e) {
+        console.warn('Fallback SQL falhou:', e.message);
+      }
+    }
 
     res.json(registros);
   } catch (error) {
