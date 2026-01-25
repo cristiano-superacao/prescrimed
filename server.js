@@ -33,6 +33,7 @@ import morgan from 'morgan';          // Logger de requisições HTTP
 import dotenv from 'dotenv';          // Carrega variáveis de ambiente do .env
 import path from 'path';              // Manipulação de caminhos de arquivos
 import { fileURLToPath } from 'url'; // Conversão de URL para path (necessário em ES Modules)
+import { spawn } from 'child_process'; // Executa scripts auxiliares sem bloquear o servidor
 
 // Importa rotas e configuração do banco de dados
 import apiRouter from './routes/index.js'; // Router principal da API
@@ -219,6 +220,28 @@ async function connectDB(retryCount = 0) {
     }
 
     console.log('🎉 Sistema pronto para uso!');
+
+    // Importa dados exportados de MySQL (JSON) assim que o schema estiver pronto
+    if (process.env.IMPORT_JSON_ON_START === 'true') {
+      try {
+        console.log('📦 IMPORT_JSON_ON_START=true - iniciando importação de JSON para Postgres...');
+        const child = spawn(process.execPath, ['scripts/import-json-to-railway.js'], {
+          env: process.env,
+          stdio: ['ignore', 'pipe', 'pipe']
+        });
+        child.stdout.on('data', (d) => process.stdout.write(`[import] ${d}`));
+        child.stderr.on('data', (d) => process.stderr.write(`[import] ${d}`));
+        child.on('exit', (code) => {
+          if (code === 0) {
+            console.log('✅ Importação de JSON concluída com sucesso.');
+          } else {
+            console.warn(`⚠️ Importação de JSON finalizada com código ${code}. Consulte logs acima.`);
+          }
+        });
+      } catch (e) {
+        console.warn('⚠️ Falha ao iniciar importação de JSON:', e?.message || e);
+      }
+    }
   } catch (error) {
     console.error('❌ Erro ao conectar no banco de dados:', error.message);
     app.locals.dbReady = false;
