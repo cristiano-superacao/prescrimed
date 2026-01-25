@@ -93,6 +93,15 @@ if (process.env.NODE_ENV !== 'production') {
  */
 async function connectDB(retryCount = 0) {
   try {
+    // Modo degradado: se o banco não foi configurado em produção, não tentar conectar
+    if (process.env.NODE_ENV === 'production' && process.env.DEGRADED_DB_MODE === 'true') {
+      const msg = 'DATABASE_URL ausente: modo degradado ativo (configure Postgres e redeploy)';
+      console.warn(`⚠️ ${msg}`);
+      app.locals.dbReady = false;
+      app.locals.dbLastError = msg;
+      return; // Não tenta conectar/sincronizar
+    }
+
     console.log(`📡 Conectando ao banco de dados... (tentativa ${retryCount + 1})`);
     app.locals.dbLastError = null;
     

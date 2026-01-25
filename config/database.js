@@ -18,10 +18,11 @@ const missingDbConfigInProd =
 const allowSqliteInProd = process.env.ALLOW_SQLITE_IN_PROD === 'true';
 
 if (missingDbConfigInProd && !allowSqliteInProd) {
-  throw new Error(
-    'Configuração de banco ausente em produção: defina DATABASE_URL (Railway Postgres) ou PGHOST/PGUSER/PGPASSWORD/PGDATABASE. '
-      + 'Para permitir SQLite em produção temporariamente, defina ALLOW_SQLITE_IN_PROD=true (NÃO RECOMENDADO).'
-  );
+  // Em produção sem DATABASE_URL/PGHOST, não derruba o servidor.
+  // Ativa modo degradado para servir frontend e health endpoints,
+  // mantendo API com 503 até a configuração correta do banco.
+  console.warn('⚠️ DATABASE_URL ausente em produção. Iniciando em modo degradado (frontend disponível, API retornará 503)');
+  process.env.DEGRADED_DB_MODE = 'true';
 }
 
 // Prioriza DATABASE_URL (PostgreSQL) quando disponível, mesmo que haja variáveis de MySQL presentes
@@ -81,8 +82,13 @@ if (process.env.DATABASE_URL) {
       pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
     });
 } else {
-  // Desenvolvimento local sem PostgreSQL - usa SQLite
-  console.log('💾 Usando SQLite para desenvolvimento local');
+  // Sem Postgres/MySQL: usa SQLite.
+  // Em produção sem DB configurado, registra modo degradado para evitar uso real do SQLite.
+  if (process.env.NODE_ENV === 'production' && process.env.DEGRADED_DB_MODE === 'true') {
+    console.log('💾 Modo degradado em produção: usando SQLite temporário (API permanecerá 503)');
+  } else {
+    console.log('💾 Usando SQLite para desenvolvimento local');
+  }
 
   const sqliteStorage =
     process.env.SQLITE_PATH || (process.env.NODE_ENV === 'production' ? '/tmp/database.sqlite' : './database.sqlite');
