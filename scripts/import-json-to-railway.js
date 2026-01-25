@@ -25,6 +25,23 @@ function buildUpsertSQL(table, columns) {
   return `INSERT INTO "${table}" (${colList}) VALUES (${placeholders}) ON CONFLICT ("id") DO UPDATE SET ${updateList}`;
 }
 
+function coerceJsonForTable(table, row) {
+  // Trata colunas JSON específicas por tabela
+  if (table === 'prescricoes') {
+    if (typeof row.itens === 'string') {
+      const s = row.itens.trim();
+      if (!s || s === 'null') {
+        row.itens = [];
+      } else {
+        try { row.itens = JSON.parse(s); }
+        catch { row.itens = []; }
+      }
+    }
+    if (row.itens == null) row.itens = [];
+  }
+  return row;
+}
+
 async function importTable(client, dir, table) {
   const file = path.join(dir, `${table}.json`);
   if (!fs.existsSync(file)) {
@@ -48,7 +65,9 @@ async function importTable(client, dir, table) {
 
   let imported = 0;
   for (const row of rows) {
-    const values = columns.map(c => row[c] === null ? null : row[c]);
+    // Converter JSON quando necessário
+    const coerced = coerceJsonForTable(table, { ...row });
+    const values = columns.map(c => coerced[c] === null ? null : coerced[c]);
     try {
       await client.query(sql, values);
       imported++;
@@ -73,7 +92,8 @@ async function main() {
   await client.connect();
 
   const importDir = path.resolve('data','export');
-  const tablesInOrder = [
+  const only = process.env.IMPORT_ONLY_TABLE ? process.env.IMPORT_ONLY_TABLE.split(',').map(s => s.trim()).filter(Boolean) : null;
+  const tablesInOrder = only && only.length > 0 ? only : [
     'empresas',
     'usuarios',
     'pacientes',
