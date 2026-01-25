@@ -17,11 +17,12 @@ async function tableExists(client, table) {
 
 function buildUpsertSQL(table, columns, jsonColumns = []) {
   const colList = columns.map(c => `"${c}"`).join(', ');
-  const placeholders = columns.map((c, i) => jsonColumns.includes(c) ? `$${i+1}::json` : `$${i+1}`).join(', ');
+  // Usa jsonb para compatibilidade total com Postgres
+  const placeholders = columns.map((c, i) => jsonColumns.includes(c) ? `$${i+1}::jsonb` : `$${i+1}`).join(', ');
   const updateList = columns
     .filter(c => c !== 'id')
     .map(c => jsonColumns.includes(c)
-      ? `"${c}" = EXCLUDED."${c}"::json`
+      ? `"${c}" = EXCLUDED."${c}"::jsonb`
       : `"${c}" = EXCLUDED."${c}"`
     ) // usa EXCLUDED para ON CONFLICT
     .join(', ');
@@ -82,7 +83,9 @@ async function importTable(client, dir, table) {
       await client.query(sql, values);
       imported++;
     } catch (e) {
-      console.warn(`⚠ Falha ao inserir em ${table}: ${e.message}`);
+      const idInfo = coerced.id ? ` (id=${coerced.id})` : '';
+      const extra = jsonColumns.length ? ` json=${JSON.stringify(jsonColumns.reduce((acc,c)=>{acc[c]=coerced[c];return acc;},{}))}` : '';
+      console.warn(`⚠ Falha ao inserir em ${table}${idInfo}: ${e.message}${extra}`);
     }
   }
   return { table, imported };
