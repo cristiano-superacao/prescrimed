@@ -5,7 +5,8 @@ import { authenticate, tenantIsolation, checkResourceOwnership } from '../middle
 const router = express.Router();
 
 router.get('/sessoes', authenticate, tenantIsolation, async (req, res) => {
-  const items = await SessaoFisio.findAll({ where: { empresaId: req.query.empresaId } });
+  const empresaId = req.query.empresaId || req.user?.empresaId;
+  const items = await SessaoFisio.findAll({ where: { empresaId } });
   res.json(items);
 });
 

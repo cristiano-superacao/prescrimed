@@ -56,7 +56,7 @@ async function main() {
 
   // Módulos
   await checkEndpoint('/api/agendamentos', token);               // Agenda
-  await checkEndpoint('/api/enfermagem/registros', token);       // Evolução
+  await checkEndpoint('/api/enfermagem', token);                 // Evolução (lista)
   await checkEndpoint('/api/casa-repouso/leitos', token);        // Casa de repouso
   await checkEndpoint('/api/petshop/pets', token);               // Petshop
   await checkEndpoint('/api/fisioterapia/sessoes', token);       // Fisioterapia
