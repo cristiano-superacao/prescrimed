@@ -5,6 +5,7 @@ import {
   Pill, 
   Stethoscope, 
   FileText, 
+  FileDown,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -19,6 +20,7 @@ import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
+import { openPrintWindow, escapeHtml } from '../utils/printWindow';
 
 export default function Cronograma() {
   const [activeTab, setActiveTab] = useState('todos');
@@ -145,6 +147,73 @@ export default function Cronograma() {
     medicacoes: items.filter(i => i.type === 'medicacoes').length
   };
 
+  const exportToPDF = () => {
+    try {
+      const generatedAt = new Date();
+      const styles = `
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+        .meta { color: #6b7280; font-size: 12px; margin-top: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+        .medicacoes { background: #ede9fe; color: #5b21b6; }
+        .consultas { background: #dbeafe; color: #1d4ed8; }
+        .exames { background: #fef3c7; color: #92400e; }
+        .outros { background: #f1f5f9; color: #334155; }
+        @media print { body { padding: 0; } }
+      `;
+
+      const rowsHtml = filteredItems
+        .map((it) => {
+          const tipoClass = it.type || 'outros';
+          const dateStr = it.date ? new Date(it.date).toLocaleDateString('pt-BR') : '-';
+          const timeStr = it.date ? new Date(it.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+          return `
+            <tr>
+              <td>${escapeHtml(dateStr)} ${escapeHtml(timeStr)}</td>
+              <td><span class="badge ${escapeHtml(tipoClass)}">${escapeHtml(it.originalType || it.type || '-')}</span></td>
+              <td>${escapeHtml(it.title || '-')}</td>
+              <td>${escapeHtml(it.subtitle || '-')}</td>
+              <td>${escapeHtml(it.details || '-')}</td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const bodyHtml = `
+        <h1>Relatório - Cronograma</h1>
+        <div class="meta">Gerado em: ${escapeHtml(generatedAt.toLocaleDateString('pt-BR'))} às ${escapeHtml(generatedAt.toLocaleTimeString('pt-BR'))}</div>
+        <div class="meta">Registros: ${escapeHtml(filteredItems.length)}</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Data/Hora</th>
+              <th>Tipo</th>
+              <th>Título</th>
+              <th>Participante</th>
+              <th>Detalhes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      `;
+
+      openPrintWindow({
+        title: 'Relatório - Cronograma',
+        bodyHtml,
+        styles
+      });
+      toast.success('Abrindo visualização para impressão/PDF');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao gerar PDF');
+    }
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -152,13 +221,25 @@ export default function Cronograma() {
         title="Cronograma"
         subtitle="Acompanhe a linha do tempo de medicações, consultas e exames dos residentes."
       >
-        <button 
-          onClick={() => setShowLegends(!showLegends)}
-          className={`btn btn-secondary flex items-center justify-center gap-2 ${showLegends ? 'bg-slate-100' : ''}`}
-        >
-          <Info size={18} />
-          <span className="hidden sm:inline">Legendas</span>
-        </button>
+        <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
+          <button
+            type="button"
+            onClick={() => setShowLegends(!showLegends)}
+            className={`btn btn-secondary flex items-center justify-center gap-2 ${showLegends ? 'bg-slate-100' : ''}`}
+          >
+            <Info size={18} />
+            <span className="hidden sm:inline">Legendas</span>
+          </button>
+          <button
+            type="button"
+            onClick={exportToPDF}
+            disabled={filteredItems.length === 0}
+            className="btn btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Exportar para PDF"
+          >
+            <FileDown size={18} /> Exportar PDF
+          </button>
+        </div>
       </PageHeader>
 
       {/* Stats Cards */}

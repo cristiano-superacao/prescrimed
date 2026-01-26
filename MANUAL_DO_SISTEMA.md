@@ -29,6 +29,13 @@ Existe um fluxo de cadastro que cria:
 
 Esse fluxo é feito pela tela de **Registro** (rota `/register`).
 
+### Acesso como Super Administrador
+O perfil `superadmin` é usado para administração **multi-empresa** (multi-tenant) e libera o módulo **Empresas**.
+
+Como criar/acessar um `superadmin`:
+- Em ambientes de deploy, use o script `npm run create:superadmin` com `SUPERADMIN_EMAIL` e `SUPERADMIN_PASSWORD` definidos.
+- Em ambientes locais com dados de demonstração/seed, o projeto pode criar um superadmin automaticamente conforme o script de seed configurado.
+
 ---
 
 ## 3) Perfis (funções) e regra de acesso
@@ -98,7 +105,8 @@ As funções do sistema são:
 - Gestão de usuários da empresa (admin/superadmin).
 
 ### Empresas
-- Gestão de empresas (principalmente `superadmin`).
+- Gestão de empresas (**somente `superadmin`**).
+- Se você estiver logado como `admin`, é esperado que o menu **Empresas** não apareça.
 
 ### Manual (tela)
 - Ajuda interativa dentro do próprio sistema.

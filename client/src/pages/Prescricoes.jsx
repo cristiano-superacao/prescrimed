@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Plus,
   FileText,
+  FileDown,
   X,
   RefreshCcw,
   SlidersHorizontal,
@@ -15,6 +16,7 @@ import { successMessage, errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import EmptyState from '../components/common/EmptyState';
+import { openPrintWindow, escapeHtml } from '../utils/printWindow';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -174,6 +176,77 @@ export default function Prescricoes() {
     }).length
     }
 
+  const exportToPDF = () => {
+    try {
+      const generatedAt = new Date();
+      const styles = `
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+        .meta { color: #6b7280; font-size: 12px; margin-top: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+        .ativa { background: #d1fae5; color: #065f46; }
+        .cancelada { background: #fee2e2; color: #991b1b; }
+        @media print { body { padding: 0; } }
+      `;
+
+      const rowsHtml = filteredPrescricoes
+        .map((p) => {
+          const pacienteNome = p.pacienteNome || p.pacienteId?.nome || p.paciente?.nome || '-';
+          const created = p.createdAt || p.dataEmissao || p.data || null;
+          const createdDate = created ? new Date(created) : null;
+          const createdStr = createdDate && !Number.isNaN(createdDate.getTime())
+            ? `${createdDate.toLocaleDateString('pt-BR')} ${createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+            : '-';
+          const status = (p.status || '').toLowerCase();
+          const statusClass = status === 'ativa' ? 'ativa' : 'cancelada';
+          const medsCount = Array.isArray(p.medicamentos) ? p.medicamentos.length : 0;
+          return `
+            <tr>
+              <td>${escapeHtml(createdStr)}</td>
+              <td>${escapeHtml(pacienteNome)}</td>
+              <td>${escapeHtml(p.tipo || '-')}</td>
+              <td>${escapeHtml(medsCount)}</td>
+              <td><span class="badge ${statusClass}">${escapeHtml(p.status || '-')}</span></td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const bodyHtml = `
+        <h1>Relatório - Prescrições</h1>
+        <div class="meta">Gerado em: ${escapeHtml(generatedAt.toLocaleDateString('pt-BR'))} às ${escapeHtml(generatedAt.toLocaleTimeString('pt-BR'))}</div>
+        <div class="meta">Registros: ${escapeHtml(filteredPrescricoes.length)}</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Emissão</th>
+              <th>Paciente</th>
+              <th>Tipo</th>
+              <th>Medicamentos</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      `;
+
+      openPrintWindow({
+        title: 'Relatório - Prescrições',
+        bodyHtml,
+        styles
+      });
+      toast.success('Abrindo visualização para impressão/PDF');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao gerar PDF');
+    }
+  };
+
     return (
       <div className="space-y-8">
         <PageHeader
@@ -181,19 +254,30 @@ export default function Prescricoes() {
           title="Prescrições"
           subtitle="Controle total das prescrições emitidas, status em tempo real e histórico completo."
         >
-          <button
-            onClick={() => setModalOpen(true)}
-            className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
-          >
-            <Plus size={18} /> Nova Prescrição
-          </button>
-        <button
-          type="button"
-          onClick={loadData}
-          className="btn btn-secondary flex items-center justify-center gap-2"
-        >
-          <RefreshCcw size={18} /> Atualizar
-        </button>
+          <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
+            <button
+              onClick={() => setModalOpen(true)}
+              className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
+            >
+              <Plus size={18} /> Nova Prescrição
+            </button>
+            <button
+              type="button"
+              onClick={exportToPDF}
+              disabled={filteredPrescricoes.length === 0}
+              className="btn btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Exportar para PDF"
+            >
+              <FileDown size={18} /> Exportar PDF
+            </button>
+            <button
+              type="button"
+              onClick={loadData}
+              className="btn btn-secondary flex items-center justify-center gap-2"
+            >
+              <RefreshCcw size={18} /> Atualizar
+            </button>
+          </div>
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

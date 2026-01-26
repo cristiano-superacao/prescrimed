@@ -32,9 +32,9 @@ export default function Sidebar({ onClose }) {
     { path: '/evolucao', label: 'Evolução', icon: Activity, permission: 'evolucao' },
     { path: '/financeiro', label: 'Financeiro', icon: DollarSign, permission: 'financeiro' },
     { path: '/usuarios', label: 'Usuários', icon: UserCog, roles: ['admin', 'superadmin'] },
-    { path: '/empresas', label: 'Empresas', icon: Building2, roles: ['superadmin'] },
     { path: '/configuracoes', label: 'Configurações', icon: Settings, permission: 'configuracoes' },
     { path: '/manual', label: 'Manual', icon: BookOpen, permission: null },
+    { path: '/empresas', label: 'Empresas', icon: Building2, roles: ['superadmin'] },
   ];
 
   return (

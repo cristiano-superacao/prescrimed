@@ -1,4 +1,4 @@
-// Script para criar usuário admin localmente
+// Script para criar usuário ADMIN localmente (não é superadmin)
 import sequelize from './config/database.js';
 import Usuario from './models/Usuario.js';
 import Empresa from './models/Empresa.js';
@@ -7,6 +7,11 @@ import bcrypt from 'bcryptjs';
 const createLocalAdmin = async () => {
   try {
     console.log('🔧 Criando usuário administrador local...\n');
+
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@prescrimed.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminNome = process.env.ADMIN_NOME || 'Administrador';
+    const resetPassword = String(process.env.RESET_PASSWORD || '').toLowerCase() === 'true';
 
     // Conectar ao banco
     await sequelize.authenticate();
@@ -22,14 +27,13 @@ const createLocalAdmin = async () => {
     if (!empresa) {
       empresa = await Empresa.create({
         nome: 'Prescrimed',
+        tipoSistema: 'casa-repouso',
         cnpj: '00000000000000',
         telefone: '(00) 0000-0000',
         email: 'contato@prescrimed.com',
         endereco: 'Endereço padrão',
-        cidade: 'Cidade',
-        estado: 'UF',
-        cep: '00000-000',
-        ativa: true
+        plano: 'basico',
+        ativo: true
       });
       console.log('✅ Empresa criada:', empresa.nome);
     } else {
@@ -37,31 +41,38 @@ const createLocalAdmin = async () => {
     }
 
     // Verificar se admin já existe
-    let admin = await Usuario.findOne({ where: { email: 'admin@prescrimed.com' } });
+    let admin = await Usuario.findOne({ where: { email: adminEmail } });
 
     if (admin) {
       console.log('\n⚠️  Usuário admin já existe!');
       console.log('📧 Email:', admin.email);
       console.log('👤 Nome:', admin.nome);
-      console.log('🔑 Para redefinir a senha, delete o usuário e rode este script novamente.\n');
+
+      if (resetPassword) {
+        const senhaHash = await bcrypt.hash(adminPassword, 10);
+        await admin.update({ senha: senhaHash, ativo: true, role: 'admin', empresaId: admin.empresaId || empresa.id });
+        console.log('✅ Senha redefinida com sucesso (RESET_PASSWORD=true).\n');
+      } else {
+        console.log('🔑 Para redefinir a senha, rode com RESET_PASSWORD=true.\n');
+      }
     } else {
       // Criar usuário admin
-      const senhaHash = await bcrypt.hash('admin123', 10);
+      const senhaHash = await bcrypt.hash(adminPassword, 10);
       
       admin = await Usuario.create({
-        nome: 'Administrador',
-        email: 'admin@prescrimed.com',
+        nome: adminNome,
+        email: adminEmail,
         senha: senhaHash,
-        cargo: 'admin',
+        role: 'admin',
         ativo: true,
         empresaId: empresa.id
       });
 
       console.log('\n✅ Usuário administrador criado com sucesso!');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📧 Email:  admin@prescrimed.com');
-      console.log('🔒 Senha:  admin123');
-      console.log('👤 Nome:   Administrador');
+      console.log('📧 Email: ', adminEmail);
+      console.log('🔒 Senha: ', adminPassword);
+      console.log('👤 Nome:  ', adminNome);
       console.log('🏢 Empresa:', empresa.nome);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Plus,
+  FileDown,
   FileText, 
   Users, 
   ShieldAlert, 
@@ -27,6 +28,7 @@ import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
 import ActionIconButton from '../components/common/ActionIconButton';
+import { openPrintWindow, escapeHtml } from '../utils/printWindow';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -333,6 +335,66 @@ export default function Evolucao() {
     );
   });
 
+  const exportToPDF = () => {
+    try {
+      const generatedAt = new Date();
+      const styles = `
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+        .meta { color: #6b7280; font-size: 12px; margin-top: 6px; }
+        .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+        .row { display: flex; gap: 12px; flex-wrap: wrap; color: #374151; font-size: 12px; margin-bottom: 6px; }
+        .label { color: #6b7280; }
+        .text { white-space: pre-wrap; color: #111827; margin-top: 6px; }
+        @media print { body { padding: 0; } }
+      `;
+
+      const bodyHtml = `
+        <h1>Relatório - Registros de Enfermagem</h1>
+        <div class="meta">Gerado em: ${escapeHtml(generatedAt.toLocaleDateString('pt-BR'))} às ${escapeHtml(generatedAt.toLocaleTimeString('pt-BR'))}</div>
+        <div class="meta">Registros: ${escapeHtml(filteredRegistros.length)}</div>
+        ${filteredRegistros
+          .map((r) => {
+            const data = r.createdAt ? new Date(r.createdAt).toLocaleDateString('pt-BR') : '-';
+            const hora = r.createdAt ? new Date(r.createdAt).toLocaleTimeString('pt-BR') : '';
+            const paciente = r.paciente?.nome || 'Paciente não identificado';
+            const tipo = r.tipo || '-';
+            const titulo = r.titulo || '-';
+            const descricao = r.descricao || '-';
+            const prioridade = r.prioridade || '-';
+            const estadoGeral = r.estadoGeral || '-';
+            const alerta = r.alerta ? 'Sim' : 'Não';
+            return `
+              <div class="card">
+                <div class="row">
+                  <div><span class="label">Data:</span> ${escapeHtml(data)} ${hora ? `(${escapeHtml(hora)})` : ''}</div>
+                  <div><span class="label">Paciente:</span> ${escapeHtml(paciente)}</div>
+                </div>
+                <div class="row">
+                  <div><span class="label">Tipo:</span> ${escapeHtml(tipo)}</div>
+                  <div><span class="label">Prioridade:</span> ${escapeHtml(prioridade)}</div>
+                  <div><span class="label">Estado geral:</span> ${escapeHtml(estadoGeral)}</div>
+                  <div><span class="label">Alerta:</span> ${escapeHtml(alerta)}</div>
+                </div>
+                <div class="text"><strong>${escapeHtml(titulo)}</strong>\n\n${escapeHtml(descricao)}</div>
+              </div>
+            `;
+          })
+          .join('')}
+      `;
+
+      openPrintWindow({
+        title: 'Relatório - Registros de Enfermagem',
+        bodyHtml,
+        styles
+      });
+      toast.success('Abrindo visualização para impressão/PDF');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao gerar PDF');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8">
       {/* Cabeçalho fixo e ações */}
@@ -349,6 +411,15 @@ export default function Evolucao() {
               className="btn btn-secondary flex items-center justify-center gap-2"
             >
               <RefreshCcw size={18} /> Atualizar
+            </button>
+            <button
+              type="button"
+              onClick={exportToPDF}
+              disabled={filteredRegistros.length === 0}
+              className="btn btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Exportar para PDF"
+            >
+              <FileDown size={18} /> Exportar PDF
             </button>
             <button
               type="button"

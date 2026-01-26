@@ -76,6 +76,7 @@ export default function Dashboard() {
   
   // Estado de carregamento (exibe spinner enquanto busca dados)
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   
   // Hook de navegação para redirecionar usuário entre páginas
@@ -89,22 +90,27 @@ export default function Dashboard() {
    * Carrega todos os dados do dashboard
    */
   useEffect(() => {
-    loadData();
+    // Evita disparar antes do store carregar usuário, mas não bloqueia superadmin
+    loadData({ background: false });
     const interval = setInterval(() => {
-      loadData();
+      loadData({ background: true });
     }, 30000); // atualiza a cada 30s
     return () => clearInterval(interval);
-  }, []); // Array vazio = executa apenas uma vez ao montar
+  }, [user?.empresaId]);
 
   /**
    * Função para carregar todos os dados do dashboard
    * Busca dados em paralelo usando Promise.all para otimizar performance
    */
-  const loadData = async () => {
-    // Ativa estado de carregamento se não estiver já carregando
-    if (!loading) {
-      setLoading(true);
-    }
+  const normalizeListResponse = (response, key) => {
+    if (Array.isArray(response)) return response;
+    if (response && Array.isArray(response[key])) return response[key];
+    return [];
+  };
+
+  const loadData = async ({ background } = { background: false }) => {
+    if (background) setRefreshing(true);
+    else setLoading(true);
     
     try {
       // Executa todas as requisições em paralelo para otimizar tempo de carregamento
@@ -117,26 +123,37 @@ export default function Dashboard() {
         dashboardService.getPriorityAlerts(empresaId),      // alertas prioritários
       ]);
 
+      const normalizedStats = statsResponse?.stats || statsResponse || {};
+      const graficoPrescricoes = normalizedStats.graficoPrescricoes || [];
+      const prescricoesPeriodo = Array.isArray(graficoPrescricoes)
+        ? graficoPrescricoes.reduce((acc, item) => acc + (Number(item.total) || 0), 0)
+        : 0;
+
       // Atualiza estados com os dados recebidos
       // Usa operador ?. para acessar propriedade aninhada com segurança
       // Usa || para fornecer valor padrão caso seja undefined/null
-      setStats(statsResponse?.stats || statsResponse);
-      setPrescricoesRecentes(prescricoesResponse?.prescricoes || []);
-      setPacientesRecentes(pacientesResponse?.pacientes || []);
-      setNextSteps(nextStepsResponse?.nextSteps || []);
-      setPriorityAlerts(alertsResponse?.alerts || []);
+      setStats({
+        ...normalizedStats,
+        prescricoesPeriodo
+      });
+      setPrescricoesRecentes(normalizeListResponse(prescricoesResponse, 'prescricoes'));
+      setPacientesRecentes(normalizeListResponse(pacientesResponse, 'pacientes'));
+      setNextSteps(nextStepsResponse?.nextSteps || nextStepsResponse || []);
+      setPriorityAlerts(alertsResponse?.alerts || alertsResponse || []);
       
       // Prepara dados para o gráfico de prescrições
-      if (statsResponse?.stats?.graficoPrescricoes) {
+      if (Array.isArray(graficoPrescricoes) && graficoPrescricoes.length > 0) {
         // Transforma dados da API em formato do gráfico
-        const chartPoints = statsResponse.stats.graficoPrescricoes.map(item => ({
+        const chartPoints = graficoPrescricoes.map(item => ({
           date: new Date(item.data).toLocaleDateString('pt-BR', { 
             day: '2-digit', 
             month: 'short' 
           }), // Formata data para exibição (ex: "15 jan")
-          value: item.total // Total de prescrições naquele dia
+          value: Number(item.total) || 0 // Total de prescrições naquele dia
         }));
         setChartData(chartPoints);
+      } else {
+        setChartData([]);
       }
       setLastUpdated(new Date());
     } catch (error) {
@@ -145,6 +162,7 @@ export default function Dashboard() {
     } finally {
       // Desativa estado de carregamento (executado sempre, com ou sem erro)
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -153,7 +171,7 @@ export default function Dashboard() {
    * Recarrega todos os dados e exibe mensagem de sucesso
    */
   const handleRefresh = async () => {
-    await loadData(); // Aguarda recarregamento dos dados
+    await loadData({ background: true });
     toast.success('Dados atualizados com sucesso!'); // Notificação de sucesso
   };
 
@@ -511,6 +529,9 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             <Calendar className="text-slate-400" size={16} />
             <span className="text-sm text-slate-600">Últimos 30 dias</span>
+            {refreshing && (
+              <span className="text-xs text-slate-400">atualizando...</span>
+            )}
           </div>
         </div>
         <div className="h-64 w-full">
@@ -545,35 +566,43 @@ export default function Dashboard() {
                 <div key={prescricao.id || prescricao._id} className="p-4 rounded-2xl border border-slate-100 bg-slate-50">
                   <div className="flex justify-between gap-3 mb-2">
                     <div>
-                      <p className="font-semibold text-slate-900">{prescricao.pacienteNome}</p>
+                      <p className="font-semibold text-slate-900">
+                        {prescricao.paciente?.nome || prescricao.pacienteNome || 'Paciente não identificado'}
+                      </p>
                       <p className="text-xs text-slate-500">{new Date(prescricao.createdAt).toLocaleString('pt-BR')}</p>
                     </div>
                     <div className="flex gap-2">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          prescricao.tipo === 'controlado'
+                          prescricao.tipo === 'medicamentosa'
                             ? 'bg-orange-100 text-orange-700'
-                            : 'bg-primary-100 text-primary-700'
+                            : prescricao.tipo === 'mista'
+                              ? 'bg-purple-100 text-purple-700'
+                              : 'bg-primary-100 text-primary-700'
                         }`}
                       >
-                        {prescricao.tipo === 'controlado' ? 'Controlado' : 'Comum'}
+                        {prescricao.tipo === 'medicamentosa'
+                          ? 'Medicamentosa'
+                          : prescricao.tipo === 'mista'
+                            ? 'Mista'
+                            : 'Nutricional'}
                       </span>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          prescricao.status === 'ativa'
+                          (prescricao.status || 'ativa') === 'ativa'
                             ? 'bg-emerald-100 text-emerald-700'
                             : 'bg-red-100 text-red-700'
                         }`}
                       >
-                        {prescricao.status}
+                        {prescricao.status || 'ativa'}
                       </span>
                     </div>
                   </div>
-                  {prescricao.medicamentos?.length > 0 && (
+                  {Array.isArray(prescricao.itens) && prescricao.itens.length > 0 && (
                     <p className="text-sm text-slate-600">
-                      {prescricao.medicamentos[0].nome}
-                      {prescricao.medicamentos.length > 1 &&
-                        ` + ${prescricao.medicamentos.length - 1} medicamentos`}
+                      {prescricao.itens[0]?.nome || 'Item'}
+                      {prescricao.itens.length > 1 &&
+                        ` + ${prescricao.itens.length - 1} itens`}
                     </p>
                   )}
                 </div>
@@ -591,7 +620,11 @@ export default function Dashboard() {
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cadastros</p>
               <h2 className="text-xl font-bold text-slate-900">Pacientes Recentes</h2>
             </div>
-            <span className="text-xs text-slate-400">Atualizado hoje</span>
+            <span className="text-xs text-slate-400">
+              {lastUpdated
+                ? `Atualizado às ${lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+                : 'Atualizado hoje'}
+            </span>
           </div>
           <div className="space-y-3">
             {pacientesRecentes.length > 0 ? (

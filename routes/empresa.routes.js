@@ -1,12 +1,11 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { Empresa, Usuario } from '../models/index.js';
-import { authenticate, requireRole } from '../middleware/auth.middleware.js';
+import { requireRole } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-// Aplicar autenticação em todas as rotas
-router.use(authenticate);
+// Observação: autenticação é aplicada no mount em routes/index.js
 
 // Listar todas as empresas (apenas superadmin)
 router.get('/', requireRole('superadmin'), async (req, res) => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Users, Clock, CheckCircle2, AlertCircle, CalendarIcon, Edit, Trash2, User, MapPin, X, Stethoscope, FileText } from 'lucide-react';
+import { Plus, Users, Clock, CheckCircle2, AlertCircle, CalendarIcon, Edit, Trash2, User, MapPin, X, Stethoscope, FileText, FileDown } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -9,6 +9,7 @@ import ActionIconButton from '../components/common/ActionIconButton';
 import EmptyState from '../components/common/EmptyState';
 import agendamentoService from '../services/agendamento.service';
 import pacienteService from '../services/paciente.service';
+import { openPrintWindow, escapeHtml } from '../utils/printWindow';
 
 export default function Agenda() {
   const [agendamentos, setAgendamentos] = useState([]);
@@ -237,6 +238,76 @@ export default function Agenda() {
     }).length
   };
 
+  const exportToPDF = () => {
+    try {
+      const generatedAt = new Date();
+      const styles = `
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+        .meta { color: #6b7280; font-size: 12px; margin-top: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+        .confirmado { background: #d1fae5; color: #065f46; }
+        .agendado { background: #fef3c7; color: #92400e; }
+        .realizado { background: #e0f2fe; color: #075985; }
+        @media print { body { padding: 0; } }
+      `;
+
+      const rowsHtml = filteredAgendamentos
+        .map((a) => {
+          const id = a.id || a._id;
+          const paciente = pacientes.find((p) => (p.id || p._id) === a.pacienteId);
+          const pacienteNome = a.participante || paciente?.nome || '-';
+          const status = (a.status || 'agendado').toLowerCase();
+          const statusClass = status === 'confirmado' ? 'confirmado' : status === 'realizado' ? 'realizado' : 'agendado';
+          return `
+            <tr>
+              <td>${escapeHtml(formatDate(a.dataHora))} ${escapeHtml(formatTime(a.dataHora))}</td>
+              <td>${escapeHtml(a.tipo || '-')}</td>
+              <td>${escapeHtml(a.titulo || '-')}</td>
+              <td>${escapeHtml(pacienteNome)}</td>
+              <td>${escapeHtml(a.local || '-')}</td>
+              <td><span class="badge ${statusClass}">${escapeHtml(a.status || 'Agendado')}</span></td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const bodyHtml = `
+        <h1>Relatório - Agenda</h1>
+        <div class="meta">Gerado em: ${escapeHtml(generatedAt.toLocaleDateString('pt-BR'))} às ${escapeHtml(generatedAt.toLocaleTimeString('pt-BR'))}</div>
+        <div class="meta">Registros: ${escapeHtml(filteredAgendamentos.length)}</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Data/Hora</th>
+              <th>Tipo</th>
+              <th>Título</th>
+              <th>Participante/Paciente</th>
+              <th>Local</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      `;
+
+      openPrintWindow({
+        title: 'Relatório - Agenda',
+        bodyHtml,
+        styles
+      });
+      toast.success('Abrindo visualização para impressão/PDF');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao gerar PDF');
+    }
+  };
+
   const handleStatusChange = async (id, currentStatus, newStatus) => {
     if (currentStatus === newStatus) return;
     try {
@@ -264,6 +335,15 @@ export default function Agenda() {
             className="btn btn-secondary flex items-center justify-center gap-2"
           >
             <Users size={18} /> Nova Reunião
+          </button>
+          <button
+            type="button"
+            onClick={exportToPDF}
+            disabled={filteredAgendamentos.length === 0}
+            className="btn btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Exportar para PDF"
+          >
+            <FileDown size={18} /> Exportar PDF
           </button>
           <button 
             onClick={() => openModal('Compromisso')}

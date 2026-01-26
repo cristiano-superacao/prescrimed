@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Edit2,
   Trash2,
   RefreshCcw,
   Download,
+  FileDown,
+  FileUp,
   Users,
   CheckCircle2,
   Filter,
@@ -34,6 +36,8 @@ import {
   Tr, 
   Td 
 } from '../components/common/Table';
+import { openPrintWindow, escapeHtml } from '../utils/printWindow';
+import * as XLSX from 'xlsx';
 
 export default function Pacientes() {
   const [pacientes, setPacientes] = useState([]);
@@ -45,6 +49,8 @@ export default function Pacientes() {
   const [viewHistorico, setViewHistorico] = useState(null);
   const [historicoPrescricoes, setHistoricoPrescricoes] = useState([]);
   const [deletingId, setDeletingId] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadPacientes();
@@ -137,6 +143,197 @@ export default function Pacientes() {
     idadeMedia
   };
 
+  const normalizeDate = (value) => {
+    if (!value) return undefined;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return value.toISOString().slice(0, 10);
+    }
+
+    const text = String(value).trim();
+    if (!text) return undefined;
+
+    // dd/mm/yyyy
+    const br = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (br) {
+      const dd = br[1].padStart(2, '0');
+      const mm = br[2].padStart(2, '0');
+      const yyyy = br[3];
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // yyyy-mm-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+
+    return undefined;
+  };
+
+  const normalizeCpf = (value) => {
+    if (!value) return undefined;
+    const digits = String(value).replace(/\D/g, '');
+    return digits || undefined;
+  };
+
+  const normalizeHeaderKey = (value) =>
+    String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+
+  const pickValue = (row, candidates) => {
+    const entries = Object.entries(row || {});
+    for (const [k, v] of entries) {
+      const key = normalizeHeaderKey(k);
+      if (candidates.includes(key)) return v;
+    }
+    return undefined;
+  };
+
+  const handleImportExcelClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportExcel = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      setImporting(true);
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+      const sheetName = workbook.SheetNames?.[0];
+      const sheet = sheetName ? workbook.Sheets[sheetName] : null;
+      if (!sheet) {
+        toast.error('Arquivo inválido: nenhuma planilha encontrada');
+        return;
+      }
+
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+      if (!Array.isArray(rows) || rows.length === 0) {
+        toast.error('Planilha vazia');
+        return;
+      }
+
+      let created = 0;
+      let skipped = 0;
+      let failed = 0;
+
+      const toastId = toast.loading(`Importando ${rows.length} residentes...`);
+
+      for (let index = 0; index < rows.length; index += 1) {
+        const row = rows[index] || {};
+
+        const nome = pickValue(row, ['nome', 'name']);
+        const cpf = pickValue(row, ['cpf', 'documento', 'document']);
+        const dataNascimento = pickValue(row, ['datanascimento', 'nascimento', 'datadenascimento']);
+        const telefone = pickValue(row, ['telefone', 'fone', 'celular']);
+        const email = pickValue(row, ['email', 'emailpessoal', 'e-mail', 'e-mailpessoal', 'emailresponsavel']);
+        const endereco = pickValue(row, ['endereco', 'endereco1', 'logradouro']);
+        const observacoes = pickValue(row, ['observacoes', 'observacao', 'obs', 'anotacoes', 'anotacao']);
+
+        const nomeStr = String(nome || '').trim();
+        if (!nomeStr) {
+          skipped += 1;
+          continue;
+        }
+
+        const payload = {
+          nome: nomeStr,
+          cpf: normalizeCpf(cpf),
+          dataNascimento: normalizeDate(dataNascimento),
+          telefone: String(telefone || '').trim() || undefined,
+          email: String(email || '').trim() || undefined,
+          endereco: String(endereco || '').trim() || undefined,
+          observacoes: String(observacoes || '').trim() || undefined
+        };
+
+        // remove undefined
+        Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
+
+        try {
+          await pacienteService.create(payload);
+          created += 1;
+        } catch (err) {
+          failed += 1;
+        }
+
+        if ((index + 1) % 10 === 0) {
+          toast.loading(`Importando... (${index + 1}/${rows.length})`, { id: toastId });
+        }
+      }
+
+      toast.dismiss(toastId);
+      toast.success(`Importação concluída: ${created} criados, ${skipped} ignorados, ${failed} com erro.`);
+      loadPacientes(searchTerm);
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao importar planilha');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const exportToPDF = () => {
+    try {
+      const generatedAt = new Date();
+      const styles = `
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+        .meta { color: #6b7280; font-size: 12px; margin-top: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; }
+        @media print { body { padding: 0; } }
+      `;
+
+      const rowsHtml = filteredPacientes
+        .map((p) => {
+          const nascimento = p.dataNascimento ? new Date(p.dataNascimento).toLocaleDateString('pt-BR') : '-';
+          return `
+            <tr>
+              <td>${escapeHtml(p.nome || '-')}</td>
+              <td>${escapeHtml(p.cpf || '-')}</td>
+              <td>${escapeHtml(nascimento)}</td>
+              <td>${escapeHtml(p.telefone || '-')}</td>
+              <td>${escapeHtml(p.email || '-')}</td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const bodyHtml = `
+        <h1>Relatório - Residentes</h1>
+        <div class="meta">Gerado em: ${escapeHtml(generatedAt.toLocaleDateString('pt-BR'))} às ${escapeHtml(generatedAt.toLocaleTimeString('pt-BR'))}</div>
+        <div class="meta">Registros: ${escapeHtml(filteredPacientes.length)}</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>Nascimento</th>
+              <th>Telefone</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      `;
+
+      openPrintWindow({
+        title: 'Relatório - Residentes',
+        bodyHtml,
+        styles
+      });
+      toast.success('Abrindo visualização para impressão/PDF');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao gerar PDF');
+    }
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -144,12 +341,39 @@ export default function Pacientes() {
         title="Residentes"
         subtitle="Gerencie os residentes da instituição, histórico clínico e dados pessoais."
       >
-        <button
-          onClick={() => setModalOpen(true)}
-          className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
-        >
-          <Plus size={20} /> Novo Residente
-        </button>
+        <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
+          <button
+            onClick={() => setModalOpen(true)}
+            className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
+          >
+            <Plus size={20} /> Novo Residente
+          </button>
+          <button
+            type="button"
+            onClick={exportToPDF}
+            disabled={filteredPacientes.length === 0}
+            className="btn btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Exportar para PDF"
+          >
+            <FileDown size={18} /> Exportar PDF
+          </button>
+          <button
+            type="button"
+            onClick={handleImportExcelClick}
+            disabled={importing}
+            className="btn btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Importar planilha (Excel)"
+          >
+            <FileUp size={18} /> {importing ? 'Importando...' : 'Importar Excel'}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+            className="hidden"
+            onChange={handleImportExcel}
+          />
+        </div>
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
