@@ -12,9 +12,11 @@
     "railway:start": "node server.js",
     "seed:demo": "node scripts/seed-demo-data.js",
     "seed:minimal": "node scripts/seed-minimal-demo.js",
+    "seed:complete": "node scripts/seed-complete-data.js",
     "create:superadmin": "node scripts/create-superadmin.js",
     "rebuild:db": "node scripts/rebuild-database.js",
     "smoke:api": "node scripts/smoke-api-flow.js",
+    "test:api:complete": "node scripts/test-complete-api.js",
     "check:railway": "node scripts/check-railway-config.js",
     "predeploy:check": "node scripts/predeploy-check.js",
     "predeploy": "npm run predeploy:check && npm run railway:build",
@@ -35,7 +37,8 @@
     "dev:all": "concurrently \"npm run dev\" \"npm run client\" \"npm run streamlit\"",
     "smoke:railway": "node scripts/smoke-railway.mjs",
     "export:mysql": "node scripts/export-mysql-data.js",
-    "import:railway": "node scripts/import-json-to-railway.js"
+    "import:railway": "node scripts/import-json-to-railway.js",
+    "db:migrate:railway": "powershell -ExecutionPolicy Bypass -File scripts/migrate-local-to-railway.ps1"
   },
   "engines": {
     "node": ">=20.0.0",

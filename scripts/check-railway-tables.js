@@ -1,18 +1,29 @@
 import pg from 'pg';
 const { Client } = pg;
 
+function maskUrl(url) {
+  if (!url) return '';
+  return url.replace(/:[^:@]+@/g, ':***@');
+}
+
 async function checkTables() {
-  // Usa a URL do Postgres Railway do projeto refreshing-analysis (backend em produção)
-  const publicUrl = 'postgresql://postgres:KWKiyrvmaTKCDEZZyIWfzvfAFgfVvboW@caboose.proxy.rlwy.net:19326/railway';
-  
+  const databaseUrl = process.env.DATABASE_URL_OVERRIDE || process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    console.error('❌ DATABASE_URL não definida. Defina DATABASE_URL (ou DATABASE_URL_OVERRIDE) com o Postgres do Railway.');
+    process.exit(1);
+  }
+
+  const isInternal = databaseUrl.includes('railway.internal');
+  const isLocal = /localhost|127\.0\.0\.1|\[::1\]/i.test(databaseUrl);
+
   const client = new Client({
-    connectionString: publicUrl,
-    ssl: { rejectUnauthorized: false }
+    connectionString: databaseUrl,
+    ssl: (isInternal || isLocal) ? undefined : { rejectUnauthorized: false }
   });
 
   try {
     await client.connect();
-    console.log('✅ Conectado ao Postgres Railway (supportive-benevolence)');
+    console.log(`✅ Conectado ao Postgres: ${maskUrl(databaseUrl)}`);
 
     // Lista todas as tabelas no schema public
     const result = await client.query(`

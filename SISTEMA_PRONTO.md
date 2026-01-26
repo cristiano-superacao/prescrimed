@@ -4,57 +4,24 @@
 
 ✅ **Sistema funcionando perfeitamente!**
 - 🚀 Servidor rodando em http://localhost:8000
-- 💾 Banco de dados SQLite conectado e operacional
+- 💾 Banco de dados PostgreSQL conectado e operacional
 - ✅ Todas as tabelas criadas automaticamente
 - 📱 Layout responsivo e profissional mantido
 - 🔐 Sistema de autenticação funcionando
 
-## 📊 Banco de Dados Atual: SQLite
+## 📊 Banco de Dados Atual: PostgreSQL
 
-O sistema está usando **SQLite** para desenvolvimento local, que:
-- ✅ Não requer instalação de servidor de banco de dados
-- ✅ Funciona perfeitamente para desenvolvimento e testes
-- ✅ Cria automaticamente o arquivo `database.sqlite` na raiz do projeto
-- ✅ Suporta todas as funcionalidades do sistema
+O sistema está padronizado para **PostgreSQL** (local e produção), com suporte exclusivo.
 
-## 🔄 Migrar para MySQL (Opcional)
+Para instruções completas e atualizadas, use:
+- [README.md](README.md)
+- [DOCUMENTATION.md](DOCUMENTATION.md)
+- [MIGRACAO_RAILWAY_POSTGRES.md](MIGRACAO_RAILWAY_POSTGRES.md)
 
-Se você quiser usar MySQL no futuro, siga estes passos:
+## ⚠️ Nota sobre documentos antigos
 
-### 1. Iniciar o serviço MySQL
-```powershell
-# Procurar por "Services" no Windows
-# Encontrar "MySQL" ou "MySQL80"
-# Clicar com botão direito -> Start
-```
-
-Ou via PowerShell:
-```powershell
-Get-Service *mysql* | Start-Service
-```
-
-### 2. Configurar senha (se necessário)
-```powershell
-# Abrir MySQL Command Line Client
-# Ou usar MySQL Workbench
-# Definir senha root
-```
-
-### 3. Atualizar o .env
-Descomente as linhas do MySQL no arquivo `.env`:
-```env
-MYSQL_HOST=localhost
-MYSQL_PORT=3306
-MYSQL_USER=root
-MYSQL_PASSWORD=sua_senha_aqui
-MYSQL_DATABASE=prescrimed
-```
-
-### 4. Criar banco e tabelas
-```powershell
-node setup-mysql.js
-npm run dev
-```
+Este arquivo foi atualizado para não indicar SQLite/MySQL como padrão.
+Se você encontrar guias de MySQL na raiz, trate como **legado**.
 
 ## 📋 Tabelas Criadas Automaticamente
 

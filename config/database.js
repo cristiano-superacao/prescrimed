@@ -3,69 +3,43 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configuração do banco de dados compatível com Railway e desenvolvimento local
+// Configuração exclusivamente PostgreSQL (Railway/Local)
 let sequelize;
 
-// Em produção (Railway), idealmente use PostgreSQL (DATABASE_URL).
-// Porém, para não derrubar o deploy por healthcheck quando a variável ainda não foi configurada,
-// por padrão fazemos fail-fast para evitar gravar dados em SQLite por engano.
+// Produção: se DATABASE_URL/PGHOST ausente, ativa modo degradado (frontend ok, API 503), sem SQLite.
 const missingDbConfigInProd =
   process.env.NODE_ENV === 'production' &&
   !process.env.DATABASE_URL &&
   !process.env.PGHOST;
 
-// Permite override explícito (não recomendado) para cenários de troubleshooting.
-const allowSqliteInProd = process.env.ALLOW_SQLITE_IN_PROD === 'true';
-
-if (missingDbConfigInProd && !allowSqliteInProd) {
-  // Em produção sem DATABASE_URL/PGHOST, não derruba o servidor.
-  // Ativa modo degradado para servir frontend e health endpoints,
-  // mantendo API com 503 até a configuração correta do banco.
-  console.warn('⚠️ DATABASE_URL ausente em produção. Iniciando em modo degradado (frontend disponível, API retornará 503)');
+if (missingDbConfigInProd) {
+  console.warn('⚠️ DATABASE_URL ausente em produção. Modo degradado ativo (sem conexão ao banco).');
   process.env.DEGRADED_DB_MODE = 'true';
 }
 
-// Prioriza DATABASE_URL (PostgreSQL) quando disponível, mesmo que haja variáveis de MySQL presentes
 if (process.env.DATABASE_URL) {
-  // Railway ou Render fornece DATABASE_URL completa (PostgreSQL em produção)
-  console.log('📡 Usando DATABASE_URL do Railway/Render (PostgreSQL)');
-  // Verifica se usa conexão interna (railway.internal) que NÃO requer SSL
+  console.log('📡 Usando DATABASE_URL (PostgreSQL)');
   const isInternalConnection = process.env.DATABASE_URL.includes('railway.internal');
+  let isLocalConnection = false;
+  let sslMode = null;
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    const host = (url.hostname || '').toLowerCase();
+    isLocalConnection = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+    sslMode = url.searchParams.get('sslmode');
+  } catch {
+    // Se não for uma URL válida, mantém comportamento antigo
+  }
+
+  // Postgres local frequentemente não suporta SSL (e pg também tenta por padrão se ssl for setado).
+  const shouldUseSsl = !isInternalConnection && !isLocalConnection && sslMode !== 'disable';
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
-    dialectOptions: isInternalConnection ? {} : {
-      ssl: { rejectUnauthorized: false }
-    },
+    dialectOptions: shouldUseSsl ? { ssl: { rejectUnauthorized: false } } : {},
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
   });
-} else if (process.env.MYSQL_HOST || process.env.MYSQL_URL) {
-  // Ambiente Locaweb ou MySQL local
-  const mysqlUrl = process.env.MYSQL_URL || null;
-  if (mysqlUrl) {
-    console.log('🐬 Usando MYSQL_URL (MySQL)');
-    sequelize = new Sequelize(mysqlUrl, {
-      dialect: 'mysql',
-      logging: process.env.NODE_ENV === 'development' ? console.log : false,
-      pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
-    });
-  } else {
-    console.log('🐬 Usando configuração MySQL (Locaweb ou local)');
-    sequelize = new Sequelize(
-      process.env.MYSQL_DATABASE || 'prescrimed',
-      process.env.MYSQL_USER || 'root',
-      process.env.MYSQL_PASSWORD || '',
-      {
-        host: process.env.MYSQL_HOST,
-        port: parseInt(process.env.MYSQL_PORT || '3306', 10),
-        dialect: 'mysql',
-        logging: process.env.NODE_ENV === 'development' ? console.log : false,
-        pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
-      }
-    );
-  }
 } else if (process.env.PGHOST) {
-  // Configuração local com PostgreSQL instalado
   console.log('📦 Usando configuração local PostgreSQL');
   sequelize = new Sequelize(
     process.env.PGDATABASE || 'prescrimed',
@@ -75,28 +49,22 @@ if (process.env.DATABASE_URL) {
       host: process.env.PGHOST,
       port: parseInt(process.env.PGPORT || '5432', 10),
       dialect: 'postgres',
-      dialectOptions: {
-        connectTimeout: 60000
-      },
+      dialectOptions: { connectTimeout: 60000 },
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
       pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
-    });
+    }
+  );
 } else {
-  // Sem Postgres/MySQL: usa SQLite.
-  // Em produção sem DB configurado, registra modo degradado para evitar uso real do SQLite.
-  if (process.env.NODE_ENV === 'production' && process.env.DEGRADED_DB_MODE === 'true') {
-    console.log('💾 Modo degradado em produção: usando SQLite temporário (API permanecerá 503)');
-  } else {
-    console.log('💾 Usando SQLite para desenvolvimento local');
+  // Sem Postgres configurado: em desenvolvimento, avisa e usa stub; em produção, modo degradado
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('⚠️ PostgreSQL não configurado. Defina DATABASE_URL ou PGHOST/PGUSER/PGPASSWORD/PGDATABASE.');
+    console.warn('⚠️ Criando stub de Sequelize (servidor funcionará mas sem banco).');
   }
-
-  const sqliteStorage =
-    process.env.SQLITE_PATH || (process.env.NODE_ENV === 'production' ? '/tmp/database.sqlite' : './database.sqlite');
-
-  sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: sqliteStorage,
-    logging: false  // Desabilitar logs SQL para não poluir console
+  // Stub Sequelize para não quebrar a aplicação
+  sequelize = new Sequelize('postgres://stub:stub@localhost:5432/stub', { 
+    dialect: 'postgres', 
+    logging: false,
+    pool: { max: 1, min: 0, idle: 1000 }
   });
 }
 

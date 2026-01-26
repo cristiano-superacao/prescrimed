@@ -34,6 +34,17 @@ pgsql/
 pgdata/
 .venv/
 
+# Streamlit (ambiente local)
+streamlit-app/venv/
+streamlit-app/streamlit-app/
+streamlit-app/.env
+
+# Exports locais de banco (não commitar)
+data/export/
+*.dump
+*.backup
+*.sql
+
 # Testes e desenvolvimento
 .playwright-mcp/
 coverage/

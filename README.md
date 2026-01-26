@@ -8,7 +8,7 @@ Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e c
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-blue.svg)](https://www.postgresql.org/)
 
 > **Última Atualização:** 21 de janeiro de 2026  
-> **Status do Sistema:** ✅ Operacional | 📚 [Documentação Técnica Completa](DOCUMENTATION.md)
+> **Status do Sistema:** ✅ Operacional | 📘 [Manual do Sistema](MANUAL_DO_SISTEMA.md) | 📚 [Documentação Técnica Completa](DOCUMENTATION.md)
 
 ---
 
@@ -56,7 +56,7 @@ Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e c
 
 ### Backend
 - **Node.js 20+** com Express
-- **PostgreSQL** via Sequelize ORM (SQLite para dev)
+- **PostgreSQL** via Sequelize ORM (suporte exclusivo)
 - **JWT** para autenticação
 - **Helmet** e CORS configurados para segurança
 - Multi-tenant com isolamento por `empresaId`
@@ -81,7 +81,7 @@ Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e c
 ### Pré-requisitos
 - Node.js 20+
 - npm 10+
-- PostgreSQL (produção) ou SQLite (desenvolvimento)
+- PostgreSQL (produção e desenvolvimento)
 
 ### Instalação Local
 

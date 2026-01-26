@@ -1,6 +1,7 @@
 # 📚 Documentação Técnica - Sistema Prescrimed
 
 > Documentação completa do sistema de gestão de saúde multi-tenant  
+> Manual de uso (operacional): [MANUAL_DO_SISTEMA.md](MANUAL_DO_SISTEMA.md)  
 > **Versão:** 1.0.0  
 > **Última Atualização:** 21 de Janeiro de 2026
 
@@ -222,14 +223,16 @@ DELETE /api/enfermagem/:id            → Excluir
 
 **Endpoints:**
 ```
-GET    /api/estoque                   → Listar itens
-GET    /api/estoque/:id               → Buscar item
-GET    /api/estoque/stats/dashboard   → Estatísticas
-POST   /api/estoque                   → Criar item
-PUT    /api/estoque/:id               → Atualizar
-DELETE /api/estoque/:id               → Excluir
-GET    /api/estoque/movimentacoes     → Listar movimentações
-POST   /api/estoque/movimentacoes     → Registrar movimento
+GET    /api/estoque/medicamentos              → Listar medicamentos
+POST   /api/estoque/medicamentos              → Criar medicamento
+POST   /api/estoque/medicamentos/movimentacao → Entrada/saída (medicamento)
+
+GET    /api/estoque/alimentos                 → Listar alimentos
+POST   /api/estoque/alimentos                 → Criar alimento
+POST   /api/estoque/alimentos/movimentacao    → Entrada/saída (alimento)
+
+GET    /api/estoque/movimentacoes?tipo=medicamento|alimento → Últimas movimentações
+GET    /api/estoque/stats                     → Estatísticas e alertas
 ```
 
 ---
@@ -248,7 +251,6 @@ POST   /api/estoque/movimentacoes     → Registrar movimento
 ```
 GET    /api/financeiro               → Listar transações
 GET    /api/financeiro/stats         → Estatísticas
-GET    /api/financeiro/:id           → Buscar transação
 POST   /api/financeiro               → Criar transação
 PUT    /api/financeiro/:id           → Atualizar
 DELETE /api/financeiro/:id           → Excluir

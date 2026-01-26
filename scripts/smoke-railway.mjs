@@ -21,8 +21,10 @@ async function main() {
   const health = await fetchJson(`${BASE}/health`);
   console.log('🩺 /health:', health.status, health.data);
 
-  const diag = await fetchJson(`${BASE}/api/diagnostic/health`);
-  console.log('🩺 /api/diagnostic/health:', diag.status, diag.data);
+  for (const path of ['/api/test', '/api/diagnostic/env-check', '/api/diagnostic/db-ping', '/api/diagnostic/db-check']) {
+    const r = await fetchJson(`${BASE}${path}`);
+    console.log(`🧪 ${path}:`, r.status, typeof r.data === 'object' ? (r.data.ok ?? 'ok') : r.data);
+  }
 
   // Login admin
   const login = await fetchJson(`${BASE}/api/auth/login`, {
@@ -37,11 +39,28 @@ async function main() {
   const token = login.data.token;
   console.log('🔐 Login OK');
 
-  // Lista pacientes
-  const pac = await fetchJson(`${BASE}/api/pacientes`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  console.log('👥 Pacientes:', pac.status, Array.isArray(pac.data) ? pac.data.length : pac.data);
+  const headers = { Authorization: `Bearer ${token}` };
+
+  // Listagens (somente leitura)
+  const endpoints = [
+    ['/pacientes', '👥 Pacientes'],
+    ['/agendamentos', '🗓️ Agendamentos'],
+    ['/prescricoes', '💊 Prescrições'],
+    ['/enfermagem', '🏥 Enfermagem'],
+    ['/fisioterapia/sessoes', '🏃 Fisio'],
+    ['/estoque/medicamentos', '📦 Estoque (Medicamentos)'],
+    ['/estoque/alimentos', '🥫 Estoque (Alimentos)'],
+    ['/estoque/movimentacoes', '🔁 Estoque (Movimentações)'],
+    ['/financeiro', '💰 Financeiro'],
+    ['/financeiro/stats', '📊 Financeiro (Stats)'],
+    ['/petshop/pets', '🐾 Pets']
+  ];
+
+  for (const [path, label] of endpoints) {
+    const res = await fetchJson(`${BASE}/api${path}`, { headers });
+    const count = Array.isArray(res.data) ? res.data.length : res.data;
+    console.log(`${label}:`, res.status, count);
+  }
 
   console.log('\n🎉 Smoke Railway concluído.');
 }

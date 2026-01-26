@@ -25,6 +25,9 @@ venv/
 env/
 ENV/
 
+# Evita duplicação acidental de projeto/venv dentro do próprio projeto
+streamlit-app/
+
 # Streamlit
 .streamlit/secrets.toml
 

@@ -9,9 +9,22 @@ if (!dbUrl) {
   process.exit(1);
 }
 
+let ssl = { rejectUnauthorized: false };
+try {
+  const url = new URL(dbUrl);
+  const host = (url.hostname || '').toLowerCase();
+  const sslMode = url.searchParams.get('sslmode');
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  if (isLocal || sslMode === 'disable') {
+    ssl = false;
+  }
+} catch {
+  // Se não conseguir parsear, mantém SSL ligado por compatibilidade com Railway
+}
+
 const client = new pg.Client({
   connectionString: dbUrl,
-  ssl: { rejectUnauthorized: false },
+  ssl,
 });
 
 async function run() {

@@ -1,14 +1,19 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { Empresa, Usuario } from '../models/index.js';
+import { authenticate, requireRole } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-// Listar todas as empresas
-router.get('/', async (req, res) => {
+// Aplicar autenticação em todas as rotas
+router.use(authenticate);
+
+// Listar todas as empresas (apenas superadmin)
+router.get('/', requireRole('superadmin'), async (req, res) => {
   try {
     const empresas = await Empresa.findAll({
-      include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }]
+      include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }],
+      order: [['createdAt', 'DESC']]
     });
     res.json(empresas);
   } catch (error) {
@@ -78,8 +83,8 @@ router.put('/me', async (req, res) => {
   }
 });
 
-// Buscar empresa por ID
-router.get('/:id', async (req, res) => {
+// Buscar empresa por ID (apenas superadmin)
+router.get('/:id', requireRole('superadmin'), async (req, res) => {
   try {
     const empresa = await Empresa.findByPk(req.params.id, {
       include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }]
@@ -97,17 +102,19 @@ router.get('/:id', async (req, res) => {
 });
 
 // Criar nova empresa
-// Criar nova empresa com validação robusta
+// Criar nova empresa (apenas superadmin)
 router.post(
   '/',
+  requireRole('superadmin'),
   [
     body('nome').isString().trim().notEmpty().withMessage('Nome é obrigatório'),
-    body('tipoSistema').isIn(['casa-repouso', 'fisioterapia', 'petshop']).withMessage('tipoSistema inválido'),
+    body('tipoSistema').optional().isIn(['casa-repouso', 'fisioterapia', 'petshop']).withMessage('tipoSistema inválido'),
     body('cnpj').optional().isString().isLength({ min: 5 }).withMessage('CNPJ inválido'),
     body('email').optional().isEmail().withMessage('Email inválido'),
     body('telefone').optional().isString(),
     body('endereco').optional().isString(),
-    body('plano').optional().isIn(['basico', 'profissional', 'empresa']).withMessage('plano inválido')
+    body('plano').optional().isIn(['basico', 'profissional', 'empresa']).withMessage('plano inválido'),
+    body('ativo').optional().isBoolean().withMessage('Ativo deve ser booleano')
   ],
   async (req, res) => {
     try {
@@ -126,8 +133,22 @@ router.post(
         }
       }
 
-      const empresa = await Empresa.create({ nome, tipoSistema, cnpj, email, telefone, endereco, plano });
-      return res.status(201).json(empresa);
+      const novaEmpresa = await Empresa.create({ 
+        nome, 
+        tipoSistema: tipoSistema || 'casa-repouso', 
+        cnpj, 
+        email, 
+        telefone, 
+        endereco, 
+        plano: plano || 'basico',
+        ativo: req.body.ativo !== undefined ? req.body.ativo : true
+      });
+      
+      const empresaCompleta = await Empresa.findByPk(novaEmpresa.id, {
+        include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }]
+      });
+      
+      return res.status(201).json(empresaCompleta);
     } catch (error) {
       console.error('Erro ao criar empresa:', error);
       // Trata erro de unicidade
@@ -139,30 +160,77 @@ router.post(
   }
 );
 
-// Atualizar empresa
-router.put('/:id', async (req, res) => {
+// Atualizar empresa (apenas superadmin)
+router.put(
+  '/:id',
+  requireRole('superadmin'),
+  [
+    body('nome').optional().isString().trim().notEmpty().withMessage('Nome não pode ser vazio'),
+    body('tipoSistema').optional().isIn(['casa-repouso', 'fisioterapia', 'petshop']).withMessage('tipoSistema inválido'),
+    body('cnpj').optional().isString().withMessage('CNPJ inválido'),
+    body('email').optional().isEmail().withMessage('Email inválido'),
+    body('telefone').optional().isString(),
+    body('endereco').optional().isString(),
+    body('plano').optional().isIn(['basico', 'profissional', 'empresa']).withMessage('plano inválido'),
+    body('ativo').optional().isBoolean().withMessage('Ativo deve ser booleano')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: 'Dados inválidos', details: errors.array() });
+      }
+
+      const empresa = await Empresa.findByPk(req.params.id);
+      
+      if (!empresa) {
+        return res.status(404).json({ error: 'Empresa não encontrada' });
+      }
+
+      // Verificar CNPJ duplicado (se estiver sendo alterado)
+      if (req.body.cnpj && req.body.cnpj !== empresa.cnpj) {
+        const existente = await Empresa.findOne({ 
+          where: { cnpj: req.body.cnpj } 
+        });
+        if (existente) {
+          return res.status(409).json({ error: 'CNPJ já cadastrado' });
+        }
+      }
+      
+      await empresa.update(req.body);
+      
+      const empresaAtualizada = await Empresa.findByPk(req.params.id, {
+        include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }]
+      });
+      
+      res.json(empresaAtualizada);
+    } catch (error) {
+      console.error('Erro ao atualizar empresa:', error);
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({ error: 'Valor único já existente', details: error.errors });
+      }
+      res.status(500).json({ error: 'Erro ao atualizar empresa' });
+    }
+  }
+);
+
+// Deletar empresa (apenas superadmin)
+router.delete('/:id', requireRole('superadmin'), async (req, res) => {
   try {
-    const empresa = await Empresa.findByPk(req.params.id);
+    const empresa = await Empresa.findByPk(req.params.id, {
+      include: [{ model: Usuario, as: 'usuarios' }]
+    });
     
     if (!empresa) {
       return res.status(404).json({ error: 'Empresa não encontrada' });
     }
-    
-    await empresa.update(req.body);
-    res.json(empresa);
-  } catch (error) {
-    console.error('Erro ao atualizar empresa:', error);
-    res.status(500).json({ error: 'Erro ao atualizar empresa' });
-  }
-});
 
-// Deletar empresa
-router.delete('/:id', async (req, res) => {
-  try {
-    const empresa = await Empresa.findByPk(req.params.id);
-    
-    if (!empresa) {
-      return res.status(404).json({ error: 'Empresa não encontrada' });
+    // Verificar se há usuários vinculados
+    if (empresa.usuarios && empresa.usuarios.length > 0) {
+      return res.status(400).json({ 
+        error: 'Não é possível deletar empresa com usuários vinculados',
+        usuariosCount: empresa.usuarios.length
+      });
     }
     
     await empresa.destroy();

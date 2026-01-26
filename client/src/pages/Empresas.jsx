@@ -1,32 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, RefreshCcw, Building2, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, RefreshCcw, Building2, Edit2, Search, X } from 'lucide-react';
 import empresaService from '../services/empresa.service';
 import { useAuthStore } from '../store/authStore';
-import EmpresaModal from '../components/EmpresaModal';
 import toast from 'react-hot-toast';
-import { successMessage, errorMessage, customErrorMessage } from '../utils/toastMessages';
-import PageHeader from '../components/common/PageHeader';
-import StatsCard from '../components/common/StatsCard';
-import EmptyState from '../components/common/EmptyState';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
-import ActionIconButton from '../components/common/ActionIconButton';
-import { 
-  TableContainer, 
-  MobileGrid, 
-  MobileCard, 
-  TableWrapper, 
-  TableHeader, 
-  TBody, 
-  Tr, 
-  Td 
-} from '../components/common/Table';
 
 export default function Empresas() {
   const { user } = useAuthStore();
   const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [density, setDensity] = useState('comfortable');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingEmpresa, setEditingEmpresa] = useState(null);
+  const [formData, setFormData] = useState({
+    nome: '',
+    cnpj: '',
+    email: '',
+    telefone: '',
+    endereco: '',
+    tipoSistema: 'casa-repouso',
+    plano: 'basico',
+    ativo: true
+  });
   const [deletingId, setDeletingId] = useState(null);
   const isSuperAdmin = user?.role === 'superadmin';
 
@@ -34,7 +29,7 @@ export default function Empresas() {
     if (isSuperAdmin) {
       loadEmpresas();
     } else {
-      toast.error(customErrorMessage('accessDenied'));
+      setLoading(false);
     }
   }, [isSuperAdmin]);
 
@@ -45,9 +40,79 @@ export default function Empresas() {
       const empresasList = Array.isArray(data) ? data : (data.empresas || []);
       setEmpresas(empresasList);
     } catch (error) {
-      toast.error(errorMessage('load', 'empresas'));
+      console.error('Erro ao carregar empresas:', error);
+      toast.error('Erro ao carregar lista de empresas');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenModal = (empresa = null) => {
+    if (empresa) {
+      setEditingEmpresa(empresa);
+      setFormData({
+        nome: empresa.nome || '',
+        cnpj: empresa.cnpj || '',
+        email: empresa.email || '',
+        telefone: empresa.telefone || '',
+        endereco: empresa.endereco || '',
+        tipoSistema: empresa.tipoSistema || 'casa-repouso',
+        plano: empresa.plano || 'basico',
+        ativo: empresa.ativo !== undefined ? empresa.ativo : true
+      });
+    } else {
+      setEditingEmpresa(null);
+      setFormData({
+        nome: '',
+        cnpj: '',
+        email: '',
+        telefone: '',
+        endereco: '',
+        tipoSistema: 'casa-repouso',
+        plano: 'basico',
+        ativo: true
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingEmpresa(null);
+    setFormData({
+      nome: '',
+      cnpj: '',
+      email: '',
+      telefone: '',
+      endereco: '',
+      tipoSistema: 'casa-repouso',
+      plano: 'basico',
+      ativo: true
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.nome.trim()) {
+      toast.error('Nome da empresa é obrigatório');
+      return;
+    }
+
+    try {
+      if (editingEmpresa) {
+        await empresaService.update(editingEmpresa.id, formData);
+        toast.success('Empresa atualizada com sucesso!');
+      } else {
+        await empresaService.create(formData);
+        toast.success('Empresa criada com sucesso!');
+      }
+      handleCloseModal();
+      loadEmpresas();
+    } catch (error) {
+      console.error('Erro ao salvar empresa:', error);
+      const errorMsg = error.response?.data?.error || 'Erro ao salvar empresa';
+      toast.error(errorMsg);
     }
   };
 
@@ -56,189 +121,468 @@ export default function Empresas() {
     if (!window.confirm(confirmMessage)) {
       return;
     }
+
     try {
       setDeletingId(id);
       await empresaService.delete(id);
-      toast.success(successMessage('delete', 'Empresa', { gender: 'f' }));
+      toast.success('Empresa excluída com sucesso!');
       loadEmpresas();
     } catch (error) {
-      toast.error(errorMessage('delete', 'empresa'));
+      console.error('Erro ao excluir empresa:', error);
+      const errorMsg = error.response?.data?.error || 'Erro ao excluir empresa';
+      toast.error(errorMsg);
     } finally {
       setDeletingId(null);
     }
   };
 
+  const filteredEmpresas = empresas.filter(empresa =>
+    empresa.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    empresa.cnpj?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    empresa.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (!isSuperAdmin) {
     return (
-      <AccessDeniedCard
-        message="Apenas Super Administradores podem acessar esta página."
-        messageClassName="text-gray-600"
-      />
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <AccessDeniedCard
+          message="Apenas Super Administradores podem acessar esta página."
+          messageClassName="text-gray-600"
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        label="Gestão"
-        title="Empresas"
-        subtitle="Gerencie as empresas cadastradas no sistema."
-      >
-        <button
-          type="button"
-          onClick={loadEmpresas}
-          className="btn btn-secondary flex items-center justify-center gap-2"
-        >
-          <RefreshCcw size={18} /> Atualizar lista
-        </button>
-        <div className="hidden md:block"></div>
-      </PageHeader>
-
-      <TableContainer
-        title="Lista de Empresas"
-        actions={
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span>Densidade:</span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl shadow-xl p-8 text-white">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <p className="text-primary-100 text-sm font-medium mb-1">Gestão</p>
+            <h1 className="text-3xl font-bold">Empresas</h1>
+            <p className="text-primary-100 mt-2">Gerencie as empresas cadastradas no sistema</p>
+          </div>
+          <div className="flex gap-3">
             <button
-              type="button"
-              onClick={() => setDensity((prev) => (prev === 'comfortable' ? 'compact' : 'comfortable'))}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                density === 'comfortable' 
-                  ? 'bg-white shadow-sm text-primary-700 ring-1 ring-slate-200' 
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              onClick={loadEmpresas}
+              disabled={loading}
+              className="btn bg-white/20 hover:bg-white/30 text-white border-white/30 flex items-center gap-2 disabled:opacity-50"
             >
-              {density === 'comfortable' ? 'Confortável' : 'Compacta'}
+              <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
+              Atualizar
+            </button>
+            <button
+              onClick={() => handleOpenModal()}
+              className="btn bg-white text-primary-600 hover:bg-primary-50 flex items-center gap-2 shadow-lg"
+            >
+              <Plus size={18} />
+              Nova Empresa
             </button>
           </div>
-        }
-      >
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          </div>
-        ) : empresas.length > 0 ? (
-          <>
-            {/* Mobile */}
-            <MobileGrid>
-              {empresas.map((empresa) => {
-                const isActive = typeof empresa.ativo === 'boolean' ? empresa.ativo : empresa.status === 'ativo';
-                return (
-                  <MobileCard key={empresa.id}>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-slate-900 dark:text-gray-100">{empresa.nome}</p>
-                        <p className="text-xs text-slate-500 dark:text-gray-400">CNPJ: {empresa.cnpj || '-'}</p>
-                        <p className="text-xs text-slate-500 dark:text-gray-400">{empresa.email || '-'}</p>
-                      </div>
-                      <span
-                        className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
-                          isActive
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                            : 'bg-red-50 text-red-700 border-red-100'
-                        }`}
-                      >
-                        {isActive ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-primary-50 text-primary-700 border border-primary-100 uppercase">
-                        {empresa.plano || 'basico'}
-                      </span>
-                      <button
-                        onClick={() => handleDelete(empresa.id, empresa.nome)}
-                        disabled={deletingId === empresa.id}
-                        className="p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Excluir Empresa"
-                        aria-label="Excluir empresa"
-                      >
-                        {deletingId === empresa.id ? (
-                          <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
-                        ) : (
-                          <Trash2 size={18} />
-                        )}
-                      </button>
-                    </div>
-                  </MobileCard>
-                );
-              })}
-            </MobileGrid>
+        </div>
+      </div>
 
-            {/* Desktop */}
-            <TableWrapper>
-              <TableHeader columns={["Nome","CNPJ","Email","Plano","Status","Ações"]} />
-              <TBody>
-                {empresas.map((empresa) => {
-                  const isActive = typeof empresa.ativo === 'boolean' ? empresa.ativo : empresa.status === 'ativo';
-                  return (
-                    <Tr key={empresa.id}>
-                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
-                        <div className="font-medium text-slate-900 dark:text-gray-100">{empresa.nome}</div>
-                      </Td>
-                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
-                        <span className="text-slate-600 dark:text-gray-300">{empresa.cnpj || '-'}</span>
-                      </Td>
-                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
-                        <span className="text-slate-600 dark:text-gray-300">{empresa.email || '-'}</span>
-                      </Td>
-                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
-                        <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-primary-50 text-primary-700 border border-primary-100 uppercase">
-                          {empresa.plano || 'basico'}
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600 font-medium">Total de Empresas</p>
+              <p className="text-3xl font-bold text-slate-900 mt-1">{empresas.length}</p>
+            </div>
+            <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
+              <Building2 className="text-primary-600" size={24} />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600 font-medium">Empresas Ativas</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-1">
+                {empresas.filter(e => e.ativo).length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+              <Building2 className="text-emerald-600" size={24} />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600 font-medium">Empresas Inativas</p>
+              <p className="text-3xl font-bold text-red-600 mt-1">
+                {empresas.filter(e => !e.ativo).length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+              <Building2 className="text-red-600" size={24} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <input
+            type="text"
+            placeholder="Buscar por nome, CNPJ ou email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent"></div>
+          </div>
+        ) : filteredEmpresas.length > 0 ? (
+          <>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Empresa
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      CNPJ
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Contato
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Tipo
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Plano
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredEmpresas.map((empresa) => (
+                    <tr key={empresa.id} className="hover:bg-slate-50 transition">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                            <Building2 className="text-primary-600" size={20} />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900">{empresa.nome}</p>
+                            <p className="text-sm text-slate-500">{empresa.endereco || 'Sem endereço'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-slate-600">{empresa.cnpj || '-'}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="text-slate-600">{empresa.email || '-'}</p>
+                          <p className="text-sm text-slate-500">{empresa.telefone || '-'}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="px-3 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                          {empresa.tipoSistema === 'casa-repouso' ? 'Casa de Repouso' : 
+                           empresa.tipoSistema === 'fisioterapia' ? 'Fisioterapia' : 'Petshop'}
                         </span>
-                      </Td>
-                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="px-3 py-1 text-xs rounded-full font-semibold bg-primary-100 text-primary-700 border border-primary-200 uppercase">
+                          {empresa.plano || 'básico'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
                         <span
-                          className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
-                            isActive
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                              : 'bg-red-50 text-red-700 border-red-100'
+                          className={`px-3 py-1 text-xs rounded-full font-medium border ${
+                            empresa.ativo
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                              : 'bg-red-100 text-red-700 border-red-200'
                           }`}
                         >
-                          {isActive ? 'Ativo' : 'Inativo'}
+                          {empresa.ativo ? 'Ativo' : 'Inativo'}
                         </span>
-                      </Td>
-                      <Td className={density === 'compact' ? 'py-3 text-sm' : 'py-4'}>
-                        <div className="flex gap-2">
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleOpenModal(empresa)}
+                            className="p-2 text-slate-600 hover:text-white hover:bg-primary-600 rounded-lg transition"
+                            title="Editar"
+                          >
+                            <Edit2 size={18} />
+                          </button>
                           <button
                             onClick={() => handleDelete(empresa.id, empresa.nome)}
                             disabled={deletingId === empresa.id}
-                            className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Excluir Empresa"
-                            aria-label="Excluir empresa"
+                            className="p-2 text-slate-600 hover:text-white hover:bg-red-600 rounded-lg transition disabled:opacity-50"
+                            title="Excluir"
                           >
                             {deletingId === empresa.id ? (
                               <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
                             ) : (
                               <Trash2 size={18} />
                             )}
-                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                              Excluir
-                            </span>
                           </button>
                         </div>
-                      </Td>
-                    </Tr>
-                  );
-                })}
-              </TBody>
-            </TableWrapper>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y divide-slate-200">
+              {filteredEmpresas.map((empresa) => (
+                <div key={empresa.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                        <Building2 className="text-primary-600" size={20} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">{empresa.nome}</p>
+                        <p className="text-xs text-slate-500">{empresa.cnpj || 'Sem CNPJ'}</p>
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
+                        empresa.ativo
+                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                          : 'bg-red-100 text-red-700 border-red-200'
+                      }`}
+                    >
+                      {empresa.ativo ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1 text-sm">
+                    <p className="text-slate-600">{empresa.email || 'Sem email'}</p>
+                    <p className="text-slate-600">{empresa.telefone || 'Sem telefone'}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                      {empresa.tipoSistema === 'casa-repouso' ? 'Casa de Repouso' : 
+                       empresa.tipoSistema === 'fisioterapia' ? 'Fisioterapia' : 'Petshop'}
+                    </span>
+                    <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-primary-100 text-primary-700 border border-primary-200 uppercase">
+                      {empresa.plano || 'básico'}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => handleOpenModal(empresa)}
+                      className="flex-1 px-4 py-2 text-primary-600 border border-primary-600 rounded-lg hover:bg-primary-50 transition font-medium flex items-center justify-center gap-2"
+                    >
+                      <Edit2 size={16} />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDelete(empresa.id, empresa.nome)}
+                      disabled={deletingId === empresa.id}
+                      className="flex-1 px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {deletingId === empresa.id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>
+                      ) : (
+                        <>
+                          <Trash2 size={16} />
+                          Excluir
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </>
         ) : (
-          <EmptyState
-            icon={Building2}
-            title="Nenhuma empresa encontrada"
-            description="Comece cadastrando uma nova empresa."
-            actionLabel="Nova Empresa"
-            onAction={() => setIsModalOpen(true)}
-          />
+          <div className="text-center py-12">
+            <Building2 className="mx-auto text-slate-300 mb-4" size={48} />
+            <p className="text-slate-600 font-medium">Nenhuma empresa encontrada</p>
+            <p className="text-slate-500 text-sm mt-1">
+              {searchTerm ? 'Tente ajustar sua busca' : 'Comece cadastrando uma nova empresa'}
+            </p>
+            {!searchTerm && (
+              <button
+                onClick={() => handleOpenModal()}
+                className="mt-4 btn btn-primary flex items-center gap-2 mx-auto"
+              >
+                <Plus size={18} />
+                Nova Empresa
+              </button>
+            )}
+          </div>
         )}
-      </TableContainer>
+      </div>
 
+      {/* Modal */}
       {isModalOpen && (
-        <EmpresaModal
-          onClose={() => setIsModalOpen(false)}
-          onSave={loadEmpresas}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-900">
+                {editingEmpresa ? 'Editar Empresa' : 'Nova Empresa'}
+              </h2>
+              <button
+                onClick={handleCloseModal}
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Nome da Empresa *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nome}
+                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                    className="input w-full"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    CNPJ
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.cnpj}
+                    onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                    className="input w-full"
+                    placeholder="00.000.000/0000-00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Telefone
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.telefone}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    className="input w-full"
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="input w-full"
+                    placeholder="contato@empresa.com"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Endereço
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.endereco}
+                    onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                    className="input w-full"
+                    placeholder="Rua, número, bairro, cidade - UF"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Tipo de Sistema
+                  </label>
+                  <select
+                    value={formData.tipoSistema}
+                    onChange={(e) => setFormData({ ...formData, tipoSistema: e.target.value })}
+                    className="input w-full"
+                  >
+                    <option value="casa-repouso">Casa de Repouso</option>
+                    <option value="fisioterapia">Fisioterapia</option>
+                    <option value="petshop">Petshop</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Plano
+                  </label>
+                  <select
+                    value={formData.plano}
+                    onChange={(e) => setFormData({ ...formData, plano: e.target.value })}
+                    className="input w-full"
+                  >
+                    <option value="basico">Básico</option>
+                    <option value="profissional">Profissional</option>
+                    <option value="empresa">Empresa</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.ativo}
+                      onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })}
+                      className="w-5 h-5 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
+                    />
+                    <span className="text-sm font-semibold text-slate-700">
+                      Empresa Ativa
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="flex-1 btn btn-secondary"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 btn btn-primary"
+                >
+                  {editingEmpresa ? 'Salvar Alterações' : 'Criar Empresa'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

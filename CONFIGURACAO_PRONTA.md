@@ -1,20 +1,28 @@
 # 🚀 Configuração Railway - Pronto para Usar!
 
+> Este arquivo é um guia rápido. Para o passo a passo completo e atualizado, use:
+> - [RAILWAY_SETUP_GUIDE.md](RAILWAY_SETUP_GUIDE.md)
+> - [RAILWAY_DEPLOY.md](RAILWAY_DEPLOY.md)
+> - [MIGRACAO_RAILWAY_POSTGRES.md](MIGRACAO_RAILWAY_POSTGRES.md)
+
 ## ✅ Arquivos Gerados
 
-Acabei de criar:
-- ✅ **setup-railway.ps1** - Script que gera chaves JWT
-- ✅ **.railway-env.txt** - Variáveis prontas para copiar
-- ✅ **scripts/seed-production-data.js** - Popula banco com dados de teste
-- ✅ **DEPLOY_RAILWAY_RAPIDO.md** - Guia completo passo a passo
+Referências úteis no repositório:
+- ✅ **setup-railway.ps1** - Script auxiliar (geração de chaves/assistente)
+- ✅ **RAILWAY_SETUP_GUIDE.md** - Guia completo passo a passo
+- ✅ **MIGRACAO_RAILWAY_POSTGRES.md** - Migração/overwrite local → Railway (Postgres)
 
 ---
 
 ## 🎯 FAÇA AGORA (5 minutos):
 
-### 1️⃣ Abra o arquivo `.railway-env.txt`
+### 1️⃣ Gere suas chaves JWT (obrigatório)
 
-Este arquivo contém as variáveis de ambiente com as chaves JWT já geradas de forma segura.
+No terminal, gere secrets fortes (não reutilize exemplos):
+
+```powershell
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
 
 ### 2️⃣ Vá para o Railway Dashboard
 
@@ -36,14 +44,19 @@ Isso cria automaticamente a variável `DATABASE_URL`.
 Settings → Variables → Raw Editor
 ```
 
-Cole todo o conteúdo do arquivo `.railway-env.txt`:
+Defina as variáveis abaixo (exemplo seguro com placeholders):
 
 ```env
-JWT_SECRET=ad90395005d599a3c84c88af9e3ee9f51b5782f82229fb97fe1738fbe5decb7dfd334c470a80bb351da3ca85c2f386f480c84e70114e544f7971671f069b5866
-JWT_REFRESH_SECRET=d1e444f2ce7bd411fd07fe26af80283942b8c48bdc905fcd15dfe8a8a2be2b221741ff9a916d3e5649332b7e5ad2cb3dca036677f001f274cad7f261c5aa80b3
+JWT_SECRET=<gere_um_secret_forte>
+JWT_REFRESH_SECRET=<gere_um_secret_forte>
 NODE_ENV=production
 ALLOWED_ORIGINS=https://prescrimed.up.railway.app
 SESSION_TIMEOUT=8h
+
+# Setup inicial (APENAS no primeiro deploy; remova depois)
+FORCE_SYNC=true
+SEED_MINIMAL=true
+SEED_PASSWORD=<defina_uma_senha_inicial>
 ```
 
 > **Não adicione DATABASE_URL manualmente!** O PostgreSQL cria automaticamente.
@@ -81,24 +94,25 @@ curl https://prescrimed.up.railway.app/health
 }
 ```
 
-### Teste 2: API Endpoint
+### Teste 2: API
 
 ```powershell
-curl https://prescrimed.up.railway.app/api/health
+curl https://prescrimed.up.railway.app/api/test
 ```
 
-**Deve retornar JSON com status 200**
+**Deve retornar JSON com status 200** (`ok: true`)
 
 ---
 
 ## 🌱 Popular com Dados de Teste
 
-**Somente depois dos testes acima passarem!**
+**Somente depois dos testes acima passarem.**
 
-```powershell
-cd C:\Users\Superação\Desktop\Sistema\prescrimed-main
-node scripts/seed-production-data.js
-```
+No Railway, o seed inicial pode ser feito via flags no primeiro deploy:
+- `FORCE_SYNC=true`
+- `SEED_MINIMAL=true`
+
+Depois do primeiro deploy, remova essas flags para evitar ações destrutivas.
 
 Isso criará:
 - ✅ **3 empresas**: Casa de Repouso, Fisioterapia, Petshop

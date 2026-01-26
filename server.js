@@ -93,6 +93,16 @@ if (process.env.NODE_ENV !== 'production') {
  */
 async function connectDB(retryCount = 0) {
   try {
+    // Se Postgres não está configurado (dev/local), não tenta conectar.
+    // Mantém servidor e frontend no ar; rotas que dependem de DB devem responder 503.
+    if (!process.env.DATABASE_URL && !process.env.PGHOST) {
+      const msg = 'PostgreSQL não configurado (defina DATABASE_URL ou PGHOST/PGUSER/PGPASSWORD/PGDATABASE).';
+      console.warn(`⚠️ ${msg}`);
+      app.locals.dbReady = false;
+      app.locals.dbLastError = msg;
+      return;
+    }
+
     // Modo degradado: se o banco não foi configurado em produção, não tentar conectar
     if (process.env.NODE_ENV === 'production' && process.env.DEGRADED_DB_MODE === 'true') {
       const msg = 'DATABASE_URL ausente: modo degradado ativo (configure Postgres e redeploy)';

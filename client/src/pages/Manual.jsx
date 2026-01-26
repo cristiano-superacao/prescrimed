@@ -81,7 +81,7 @@ export default function Manual() {
           steps: ['Clique no agendamento', 'Escolha ação: Editar, Confirmar ou Cancelar', 'Confirme a operação']
         }
       ],
-      permissions: 'Admin, Médico, Enfermeiro'
+      permissions: 'Admin, Atendente, Enfermeiro, Fisioterapeuta'
     },
     {
       id: 'cronograma',
@@ -112,7 +112,7 @@ export default function Manual() {
           steps: ['Crie tarefa com recorrência', 'Defina frequência (diária, semanal, mensal)', 'Sistema criará automaticamente']
         }
       ],
-      permissions: 'Admin, Enfermeiro, Médico'
+      permissions: 'Admin, Enfermeiro, Técnico de Enfermagem, Auxiliar Administrativo'
     },
     {
       id: 'prescricoes',
@@ -144,7 +144,7 @@ export default function Manual() {
           steps: ['Abra prescrição finalizada', 'Clique em "Renovar"', 'Ajuste conforme necessário', 'Salve nova prescrição']
         }
       ],
-      permissions: 'Médico, Admin (criar) | Enfermeiro (administrar)'
+      permissions: 'Nutricionista/Admin (criar) | Enfermeiro/Técnico de Enfermagem (registrar administração)'
     },
     {
       id: 'censo',
@@ -169,7 +169,7 @@ export default function Manual() {
           steps: ['Clique em "Imprimir Mapa"', 'Escolha organização', 'Imprima para distribuição']
         }
       ],
-      permissions: 'Médico, Enfermeiro, Farmacêutico, Admin'
+      permissions: 'Nutricionista, Enfermeiro, Técnico de Enfermagem, Admin'
     },
     {
       id: 'pacientes',
@@ -201,7 +201,7 @@ export default function Manual() {
           steps: ['Abra aba Documentos', 'Clique em "+ Anexar"', 'Selecione tipo e arquivo', 'Faça upload']
         }
       ],
-      permissions: 'Enfermeiro, Médico, Admin (criar) | Todos (visualizar)'
+      permissions: 'Admin/Atendente (cadastrar/editar) | Demais perfis (visualizar conforme permissões)'
     },
     {
       id: 'estoque',
@@ -233,7 +233,7 @@ export default function Manual() {
           steps: ['Visualize alertas no topo', 'Clique para ver detalhes', 'Tome ações necessárias']
         }
       ],
-      permissions: 'Farmacêutico, Admin (gerenciar) | Enfermeiro (saídas)'
+      permissions: 'Admin/Auxiliar Administrativo (gerenciar) | Enfermeiro/Técnico de Enfermagem (movimentações)'
     },
     {
       id: 'evolucao',
@@ -265,7 +265,7 @@ export default function Manual() {
           steps: ['Selecione evolução', 'Clique em "Imprimir"', 'Escolha formato', 'Salve ou imprima']
         }
       ],
-      permissions: 'Médico, Enfermeiro (criar) | Todos (visualizar)'
+      permissions: 'Enfermeiro/Técnico de Enfermagem (criar) | Todos (visualizar)'
     },
     {
       id: 'financeiro',
@@ -319,7 +319,7 @@ export default function Manual() {
             'Clique em "+ Novo Usuário"',
             'Preencha dados pessoais',
             'Defina e-mail e senha',
-            'Escolha role (Admin, Médico, etc.)',
+            'Escolha a função (admin, enfermeiro, fisioterapeuta, etc.)',
             'Selecione permissões de módulos',
             'Defina status e salve'
           ]
