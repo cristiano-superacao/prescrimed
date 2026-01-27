@@ -30,6 +30,7 @@ import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
 import ActionIconButton from '../components/common/ActionIconButton';
 import { openPrintWindow, escapeHtml } from '../utils/printWindow';
+import { buildEmpresaHeaderConfig, isSuperadminAllEmpresasSelected, listEmpresasForSuperadmin, subscribeEmpresaContextChanged } from '../utils/empresaContext';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -96,12 +97,66 @@ export default function Evolucao() {
     loadPacientes();
     loadStats();
     loadItensEstoque();
-  }, [page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, user?.role]);
+
+  useEffect(() => {
+    return subscribeEmpresaContextChanged(() => {
+      setPage(1);
+      loadData();
+      loadPacientes();
+      loadStats();
+      loadItensEstoque();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
 
   // Função para carregar registros de enfermagem
   const loadData = async () => {
     try {
       setLoading(true);
+      const shouldAggregateAll = isSuperadminAllEmpresasSelected(user);
+
+      if (shouldAggregateAll) {
+        toast.loading('Carregando evolução de todas as empresas...', { id: 'evolucao-load-all' });
+        const empresas = await listEmpresasForSuperadmin();
+        const perCompanyLimit = Math.max(page * pageSize, pageSize);
+
+        const results = await Promise.all(
+          (empresas || []).map(async (empresa) => {
+            const config = buildEmpresaHeaderConfig(empresa.id);
+            const data = await enfermagemService.getAll({ page: 1, pageSize: perCompanyLimit }, config);
+            const items = Array.isArray(data)
+              ? data
+              : (Array.isArray(data?.items) ? data.items : []);
+            const total = Array.isArray(data) ? data.length : (Number(data?.total) || items.length);
+            return { empresa, items, total };
+          })
+        );
+
+        const merged = results
+          .flatMap(({ empresa, items }) => {
+            const empresaLabel = empresa
+              ? `${empresa.codigo ? `${empresa.codigo} - ` : ''}${empresa.nome || 'Empresa'}`
+              : null;
+            return (items || []).map((r) => ({
+              ...r,
+              __empresaId: empresa?.id,
+              empresaLabel
+            }));
+          })
+          .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        const totalGlobal = results.reduce((acc, r) => acc + (Number(r.total) || 0), 0);
+        const start = (page - 1) * pageSize;
+        const slice = merged.slice(start, start + pageSize);
+
+        setRegistros(slice);
+        setTotal(totalGlobal);
+        toast.dismiss('evolucao-load-all');
+        return;
+      }
+
       const data = await enfermagemService.getAll({ page, pageSize });
       if (Array.isArray(data)) {
         setRegistros(data);
@@ -112,6 +167,7 @@ export default function Evolucao() {
         setPageSize(Number(data.pageSize) || 10);
       }
     } catch (error) {
+      toast.dismiss('evolucao-load-all');
       const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'registros'));
     } finally {
@@ -122,6 +178,34 @@ export default function Evolucao() {
   // Função para carregar pacientes
   const loadPacientes = async () => {
     try {
+      const shouldAggregateAll = isSuperadminAllEmpresasSelected(user);
+
+      if (shouldAggregateAll) {
+        const empresas = await listEmpresasForSuperadmin();
+        const results = await Promise.all(
+          (empresas || []).map(async (empresa) => {
+            const config = buildEmpresaHeaderConfig(empresa.id);
+            const data = await pacienteService.getAll('', config);
+            const lista = Array.isArray(data) ? data : (data?.pacientes || data?.items || []);
+            return { empresa, pacientes: Array.isArray(lista) ? lista : [] };
+          })
+        );
+
+        const merged = results.flatMap(({ empresa, pacientes }) => {
+          const empresaLabel = empresa
+            ? `${empresa.codigo ? `${empresa.codigo} - ` : ''}${empresa.nome || 'Empresa'}`
+            : null;
+          return (pacientes || []).map((p) => ({
+            ...p,
+            __empresaId: empresa?.id,
+            empresaLabel
+          }));
+        });
+
+        setPacientes(merged);
+        return;
+      }
+
       const data = await pacienteService.getAll();
       const lista = Array.isArray(data) ? data : (data.pacientes || []);
       setPacientes(lista);
@@ -133,6 +217,32 @@ export default function Evolucao() {
   // Função para carregar estatísticas
   const loadStats = async () => {
     try {
+      const shouldAggregateAll = isSuperadminAllEmpresasSelected(user);
+
+      if (shouldAggregateAll) {
+        const empresas = await listEmpresasForSuperadmin();
+        const results = await Promise.all(
+          (empresas || []).map(async (empresa) => {
+            const config = buildEmpresaHeaderConfig(empresa.id);
+            const data = await enfermagemService.getStats(config);
+            return data || {};
+          })
+        );
+
+        const merged = results.reduce(
+          (acc, cur) => ({
+            registrosHoje: (acc.registrosHoje || 0) + (Number(cur.registrosHoje) || 0),
+            pacientesComRegistro: (acc.pacientesComRegistro || 0) + (Number(cur.pacientesComRegistro) || 0),
+            riscoQueda: (acc.riscoQueda || 0) + (Number(cur.riscoQueda) || 0),
+            alertasCriticos: (acc.alertasCriticos || 0) + (Number(cur.alertasCriticos) || 0)
+          }),
+          { registrosHoje: 0, pacientesComRegistro: 0, riscoQueda: 0, alertasCriticos: 0 }
+        );
+
+        setStats(merged);
+        return;
+      }
+
       const data = await enfermagemService.getStats();
       setStats(data);
     } catch (error) {
@@ -143,6 +253,41 @@ export default function Evolucao() {
   // Função para carregar itens do estoque
   const loadItensEstoque = async () => {
     try {
+      const shouldAggregateAll = isSuperadminAllEmpresasSelected(user);
+
+      if (shouldAggregateAll) {
+        const empresas = await listEmpresasForSuperadmin();
+        const results = await Promise.all(
+          (empresas || []).map(async (empresa) => {
+            const config = buildEmpresaHeaderConfig(empresa.id);
+            const [medicamentos, alimentos] = await Promise.all([
+              estoqueService.getMedicamentos({}, config),
+              estoqueService.getAlimentos({}, config)
+            ]);
+            return {
+              empresa,
+              medicamentos: Array.isArray(medicamentos) ? medicamentos : (medicamentos?.items || []),
+              alimentos: Array.isArray(alimentos) ? alimentos : (alimentos?.items || [])
+            };
+          })
+        );
+
+        const merged = results.flatMap(({ empresa, medicamentos, alimentos }) => {
+          const empresaLabel = empresa
+            ? `${empresa.codigo ? `${empresa.codigo} - ` : ''}${empresa.nome || 'Empresa'}`
+            : null;
+          const norm = (list) => (Array.isArray(list) ? list : []).map((it) => ({
+            ...it,
+            __empresaId: empresa?.id,
+            empresaLabel
+          }));
+          return [...norm(medicamentos), ...norm(alimentos)];
+        });
+
+        setItensEstoque(merged);
+        return;
+      }
+
       const medicamentos = await estoqueService.getMedicamentos();
       const alimentos = await estoqueService.getAlimentos();
       setItensEstoque([
@@ -214,7 +359,18 @@ export default function Evolucao() {
           setModalOpen(false);
           return;
       } else {
-        await enfermagemService.create(payload);
+        const shouldAggregateAll = isSuperadminAllEmpresasSelected(user);
+        if (shouldAggregateAll) {
+          const paciente = pacientes.find((p) => String(p.id || p._id) === String(payload.pacienteId));
+          const empresaId = paciente?.__empresaId || paciente?.empresaId;
+          if (!empresaId) {
+            toast.error('Selecione um residente com empresa válida (ou escolha uma empresa no topo)');
+            return;
+          }
+          await enfermagemService.create(payload, buildEmpresaHeaderConfig(empresaId));
+        } else {
+          await enfermagemService.create(payload);
+        }
         toast.success(successMessage('create', 'Registro'));
       }
 
@@ -240,7 +396,18 @@ export default function Evolucao() {
     
     try {
       setDeletingId(id);
-      await enfermagemService.delete(id);
+      const shouldAggregateAll = isSuperadminAllEmpresasSelected(user);
+      if (shouldAggregateAll) {
+        const registro = registros.find((r) => String(r.id || r._id) === String(id));
+        const empresaId = registro?.__empresaId || registro?.empresaId;
+        if (empresaId) {
+          await enfermagemService.delete(id, buildEmpresaHeaderConfig(empresaId));
+        } else {
+          await enfermagemService.delete(id);
+        }
+      } else {
+        await enfermagemService.delete(id);
+      }
       toast.success(successMessage('delete', 'Registro'));
       loadData();
       loadStats();
@@ -513,6 +680,11 @@ export default function Evolucao() {
                         <User size={14} className="inline mr-1" />
                         {registro.paciente?.nome || 'Paciente não identificado'}
                       </p>
+                      {registro.empresaLabel && (
+                        <p className="text-xs text-slate-400 dark:text-gray-500 mt-0.5 truncate" title={registro.empresaLabel}>
+                          Empresa: {registro.empresaLabel}
+                        </p>
+                      )}
                       <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">
                         {formatDate(registro.createdAt)}
                       </p>

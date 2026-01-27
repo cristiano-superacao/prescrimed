@@ -226,7 +226,19 @@ router.delete('/:id', authenticate, async (req, res) => {
 // Estatísticas dos registros
 router.get('/stats/dashboard', authenticate, async (req, res) => {
   try {
-    const empresaId = req.user.empresaId;
+    let empresaId;
+    if (req.user?.role !== 'superadmin') {
+      empresaId = req.user.empresaId;
+    } else {
+      empresaId = req.tenantEmpresaId || req.query?.empresaId || req.headers['x-empresa-id'] || req.user?.empresaId;
+    }
+
+    if (!empresaId) {
+      return res.status(400).json({
+        error: 'Contexto de empresa é obrigatório para buscar estatísticas',
+        code: 'empresa_context_required'
+      });
+    }
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 

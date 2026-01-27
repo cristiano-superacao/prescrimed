@@ -1,28 +1,28 @@
 import { get, post, put, del } from './request';
 
 const enfermagemService = {
-  getAll: async (params) => {
-    return get('/enfermagem', { params });
+  getAll: async (params = {}, config = {}) => {
+    return get('/enfermagem', { ...config, params });
   },
 
   getById: async (id) => {
     return get(`/enfermagem/${id}`);
   },
 
-  create: async (data) => {
-    return post('/enfermagem', data);
+  create: async (data, config = {}) => {
+    return post('/enfermagem', data, config);
   },
 
-  update: async (id, data) => {
-    return put(`/enfermagem/${id}`, data);
+  update: async (id, data, config = {}) => {
+    return put(`/enfermagem/${id}`, data, config);
   },
 
-  delete: async (id) => {
-    return del(`/enfermagem/${id}`);
+  delete: async (id, config = {}) => {
+    return del(`/enfermagem/${id}`, config);
   },
 
-  getStats: async () => {
-    return get('/enfermagem/stats/dashboard');
+  getStats: async (config = {}) => {
+    return get('/enfermagem/stats/dashboard', config);
   }
 };
 

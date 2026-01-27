@@ -2,8 +2,8 @@ import { get, post } from './request';
 
 const estoqueService = {
   // --- MEDICAMENTOS ---
-  getMedicamentos: async (params) => {
-    return get('/estoque/medicamentos', { params });
+  getMedicamentos: async (params = {}, config = {}) => {
+    return get('/estoque/medicamentos', { ...config, params });
   },
 
   createMedicamento: async (data) => {
@@ -16,8 +16,8 @@ const estoqueService = {
   },
 
   // --- ALIMENTOS ---
-  getAlimentos: async (params) => {
-    return get('/estoque/alimentos', { params });
+  getAlimentos: async (params = {}, config = {}) => {
+    return get('/estoque/alimentos', { ...config, params });
   },
 
   createAlimento: async (data) => {
@@ -30,13 +30,13 @@ const estoqueService = {
   },
 
   // --- ESTATÍSTICAS E RELATÓRIOS ---
-  getStats: async () => {
-    return get('/estoque/stats');
+  getStats: async (config = {}) => {
+    return get('/estoque/stats', config);
   },
 
-  getMovimentacoes: async (tipo = '') => {
+  getMovimentacoes: async (tipo = '', config = {}) => {
     const url = tipo ? `/estoque/movimentacoes?tipo=${tipo}` : '/estoque/movimentacoes';
-    return get(url);
+    return get(url, config);
   }
 };
 
