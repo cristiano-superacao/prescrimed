@@ -137,7 +137,7 @@ router.get('/prescricoes-recentes', async (req, res) => {
         { model: Paciente, as: 'paciente', attributes: ['id', 'nome'] },
         { model: Usuario, as: 'nutricionista', attributes: ['id', 'nome'] }
       ],
-      order: [['createdAt', 'DESC']],
+      order: [['updatedAt', 'DESC']],
       limit: parseInt(limit)
     });
     
@@ -159,7 +159,7 @@ router.get('/pacientes-recentes', async (req, res) => {
       include: [
         { model: Empresa, as: 'empresa', attributes: ['id', 'nome'] }
       ],
-      order: [['createdAt', 'DESC']],
+      order: [['updatedAt', 'DESC']],
       limit: parseInt(limit)
     });
     

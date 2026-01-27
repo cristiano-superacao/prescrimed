@@ -349,6 +349,46 @@ O smoke test valida:
 - ✅ Criação de prescrição
 - ✅ Persistência no banco (Postgres)
 
+### Acesso por Cargo (Roles) e Usuários por Empresa
+
+Para garantir que cada empresa tenha profissionais essenciais e que eles consigam operar nas funcionalidades de cada residente, use os scripts abaixo.
+
+**Criar usuários por empresa (Nutricionista, Assistente Social, Técnico de Enfermagem):**
+
+```bash
+node scripts/seed-company-role-users.js
+```
+
+Isso cria, para cada empresa existente, três usuários com senha padrão `teste123` e e-mails no padrão:
+- `nutricionista.<slug-da-empresa>@prescrimed.com`
+- `assistente-social.<slug-da-empresa>@prescrimed.com`
+- `tecnico-enfermagem.<slug-da-empresa>@prescrimed.com`
+
+Exemplo para "Casa de Repouso Vida Plena":
+- `nutricionista.casa-de-repouso-vida-plena@prescrimed.com`
+- `assistente-social.casa-de-repouso-vida-plena@prescrimed.com`
+- `tecnico-enfermagem.casa-de-repouso-vida-plena@prescrimed.com`
+
+**Testar acessos por residente e operações de cada cargo:**
+
+```bash
+node scripts/test-resident-role-access.js
+```
+
+O teste realiza:
+- Nutricionista: login, lista pacientes/agendamentos e cria uma prescrição no residente.
+- Técnico de Enfermagem: login, lista pacientes/agendamentos e cria um registro de enfermagem (sinais vitais).
+- Assistente Social: login e leitura de pacientes/agendamentos.
+
+Essas operações usam o isolamento multi-tenant (`empresaId`) e respeitam as permissões configuradas.
+
+### Paginação e Ordenação (UI/Backend)
+
+- Paginação padronizada em todos os módulos (backend) com resposta `{ items, total, page, pageSize }`.
+- Ordenação por `updatedAt DESC` nos listados recentes (10 mais recentes).
+- Agenda com ordenação especial por status: **Confirmados → Agendados → Cancelados → Concluídos**.
+- UI com layout responsivo e profissional em todas as listas, incluindo exibição do **Código de cadastro** (ID) em cartões e tabelas.
+
 ### Verificar Configuração do Railway
 ```bash
 npm run check:railway

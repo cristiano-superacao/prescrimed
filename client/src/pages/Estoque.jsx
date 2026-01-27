@@ -38,6 +38,9 @@ export default function Estoque() {
   const [activeTab, setActiveTab] = useState('medicamentos'); // medicamentos, alimentos
   const [modalOpen, setModalOpen] = useState(null); // null, 'cadastrar', 'entrada', 'saida'
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [stats, setStats] = useState(null);
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [showHistorico, setShowHistorico] = useState(false);
@@ -51,17 +54,25 @@ export default function Estoque() {
   useEffect(() => {
     loadItems();
     loadStats();
-  }, [activeTab]);
+  }, [activeTab, page]);
 
   const loadItems = async () => {
     setLoading(true);
     try {
+      const params = { page, pageSize };
       const data = activeTab === 'medicamentos' 
-        ? await estoqueService.getMedicamentos() 
-        : await estoqueService.getAlimentos();
-      
-      const itemsList = Array.isArray(data) ? data : (data.items || data.medicamentos || data.alimentos || []);
-      setItems(itemsList);
+        ? await estoqueService.getMedicamentos(params) 
+        : await estoqueService.getAlimentos(params);
+
+      if (Array.isArray(data)) {
+        setItems(data);
+        setTotal(data.length);
+      } else {
+        const itemsList = Array.isArray(data.items) ? data.items : (data.medicamentos || data.alimentos || []);
+        setItems(itemsList);
+        setTotal(Number(data.total) || 0);
+        setPageSize(Number(data.pageSize) || 10);
+      }
     } catch (error) {
       toast.error(errorMessage('load', 'itens'));
       console.error(error);
@@ -562,6 +573,16 @@ export default function Estoque() {
           </button>
         </div>
       </PageHeader>
+      {/* Controles de paginação */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm text-slate-600">
+          Página <span className="font-semibold">{page}</span>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
+          <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+        </div>
+      </div>
 
       {/* Estatísticas Gerais */}
       {stats && (
@@ -679,6 +700,7 @@ export default function Estoque() {
                         </div>
                         <div>
                           <p className="font-bold text-slate-800 dark:text-gray-100">{item.nome}</p>
+                          <p className="text-[10px] text-slate-400">Código: {item.id || item._id}</p>
                           <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 dark:text-gray-400">
                             {item.lote && <span>Lote: {item.lote}</span>}
                             {item.categoria && <span>Cat: {item.categoria}</span>}
@@ -738,6 +760,7 @@ export default function Estoque() {
                           </div>
                           <div>
                             <span className="font-bold text-slate-800 dark:text-gray-100 block">{item.nome}</span>
+                            <span className="text-[11px] text-slate-400 block">Código: {item.id || item._id}</span>
                             {item.lote && <span className="text-xs text-slate-500 dark:text-gray-400">Lote: {item.lote}</span>}
                             {item.categoria && <span className="text-xs text-slate-500 dark:text-gray-400">Cat: {item.categoria}</span>}
                           </div>

@@ -26,12 +26,15 @@ export default function Cronograma() {
   const [activeTab, setActiveTab] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [showLegends, setShowLegends] = useState(false);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page]);
 
   const loadData = async () => {
     try {
@@ -90,8 +93,12 @@ export default function Cronograma() {
         };
       });
 
-      const allItems = [...formattedAgendamentos, ...formattedPrescricoes].sort((a, b) => a.date - b.date);
-      setItems(allItems);
+      const allItems = [...formattedAgendamentos, ...formattedPrescricoes]
+        .sort((a, b) => (new Date(b.date)) - (new Date(a.date)));
+      setTotal(allItems.length);
+      const start = (page - 1) * pageSize;
+      const sliced = allItems.slice(start, start + pageSize);
+      setItems(sliced);
 
     } catch (error) {
       console.error(error);
@@ -241,6 +248,16 @@ export default function Cronograma() {
           </button>
         </div>
       </PageHeader>
+      {/* Controles de paginação */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm text-slate-600">
+          Página <span className="font-semibold">{page}</span>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
+          <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+        </div>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -419,6 +436,7 @@ export default function Cronograma() {
                         <span className="truncate">{item.details}</span>
                       </div>
                     )}
+                    <div className="text-[11px] text-slate-400">Código: {item.id}</div>
                   </div>
                 </div>
               );

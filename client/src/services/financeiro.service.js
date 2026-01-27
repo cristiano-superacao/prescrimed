@@ -7,6 +7,8 @@ const financeiroService = {
       status: filters.status,
       dataInicio: filters.dataInicio,
       dataFim: filters.dataFim,
+      page: filters.page,
+      pageSize: filters.pageSize,
     });
     return get(`/financeiro${qs}`);
   },

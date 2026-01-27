@@ -25,6 +25,9 @@ import {
 export default function Usuarios() {
   const { user } = useAuthStore();
   const [usuarios, setUsuarios] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUsuario, setSelectedUsuario] = useState(null);
@@ -40,14 +43,21 @@ export default function Usuarios() {
     } else {
       toast.error(customErrorMessage('accessDenied'));
     }
-  }, [isAdmin]);
+  }, [isAdmin, page]);
 
   const loadUsuarios = async () => {
     try {
       setLoading(true);
-      const data = await usuarioService.getAll();
-      const usuariosList = Array.isArray(data) ? data : (data.usuarios || []);
-      setUsuarios(usuariosList);
+      const data = await usuarioService.getAll({ page, pageSize });
+      if (Array.isArray(data)) {
+        setUsuarios(data);
+        setTotal(data.length);
+      } else {
+        const usuariosList = Array.isArray(data.items) ? data.items : (data.usuarios || []);
+        setUsuarios(usuariosList);
+        setTotal(Number(data.total) || 0);
+        setPageSize(Number(data.pageSize) || 10);
+      }
     } catch (error) {
       toast.error(errorMessage('load', 'usuários'));
     } finally {
@@ -135,6 +145,16 @@ export default function Usuarios() {
           <Plus size={18} /> Novo Usuário
         </button>
       </PageHeader>
+      {/* Controles de paginação */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm text-slate-600">
+          Página <span className="font-semibold">{page}</span>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
+          <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatsCard
@@ -208,6 +228,7 @@ export default function Usuarios() {
                       </div>
                       <div>
                         <p className="font-medium text-slate-900 dark:text-gray-100">{usuario.nome}</p>
+                        <p className="text-[10px] text-slate-400">Código: {usuario.id}</p>
                         <p className="text-xs text-slate-500 dark:text-gray-400">{usuario.email}</p>
                         {usuario.crm && (
                           <span className="text-xs text-slate-500 dark:text-gray-400">CRM: {usuario.crm}</span>
@@ -275,7 +296,10 @@ export default function Usuarios() {
                         <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xs">
                           {usuario.nome.charAt(0).toUpperCase()}
                         </div>
-                        <div className="font-medium text-slate-900 dark:text-gray-100">{usuario.nome}</div>
+                        <div className="flex flex-col">
+                          <div className="font-medium text-slate-900 dark:text-gray-100">{usuario.nome}</div>
+                          <span className="text-[11px] text-slate-400">Código: {usuario.id}</span>
+                        </div>
                       </div>
                     </Td>
                     <Td className={`${density === 'compact' ? 'py-3' : 'py-4'} text-sm text-slate-600 dark:text-gray-300`}>

@@ -30,6 +30,9 @@ import {
 
 export default function Prescricoes() {
   const [prescricoes, setPrescricoes] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -73,20 +76,27 @@ export default function Prescricoes() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [prescricoesData, pacientesData] = await Promise.all([
-        prescricaoService.getAll(),
+        prescricaoService.getAll({ page, pageSize }),
         pacienteService.getAll(),
       ]);
       
-      const prescricoesList = Array.isArray(prescricoesData) 
-        ? prescricoesData 
-        : (prescricoesData.prescricoes || []);
-      setPrescricoes(prescricoesList);
+      if (Array.isArray(prescricoesData)) {
+        setPrescricoes(prescricoesData);
+        setTotal(prescricoesData.length);
+      } else {
+        const prescricoesList = Array.isArray(prescricoesData.items) 
+          ? prescricoesData.items 
+          : (prescricoesData.prescricoes || []);
+        setPrescricoes(prescricoesList);
+        setTotal(Number(prescricoesData.total) || 0);
+        setPageSize(Number(prescricoesData.pageSize) || 10);
+      }
 
       const pacientesList = Array.isArray(pacientesData) 
         ? pacientesData 
@@ -376,6 +386,7 @@ export default function Prescricoes() {
                         <p className="font-medium text-slate-900 dark:text-gray-100">
                           {p.pacienteNome || 'Paciente não identificado'}
                         </p>
+                        <p className="text-[10px] text-slate-400">Código: {p.id || p._id}</p>
                         <div className="flex items-center gap-2 mt-1 text-xs text-slate-600 dark:text-gray-300">
                           <span>{formatDate(p.createdAt)}</span>
                           <span className="text-slate-400">
@@ -442,9 +453,12 @@ export default function Prescricoes() {
                         <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
                           {prescricao.pacienteNome ? prescricao.pacienteNome.charAt(0).toUpperCase() : 'P'}
                         </div>
-                        <span className="font-medium text-slate-900 dark:text-gray-100">
-                          {prescricao.pacienteNome || 'Paciente não identificado'}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-slate-900 dark:text-gray-100">
+                            {prescricao.pacienteNome || 'Paciente não identificado'}
+                          </span>
+                          <span className="text-[11px] text-slate-400">Código: {prescricao.id || prescricao._id}</span>
+                        </div>
                       </div>
                     </Td>
                     <Td className="text-sm text-slate-600 dark:text-gray-300">
@@ -671,6 +685,16 @@ export default function Prescricoes() {
           </div>
         </div>
       )}
+      {/* Controles de paginação */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm text-slate-600">
+          Página <span className="font-semibold">{page}</span>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
+          <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+        </div>
+      </div>
     </div>
   );
 }

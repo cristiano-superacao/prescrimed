@@ -35,12 +35,19 @@ router.get('/', async (req, res) => {
       if (req.query.dataFim) where.dataVencimento[Op.lte] = req.query.dataFim;
     }
 
-    const transacoes = await FinanceiroTransacao.findAll({
+    const { page = 1, pageSize = 10 } = req.query;
+    const limit = Math.max(1, parseInt(pageSize));
+    const offset = (Math.max(1, parseInt(page)) - 1) * limit;
+
+    const { rows, count } = await FinanceiroTransacao.findAndCountAll({
       where,
-      order: [['dataVencimento', 'DESC'], ['createdAt', 'DESC']]
+      order: [['updatedAt', 'DESC']],
+      limit,
+      offset,
+      include: [{ model: Paciente, as: 'paciente', attributes: ['id', 'nome'] }]
     });
 
-    res.json(transacoes.map(transacaoToClient));
+    res.json({ items: rows.map(transacaoToClient), total: count, page: parseInt(page), pageSize: limit });
   } catch (error) {
     console.error('❌ Erro ao buscar movimentações financeiras:', error);
     

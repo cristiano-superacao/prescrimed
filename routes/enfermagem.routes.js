@@ -8,7 +8,7 @@ const router = express.Router();
 // Listar todos os registros com filtros
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { pacienteId, tipo, dataInicio, dataFim, prioridade, alerta } = req.query;
+    const { pacienteId, tipo, dataInicio, dataFim, prioridade, alerta, page = 1, pageSize = 10 } = req.query;
     const where = {};
     // Aplica isolamento por empresa apenas se não for superadmin
     if (req.user?.role !== 'superadmin') {
@@ -27,18 +27,24 @@ router.get('/', authenticate, async (req, res) => {
       };
     }
 
-    let registros = await RegistroEnfermagem.findAll({ where, order: [['createdAt', 'DESC']] });
+    const limit = Math.max(1, parseInt(pageSize));
+    const offset = (Math.max(1, parseInt(page)) - 1) * limit;
+
+    let registrosData = await RegistroEnfermagem.findAndCountAll({ where, order: [['updatedAt', 'DESC']], limit, offset });
+    let registros = registrosData.rows;
+    let total = registrosData.count;
     // Fallback: se vazio, consultar via SQL direto (possível diferença de mapeamento de tabela)
     if (!registros || (Array.isArray(registros) && registros.length === 0)) {
       try {
-        const raw = await sequelize.query('SELECT * FROM "RegistrosEnfermagem" ORDER BY "createdAt" DESC', { type: QueryTypes.SELECT });
+        const raw = await sequelize.query('SELECT * FROM "RegistrosEnfermagem" ORDER BY "updatedAt" DESC LIMIT :limit OFFSET :offset', { type: QueryTypes.SELECT, replacements: { limit, offset } });
         registros = raw;
+        total = raw.length; // pode não refletir total exato sem COUNT
       } catch (e) {
         console.warn('Fallback SQL falhou:', e.message);
       }
     }
 
-    res.json(registros);
+    res.json({ items: registros, total, page: parseInt(page), pageSize: limit });
   } catch (error) {
     console.error('Erro ao listar registros:', error);
     res.status(500).json({ error: 'Erro ao listar registros de enfermagem' });

@@ -32,10 +32,13 @@ export default function CensoMP() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('todos'); // todos, com_prescricao, sem_prescricao
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page]);
 
   const loadData = async () => {
     try {
@@ -65,7 +68,11 @@ export default function CensoMP() {
         };
       });
 
-      setCensoData(mappedData);
+      // Ordenar por atualização mais recente
+      const ordered = mappedData.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+      setTotal(ordered.length);
+      const start = (page - 1) * pageSize;
+      setCensoData(ordered.slice(start, start + pageSize));
     } catch (error) {
       console.error(error);
       toast.error(errorMessage('load', 'dados do censo'));
@@ -242,6 +249,7 @@ export default function CensoMP() {
                       </div>
                       <div>
                         <p className="font-medium text-slate-900 dark:text-gray-100">{item.nome}</p>
+                        <p className="text-[10px] text-slate-400">Código: {item.id || item._id}</p>
                         <p className="text-xs text-slate-500 dark:text-gray-400">CPF: {item.cpf || 'N/A'}</p>
                       </div>
                     </div>
@@ -292,6 +300,7 @@ export default function CensoMP() {
                         </div>
                         <div>
                           <p className="font-medium text-slate-900 dark:text-gray-100">{item.nome}</p>
+                          <p className="text-[11px] text-slate-400">Código: {item.id || item._id}</p>
                           <p className="text-xs text-slate-500 dark:text-gray-400">CPF: {item.cpf || 'N/A'}</p>
                         </div>
                       </div>
@@ -344,6 +353,16 @@ export default function CensoMP() {
           </div>
         )}
       </TableContainer>
+      {/* Controles de paginação */}
+      <div className="flex items-center justify-between gap-3 mt-4">
+        <div className="text-sm text-slate-600">
+          Página <span className="font-semibold">{page}</span>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
+          <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+        </div>
+      </div>
     </div>
   );
 }

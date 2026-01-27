@@ -6,14 +6,19 @@ const router = express.Router();
 // Listar todos os pacientes
 router.get('/', async (req, res) => {
   try {
-    const { empresaId } = req.query;
+    const { empresaId, page = 1, pageSize = 10 } = req.query;
     const where = empresaId ? { empresaId } : {};
-    
-    const pacientes = await Paciente.findAll({
+    const limit = Math.max(1, parseInt(pageSize));
+    const offset = (Math.max(1, parseInt(page)) - 1) * limit;
+
+    const { rows, count } = await Paciente.findAndCountAll({
       where,
-      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nome'] }]
+      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nome'] }],
+      order: [['updatedAt', 'DESC']],
+      limit,
+      offset
     });
-    res.json(pacientes);
+    res.json({ items: rows, total: count, page: parseInt(page), pageSize: limit });
   } catch (error) {
     console.error('Erro ao listar pacientes:', error);
     res.status(500).json({ error: 'Erro ao listar pacientes' });

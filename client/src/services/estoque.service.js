@@ -2,8 +2,8 @@ import { get, post } from './request';
 
 const estoqueService = {
   // --- MEDICAMENTOS ---
-  getMedicamentos: async () => {
-    return get('/estoque/medicamentos');
+  getMedicamentos: async (params) => {
+    return get('/estoque/medicamentos', { params });
   },
 
   createMedicamento: async (data) => {
@@ -16,8 +16,8 @@ const estoqueService = {
   },
 
   // --- ALIMENTOS ---
-  getAlimentos: async () => {
-    return get('/estoque/alimentos');
+  getAlimentos: async (params) => {
+    return get('/estoque/alimentos', { params });
   },
 
   createAlimento: async (data) => {

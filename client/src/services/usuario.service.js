@@ -1,8 +1,8 @@
 import { get, post, put, del } from './request';
 
 const usuarioService = {
-  getAll: async () => {
-    return get('/usuarios');
+  getAll: async (params) => {
+    return get('/usuarios', { params });
   },
 
   getById: async (id) => {

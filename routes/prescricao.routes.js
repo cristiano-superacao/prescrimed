@@ -77,20 +77,24 @@ function prescricaoToClient(prescricaoInstance) {
 // Listar todas as prescrições
 router.get('/', async (req, res) => {
   try {
-    const { empresaId, pacienteId } = req.query;
+    const { empresaId, pacienteId, page = 1, pageSize = 10 } = req.query;
     const where = {};
     if (empresaId) where.empresaId = empresaId;
     if (pacienteId) where.pacienteId = pacienteId;
-    
-    const prescricoes = await Prescricao.findAll({
+    const limit = Math.max(1, parseInt(pageSize));
+    const offset = (Math.max(1, parseInt(page)) - 1) * limit;
+
+    const { rows, count } = await Prescricao.findAndCountAll({
       where,
       include: [
         { model: Paciente, as: 'paciente', attributes: ['id', 'nome', 'cpf'] },
         { model: Usuario, as: 'nutricionista', attributes: ['id', 'nome', 'email'] }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['updatedAt', 'DESC']],
+      limit,
+      offset
     });
-    res.json(prescricoes.map(prescricaoToClient));
+    res.json({ items: rows.map(prescricaoToClient), total: count, page: parseInt(page), pageSize: limit });
   } catch (error) {
     console.error('Erro ao listar prescrições:', error);
     res.status(500).json({ error: 'Erro ao listar prescrições' });
@@ -100,20 +104,24 @@ router.get('/', async (req, res) => {
 // Listar prescrições por paciente (compatibilidade com o frontend)
 router.get('/paciente/:id', async (req, res) => {
   try {
-    const { empresaId } = req.query;
+    const { empresaId, page = 1, pageSize = 10 } = req.query;
     const where = { pacienteId: req.params.id };
     if (empresaId) where.empresaId = empresaId;
+    const limit = Math.max(1, parseInt(pageSize));
+    const offset = (Math.max(1, parseInt(page)) - 1) * limit;
 
-    const prescricoes = await Prescricao.findAll({
+    const { rows, count } = await Prescricao.findAndCountAll({
       where,
       include: [
         { model: Paciente, as: 'paciente', attributes: ['id', 'nome', 'cpf'] },
         { model: Usuario, as: 'nutricionista', attributes: ['id', 'nome', 'email'] }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['updatedAt', 'DESC']],
+      limit,
+      offset
     });
 
-    res.json(prescricoes.map(prescricaoToClient));
+    res.json({ items: rows.map(prescricaoToClient), total: count, page: parseInt(page), pageSize: limit });
   } catch (error) {
     console.error('Erro ao listar prescrições do paciente:', error);
     res.status(500).json({ error: 'Erro ao listar prescrições do paciente' });

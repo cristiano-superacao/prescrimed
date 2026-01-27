@@ -35,15 +35,20 @@ function getEmpresaId(req) {
 router.get('/medicamentos', async (req, res) => {
   try {
     const empresaId = getEmpresaId(req);
+    const { page = 1, pageSize = 10 } = req.query;
     const where = { tipo: 'medicamento' };
     if (empresaId) where.empresaId = empresaId;
+    const limit = Math.max(1, parseInt(pageSize));
+    const offset = (Math.max(1, parseInt(page)) - 1) * limit;
 
-    const itens = await EstoqueItem.findAll({
+    const { rows, count } = await EstoqueItem.findAndCountAll({
       where,
-      order: [['nome', 'ASC']]
+      order: [['updatedAt', 'DESC']],
+      limit,
+      offset
     });
 
-    res.json(itens.map(itemToClient));
+    res.json({ items: rows.map(itemToClient), total: count, page: parseInt(page), pageSize: limit });
   } catch (error) {
     console.error('❌ Erro ao buscar medicamentos:', error);
     
@@ -94,15 +99,20 @@ router.post('/medicamentos', async (req, res) => {
 router.get('/alimentos', async (req, res) => {
   try {
     const empresaId = getEmpresaId(req);
+    const { page = 1, pageSize = 10 } = req.query;
     const where = { tipo: 'alimento' };
     if (empresaId) where.empresaId = empresaId;
+    const limit = Math.max(1, parseInt(pageSize));
+    const offset = (Math.max(1, parseInt(page)) - 1) * limit;
 
-    const itens = await EstoqueItem.findAll({
+    const { rows, count } = await EstoqueItem.findAndCountAll({
       where,
-      order: [['nome', 'ASC']]
+      order: [['updatedAt', 'DESC']],
+      limit,
+      offset
     });
 
-    res.json(itens.map(itemToClient));
+    res.json({ items: rows.map(itemToClient), total: count, page: parseInt(page), pageSize: limit });
   } catch (error) {
     console.error('Erro ao buscar alimentos:', error);
     res.status(500).json({ error: 'Erro ao buscar alimentos do estoque' });

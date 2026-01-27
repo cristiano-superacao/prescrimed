@@ -39,6 +39,9 @@ import {
 
 export default function Financeiro() {
   const [transacoes, setTransacoes] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [stats, setStats] = useState({
     receitas: 0,
     despesas: 0,
@@ -58,16 +61,23 @@ export default function Financeiro() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [transacoesData, statsData] = await Promise.all([
-        financeiroService.getAll(),
+        financeiroService.getAll({ page, pageSize }),
         financeiroService.getStats()
       ]);
-      setTransacoes(Array.isArray(transacoesData) ? transacoesData : []);
+      if (Array.isArray(transacoesData)) {
+        setTransacoes(transacoesData);
+        setTotal(transacoesData.length);
+      } else {
+        setTransacoes(Array.isArray(transacoesData.items) ? transacoesData.items : []);
+        setTotal(Number(transacoesData.total) || 0);
+        setPageSize(Number(transacoesData.pageSize) || 10);
+      }
       
       // Garantir que todos os valores sejam numéricos válidos
       setStats({
@@ -293,6 +303,16 @@ export default function Financeiro() {
           </button>
         </div>
       </PageHeader>
+      {/* Controles de paginação */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm text-slate-600">
+          Página <span className="font-semibold">{page}</span>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
+          <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
@@ -394,6 +414,7 @@ export default function Financeiro() {
                       </div>
                       <div>
                         <p className="font-medium text-slate-900 dark:text-gray-100">{t.descricao}</p>
+                        <p className="text-[10px] text-slate-400">Código: {t.id || t._id}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-300">
                             {t.categoria}
@@ -459,6 +480,7 @@ export default function Financeiro() {
                         </div>
                         <div>
                           <p className="font-medium text-slate-900 dark:text-gray-100">{transacao.descricao}</p>
+                          <p className="text-[11px] text-slate-400">Código: {transacao.id || transacao._id}</p>
                           {transacao.pacienteId && (
                             <p className="text-xs text-slate-500 dark:text-gray-300">{transacao.pacienteId.nome}</p>
                           )}

@@ -43,6 +43,9 @@ import {
 export default function Evolucao() {
   // Estados principais
   const [registros, setRegistros] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,14 +92,21 @@ export default function Evolucao() {
     loadPacientes();
     loadStats();
     loadItensEstoque();
-  }, []);
+  }, [page]);
 
   // Função para carregar registros de enfermagem
   const loadData = async () => {
     try {
       setLoading(true);
-      const data = await enfermagemService.getAll();
-      setRegistros(data);
+      const data = await enfermagemService.getAll({ page, pageSize });
+      if (Array.isArray(data)) {
+        setRegistros(data);
+        setTotal(data.length);
+      } else {
+        setRegistros(Array.isArray(data.items) ? data.items : []);
+        setTotal(Number(data.total) || 0);
+        setPageSize(Number(data.pageSize) || 10);
+      }
     } catch (error) {
       toast.error(apiErrorMessage(error, errorMessage('load', 'registros')));
     } finally {
@@ -433,6 +443,16 @@ export default function Evolucao() {
             </button>
           </div>
         </PageHeader>
+        {/* Controles de paginação */}
+        <div className="flex items-center justify-between gap-3 px-2">
+          <div className="text-sm text-slate-600">
+            Página <span className="font-semibold">{page}</span>
+          </div>
+          <div className="flex gap-2">
+            <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
+            <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+          </div>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-4">
           <StatsCard
             icon={FileText}
@@ -494,6 +514,7 @@ export default function Evolucao() {
                         )}
                       </div>
                       <p className="font-semibold text-slate-900 dark:text-gray-100">{registro.titulo}</p>
+                      <p className="text-[10px] text-slate-400">Código: {registro.id || registro._id}</p>
                       <p className="text-sm text-slate-600 dark:text-gray-300 mt-1">
                         <User size={14} className="inline mr-1" />
                         {registro.paciente?.nome || 'Paciente não identificado'}
@@ -563,6 +584,7 @@ export default function Evolucao() {
 
                   <div className="mt-3">
                     <p className="font-semibold text-slate-900 dark:text-gray-100">{registro.titulo}</p>
+                    <p className="text-[11px] text-slate-400">Código: {registro.id || registro._id}</p>
                     <div className="mt-1 flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-sm">
                         {registro.paciente?.nome?.charAt(0) || '?'}

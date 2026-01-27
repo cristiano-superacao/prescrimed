@@ -42,6 +42,9 @@ import * as XLSX from 'xlsx';
 
 export default function Pacientes() {
   const [pacientes, setPacientes] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -56,7 +59,7 @@ export default function Pacientes() {
 
   useEffect(() => {
     loadPacientes();
-  }, []);
+  }, [page]);
 
   const loadPacientes = async (search = '') => {
     try {
@@ -64,10 +67,19 @@ export default function Pacientes() {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (statusFilter) params.append('status', statusFilter);
+      params.append('page', String(page));
+      params.append('pageSize', String(pageSize));
       
       const data = await pacienteService.getAll(params.toString());
-      const pacientesList = Array.isArray(data) ? data : (data.pacientes || []);
-      setPacientes(pacientesList);
+      if (Array.isArray(data)) {
+        setPacientes(data);
+        setTotal(data.length);
+      } else {
+        const pacientesList = Array.isArray(data.items) ? data.items : (data.pacientes || []);
+        setPacientes(pacientesList);
+        setTotal(Number(data.total) || 0);
+        setPageSize(Number(data.pageSize) || 10);
+      }
     } catch (error) {
       toast.error(errorMessage('load', 'pacientes'));
     } finally {
@@ -469,6 +481,7 @@ export default function Pacientes() {
                       </div>
                       <div>
                         <p className="font-medium text-slate-900 dark:text-gray-100">{paciente.nome}</p>
+                        <p className="text-[10px] text-slate-400">Código: {paciente.id || paciente._id}</p>
                         <p className="text-xs text-slate-500 dark:text-gray-400">CPF: {paciente.cpf || '-'}</p>
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-gray-400 mt-1">
                           <Calendar size={12} />
@@ -542,7 +555,10 @@ export default function Pacientes() {
                         <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs">
                           {paciente.nome.charAt(0)}
                         </div>
-                        <span className="font-medium text-slate-900 dark:text-gray-100">{paciente.nome}</span>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-slate-900 dark:text-gray-100">{paciente.nome}</span>
+                          <span className="text-[11px] text-slate-400">Código: {paciente.id || paciente._id}</span>
+                        </div>
                       </div>
                     </Td>
                     <Td className="text-sm text-slate-600 dark:text-gray-300">{paciente.cpf || '-'}</Td>
@@ -581,18 +597,15 @@ export default function Pacientes() {
                 ))}
               </TBody>
             </TableWrapper>
-          </div>
-        ) : (
-          <div id="residentes-accordion">
+            </div>
+          ) : (
             <EmptyState
-              icon={Users}
               title="Nenhum residente encontrado"
-              description="Cadastre o primeiro residente para começar."
-              actionLabel="Cadastrar Residente"
+              description="Ajuste os filtros ou cadastre um novo residente."
+              actionLabel="Novo residente"
               onAction={() => setModalOpen(true)}
             />
-          </div>
-        )}
+          )}
       </TableContainer>
 
       {modalOpen && (
@@ -705,6 +718,16 @@ export default function Pacientes() {
           </div>
         </div>
       )}
+      {/* Controles de paginação */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm text-slate-600">
+          Página <span className="font-semibold">{page}</span>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
+          <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+        </div>
+      </div>
     </div>
   );
 }

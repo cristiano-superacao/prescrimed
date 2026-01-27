@@ -1,13 +1,14 @@
 import express from 'express';
 import { Agendamento, Paciente, Usuario, Empresa } from '../models/index.js';
 import { Op } from 'sequelize';
+import sequelize from '../config/database.js';
 
 const router = express.Router();
 
 // GET /api/agendamentos - Listar agendamentos com filtros
 router.get('/', async (req, res) => {
   try {
-    const { empresaId, pacienteId, usuarioId, dataInicio, dataFim, status, tipo } = req.query;
+    const { empresaId, pacienteId, usuarioId, dataInicio, dataFim, status, tipo, page = 1, pageSize = 10 } = req.query;
     
     const where = {};
     
@@ -24,7 +25,18 @@ router.get('/', async (req, res) => {
       if (dataFim) where.dataHora[Op.lte] = new Date(dataFim);
     }
     
-    const agendamentos = await Agendamento.findAll({
+    const limit = Math.max(1, parseInt(pageSize));
+    const offset = (Math.max(1, parseInt(page)) - 1) * limit;
+
+    // Ordenação por prioridade de status e depois por atualização recente
+    const statusOrderCase = `CASE 
+      WHEN status = 'confirmado' THEN 1 
+      WHEN status = 'agendado' THEN 2 
+      WHEN status = 'cancelado' THEN 3 
+      WHEN status = 'concluido' THEN 4 
+      ELSE 5 END`;
+
+    const { rows, count } = await Agendamento.findAndCountAll({
       where,
       include: [
         { 
@@ -43,10 +55,13 @@ router.get('/', async (req, res) => {
           attributes: ['id', 'nome'] 
         }
       ],
-      order: [['dataHora', 'ASC']]
+      order: [[sequelize.literal(statusOrderCase), 'ASC'], ['updatedAt', 'DESC']],
+      limit,
+      offset
     });
-    
-    res.json(agendamentos);
+
+    // Resposta com paginação
+    return res.json({ items: rows, total: count, page: parseInt(page), pageSize: limit });
   } catch (error) {
     console.error('Erro ao buscar agendamentos:', error);
     res.status(500).json({ error: 'Erro ao buscar agendamentos' });

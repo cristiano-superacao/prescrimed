@@ -6,8 +6,12 @@ const router = express.Router();
 
 router.get('/sessoes', authenticate, tenantIsolation, async (req, res) => {
   const empresaId = req.query.empresaId || req.user?.empresaId;
-  const items = await SessaoFisio.findAll({ where: { empresaId } });
-  res.json(items);
+  const { page = 1, pageSize = 10 } = req.query;
+  const where = { empresaId };
+  const limit = Math.max(1, parseInt(pageSize));
+  const offset = (Math.max(1, parseInt(page)) - 1) * limit;
+  const { rows, count } = await SessaoFisio.findAndCountAll({ where, order: [['updatedAt', 'DESC']], limit, offset });
+  res.json({ items: rows, total: count, page: parseInt(page), pageSize: limit });
 });
 
 router.post('/sessoes', authenticate, tenantIsolation, async (req, res) => {

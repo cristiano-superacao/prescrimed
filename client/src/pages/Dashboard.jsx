@@ -570,6 +570,7 @@ export default function Dashboard() {
                         {prescricao.paciente?.nome || prescricao.pacienteNome || 'Paciente não identificado'}
                       </p>
                       <p className="text-xs text-slate-500">{new Date(prescricao.createdAt).toLocaleString('pt-BR')}</p>
+                      <p className="text-xs text-slate-400">Código: {prescricao.id || prescricao._id}</p>
                     </div>
                     <div className="flex gap-2">
                       <span
@@ -636,6 +637,7 @@ export default function Dashboard() {
                     <span>
                       Entrada: {new Date(paciente.createdAt).toLocaleDateString('pt-BR')}
                     </span>
+                    <span className="text-xs text-slate-400">Código: {paciente.id || paciente._id}</span>
                   </div>
                 </div>
               ))

@@ -13,6 +13,9 @@ import { openPrintWindow, escapeHtml } from '../utils/printWindow';
 
 export default function Agenda() {
   const [agendamentos, setAgendamentos] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterTerm, setFilterTerm] = useState('');
@@ -38,13 +41,20 @@ export default function Agenda() {
   useEffect(() => {
     loadAgendamentos();
     loadPacientes();
-  }, []);
+  }, [page]);
 
   const loadAgendamentos = async () => {
     try {
       setLoading(true);
-      const data = await agendamentoService.getAll();
-      setAgendamentos(Array.isArray(data) ? data : []);
+      const data = await agendamentoService.getAll({ page, pageSize });
+      if (Array.isArray(data)) {
+        setAgendamentos(data);
+        setTotal(data.length);
+      } else {
+        setAgendamentos(Array.isArray(data.items) ? data.items : []);
+        setTotal(Number(data.total) || 0);
+        setPageSize(Number(data.pageSize) || 10);
+      }
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error);
       toast.error('Erro ao carregar agendamentos');
@@ -415,6 +425,7 @@ export default function Agenda() {
                       <div>
                         <p className="font-semibold text-slate-900 dark:text-gray-100">{ag.titulo}</p>
                         <p className="text-xs text-slate-500 dark:text-gray-400">{ag.tipo}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Código: {ag.id || ag._id}</p>
                       </div>
                     </div>
                     <select 
@@ -500,7 +511,10 @@ export default function Agenda() {
                       </div>
                     </Td>
                     <Td>
-                      <span className="font-semibold text-slate-900 dark:text-gray-100">{ag.titulo}</span>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-slate-900 dark:text-gray-100">{ag.titulo}</span>
+                        <span className="text-[11px] text-slate-400">Código: {ag.id || ag._id}</span>
+                      </div>
                     </Td>
                     <Td>
                       <div className="flex flex-col">
@@ -800,6 +814,16 @@ export default function Agenda() {
           </div>
         </div>
       )}
+      {/* Controles de paginação */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm text-slate-600">
+          Página <span className="font-semibold">{page}</span>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
+          <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+        </div>
+      </div>
     </div>
   );
 }
