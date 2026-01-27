@@ -55,7 +55,12 @@ export default function Sidebar({ onClose }) {
       <div className="px-6 py-5 border-b border-white/10">
         <p className="text-sm text-primary-100">Bem-vindo</p>
         <p className="text-lg font-semibold">{user?.nome}</p>
-        <p className="text-sm text-primary-200/60">{user?.email}</p>
+        <p
+          className="text-sm text-primary-200/60 truncate"
+          title={user?.empresa?.nome || user?.email}
+        >
+          {user?.empresa?.nome || user?.email}
+        </p>
         {(user?.role === 'admin' || user?.role === 'superadmin') && (
           <span className="inline-flex items-center gap-2 mt-3 px-3 py-1 rounded-full bg-white/10 text-xs font-semibold text-primary-300">
             {user?.role === 'superadmin' ? 'Super Admin' : 'Administrador'}
