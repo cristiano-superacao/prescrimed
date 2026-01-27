@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getSelectedEmpresaId } from '../utils/empresaContext';
 
 // Raiz do backend em produção (configurável via Vite)
 const VITE_BACKEND_ROOT = import.meta.env.VITE_BACKEND_ROOT;
@@ -75,7 +76,7 @@ api.interceptors.request.use(
     try {
       const userRaw = localStorage.getItem('user');
       const user = userRaw ? JSON.parse(userRaw) : null;
-      const selectedEmpresaId = localStorage.getItem('superadminEmpresaId');
+      const selectedEmpresaId = getSelectedEmpresaId();
 
       if (user?.role === 'superadmin' && selectedEmpresaId) {
         config.headers['X-Empresa-Id'] = selectedEmpresaId;

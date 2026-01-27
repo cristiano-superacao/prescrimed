@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { 
   Search, 
   Calendar as CalendarIcon, 
@@ -7,11 +7,8 @@ import {
   FileText, 
   FileDown,
   Clock,
-  CheckCircle2,
-  AlertCircle,
   User,
   MapPin,
-  Filter,
   Info
 } from 'lucide-react';
 import agendamentoService from '../services/agendamento.service';
@@ -21,20 +18,36 @@ import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import { openPrintWindow, escapeHtml } from '../utils/printWindow';
+import { useAuthStore } from '../store/authStore';
+import { buildEmpresaHeaderConfig, isSuperadminAllEmpresasSelected, listEmpresasForSuperadmin, subscribeEmpresaContextChanged } from '../utils/empresaContext';
 
 export default function Cronograma() {
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
-  const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [showLegends, setShowLegends] = useState(false);
+  const [allItems, setAllItems] = useState([]);
 
   useEffect(() => {
     loadData();
-  }, [page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
+
+  useEffect(() => {
+    return subscribeEmpresaContextChanged(() => {
+      setPage(1);
+      loadData();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
+
+  // Sempre volta para a primeira página ao mudar filtros
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, searchTerm, pageSize]);
 
   const loadData = async () => {
     try {
@@ -43,70 +56,162 @@ export default function Cronograma() {
       const today = new Date();
       const future = new Date();
       future.setDate(today.getDate() + 30);
+
+      const paramsAg = {
+        dataInicio: today.toISOString(),
+        dataFim: future.toISOString()
+      };
+
+      const formatAgendamentos = (agendamentosList, empresa) => {
+        const empresaLabel = empresa
+          ? `${empresa.codigo ? `${empresa.codigo} - ` : ''}${empresa.nome || 'Empresa'}`
+          : null;
+
+        return (Array.isArray(agendamentosList) ? agendamentosList : []).map((ag) => {
+          const rawDate = ag.dataHora || ag.dataHoraInicio || ag.dataHoraFim || ag.createdAt;
+          const dataHora = rawDate ? new Date(rawDate) : new Date();
+          const isValidDate = !isNaN(dataHora.getTime());
+
+          return {
+            id: ag.id || ag._id,
+            type: ag.tipo === 'Consulta' ? 'consultas' : ag.tipo === 'Exame' ? 'exames' : 'outros',
+            originalType: ag.tipo,
+            title: ag.titulo,
+            subtitle: ag.participante || 'Sem participante',
+            date: isValidDate ? dataHora : new Date(),
+            status: ag.status,
+            details: ag.local,
+            source: 'agendamento',
+            empresaLabel
+          };
+        });
+      };
+
+      const formatPrescricoes = (listaPrescricoes, empresa) => {
+        const empresaLabel = empresa
+          ? `${empresa.codigo ? `${empresa.codigo} - ` : ''}${empresa.nome || 'Empresa'}`
+          : null;
+
+        return (Array.isArray(listaPrescricoes) ? listaPrescricoes : []).map((pres) => {
+          const dataRef = pres.dataEmissao || pres.createdAt || new Date().toISOString();
+          const dataPrescricao = new Date(dataRef);
+          const isValidDate = !isNaN(dataPrescricao.getTime());
+
+          return {
+            id: pres.id || pres._id,
+            type: 'medicacoes',
+            originalType: 'Medicação',
+            title: `Prescrição: ${pres.medicamentos?.[0]?.nome || 'Medicamentos diversos'}`,
+            subtitle: pres.pacienteNome || pres.pacienteId?.nome || 'Paciente não identificado',
+            date: isValidDate ? dataPrescricao : new Date(),
+            status: pres.status,
+            details: `${pres.medicamentos?.length || 0} ${pres.medicamentos?.length === 1 ? 'medicamento' : 'medicamentos'}`,
+            source: 'prescricao',
+            empresaLabel
+          };
+        });
+      };
+
+      const shouldAggregateAll = isSuperadminAllEmpresasSelected(user);
+      if (shouldAggregateAll) {
+        toast.loading('Carregando cronograma de todas as empresas...', { id: 'cronograma-load-all' });
+        const empresas = await listEmpresasForSuperadmin();
+
+        const results = await Promise.all(
+          empresas.map(async (empresa) => {
+            const config = buildEmpresaHeaderConfig(empresa.id);
+            const [agendamentosData, prescricoesData] = await Promise.all([
+              agendamentoService.getAll(paramsAg, config),
+              prescricaoService.getAll({ status: 'ativa' }, config)
+            ]);
+
+            const agendamentosList = Array.isArray(agendamentosData)
+              ? agendamentosData
+              : (Array.isArray(agendamentosData?.items) ? agendamentosData.items : []);
+
+            const prescricoesResponse = prescricoesData || {};
+            const listaPrescricoes = Array.isArray(prescricoesResponse)
+              ? prescricoesResponse
+              : (Array.isArray(prescricoesResponse?.items)
+                ? prescricoesResponse.items
+                : (Array.isArray(prescricoesResponse?.prescricoes) ? prescricoesResponse.prescricoes : []));
+
+            return {
+              empresa,
+              agendamentosList,
+              listaPrescricoes
+            };
+          })
+        );
+
+        const formatted = results.flatMap((r) => [
+          ...formatAgendamentos(r.agendamentosList, r.empresa),
+          ...formatPrescricoes(r.listaPrescricoes, r.empresa)
+        ]);
+
+        const merged = formatted.sort((a, b) => (new Date(b.date)) - (new Date(a.date)));
+        setAllItems(merged);
+        toast.dismiss('cronograma-load-all');
+        return;
+      }
       
       const [agendamentosData, prescricoesData] = await Promise.all([
-        agendamentoService.getAll({
-          dataInicio: today.toISOString(),
-          dataFim: future.toISOString()
-        }),
+        agendamentoService.getAll(paramsAg),
         prescricaoService.getAll({ status: 'ativa' })
       ]);
 
-      const agendamentos = Array.isArray(agendamentosData) ? agendamentosData : [];
-      const formattedAgendamentos = agendamentos.map(ag => {
-        const dataHora = ag.dataHoraInicio ? new Date(ag.dataHoraInicio) : new Date();
-        const isValidDate = !isNaN(dataHora.getTime());
-        
-        return {
-          id: ag.id || ag._id,
-          type: ag.tipo === 'Consulta' ? 'consultas' : ag.tipo === 'Exame' ? 'exames' : 'outros',
-          originalType: ag.tipo,
-          title: ag.titulo,
-          subtitle: ag.participante || 'Sem participante',
-          date: isValidDate ? dataHora : new Date(),
-          status: ag.status,
-          details: ag.local,
-          source: 'agendamento'
-        };
-      });
+      const agendamentosList = Array.isArray(agendamentosData)
+        ? agendamentosData
+        : (Array.isArray(agendamentosData?.items) ? agendamentosData.items : []);
+
+      const formattedAgendamentos = formatAgendamentos(agendamentosList, null);
 
       const prescricoesResponse = prescricoesData || {};
-      const listaPrescricoes = Array.isArray(prescricoesResponse) 
-        ? prescricoesResponse 
-        : (Array.isArray(prescricoesResponse.prescricoes) ? prescricoesResponse.prescricoes : []);
+      const listaPrescricoes = Array.isArray(prescricoesResponse)
+        ? prescricoesResponse
+        : (Array.isArray(prescricoesResponse?.items)
+          ? prescricoesResponse.items
+          : (Array.isArray(prescricoesResponse?.prescricoes) ? prescricoesResponse.prescricoes : []));
         
-      const formattedPrescricoes = listaPrescricoes.map(pres => {
-        const dataRef = pres.dataEmissao || pres.createdAt || new Date().toISOString();
-        const dataPrescricao = new Date(dataRef);
-        const isValidDate = !isNaN(dataPrescricao.getTime());
-        
-        return {
-          id: pres.id || pres._id,
-          type: 'medicacoes',
-          originalType: 'Medicação',
-          title: `Prescrição: ${pres.medicamentos?.[0]?.nome || 'Medicamentos diversos'}`,
-          subtitle: pres.pacienteNome || pres.pacienteId?.nome || 'Paciente não identificado',
-          date: isValidDate ? dataPrescricao : new Date(),
-          status: pres.status,
-          details: `${pres.medicamentos?.length || 0} ${pres.medicamentos?.length === 1 ? 'medicamento' : 'medicamentos'}`,
-          source: 'prescricao'
-        };
-      });
+      const formattedPrescricoes = formatPrescricoes(listaPrescricoes, null);
 
       const allItems = [...formattedAgendamentos, ...formattedPrescricoes]
         .sort((a, b) => (new Date(b.date)) - (new Date(a.date)));
-      setTotal(allItems.length);
-      const start = (page - 1) * pageSize;
-      const sliced = allItems.slice(start, start + pageSize);
-      setItems(sliced);
+
+      setAllItems(allItems);
 
     } catch (error) {
+      toast.dismiss('cronograma-load-all');
       const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'cronograma'));
     } finally {
       setLoading(false);
     }
   };
+
+  const filteredAllItems = useMemo(() => {
+    const q = String(searchTerm || '').trim().toLowerCase();
+    return allItems.filter((item) => {
+      const matchesTab = activeTab === 'todos' || item.type === activeTab || (activeTab === 'consultas' && item.type === 'outros');
+      if (!matchesTab) return false;
+      if (!q) return true;
+      const title = String(item.title || '').toLowerCase();
+      const subtitle = String(item.subtitle || '').toLowerCase();
+      return title.includes(q) || subtitle.includes(q);
+    });
+  }, [allItems, activeTab, searchTerm]);
+
+  const totalFiltered = filteredAllItems.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
+
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredAllItems.slice(start, start + pageSize);
+  }, [filteredAllItems, page, pageSize]);
 
   const getStatusInfo = (date, status, type) => {
     if (status === 'concluido' || status === 'realizado') {
@@ -133,13 +238,6 @@ export default function Cronograma() {
     return { label: 'Agendado', color: 'bg-slate-100 text-slate-700 border-slate-200', dot: 'bg-slate-400' };
   };
 
-  const filteredItems = items.filter(item => {
-    const matchesTab = activeTab === 'todos' || item.type === activeTab || (activeTab === 'consultas' && item.type === 'outros');
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          item.subtitle.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
-
   const tabs = [
     { id: 'todos', label: 'Todos', icon: CalendarIcon },
     { id: 'medicacoes', label: 'Medicações', icon: Pill },
@@ -148,10 +246,10 @@ export default function Cronograma() {
   ];
 
   const stats = {
-    total: items.length,
-    consultas: items.filter(i => i.type === 'consultas').length,
-    exames: items.filter(i => i.type === 'exames').length,
-    medicacoes: items.filter(i => i.type === 'medicacoes').length
+    total: allItems.length,
+    consultas: allItems.filter(i => i.type === 'consultas').length,
+    exames: allItems.filter(i => i.type === 'exames').length,
+    medicacoes: allItems.filter(i => i.type === 'medicacoes').length
   };
 
   const exportToPDF = () => {
@@ -172,11 +270,12 @@ export default function Cronograma() {
         @media print { body { padding: 0; } }
       `;
 
-      const rowsHtml = filteredItems
+      const rowsHtml = filteredAllItems
         .map((it) => {
           const tipoClass = it.type || 'outros';
-          const dateStr = it.date ? new Date(it.date).toLocaleDateString('pt-BR') : '-';
-          const timeStr = it.date ? new Date(it.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+          const dateObj = it.date ? new Date(it.date) : null;
+          const dateStr = dateObj && !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('pt-BR') : '-';
+          const timeStr = dateObj && !isNaN(dateObj.getTime()) ? dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
           return `
             <tr>
               <td>${escapeHtml(dateStr)} ${escapeHtml(timeStr)}</td>
@@ -192,7 +291,7 @@ export default function Cronograma() {
       const bodyHtml = `
         <h1>Relatório - Cronograma</h1>
         <div class="meta">Gerado em: ${escapeHtml(generatedAt.toLocaleDateString('pt-BR'))} às ${escapeHtml(generatedAt.toLocaleTimeString('pt-BR'))}</div>
-        <div class="meta">Registros: ${escapeHtml(filteredItems.length)}</div>
+        <div class="meta">Registros: ${escapeHtml(filteredAllItems.length)}</div>
         <table>
           <thead>
             <tr>
@@ -240,7 +339,7 @@ export default function Cronograma() {
           <button
             type="button"
             onClick={exportToPDF}
-            disabled={filteredItems.length === 0}
+            disabled={filteredAllItems.length === 0}
             className="btn btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Exportar para PDF"
           >
@@ -251,11 +350,11 @@ export default function Cronograma() {
       {/* Controles de paginação */}
       <div className="flex items-center justify-between gap-3">
         <div className="text-sm text-slate-600">
-          Página <span className="font-semibold">{page}</span>
+          Página <span className="font-semibold">{page}</span> de <span className="font-semibold">{totalPages}</span>
         </div>
         <div className="flex gap-2">
           <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</button>
-          <button className="btn btn-secondary" disabled={(page * pageSize) >= total && total > 0} onClick={() => setPage((p) => p + 1)}>Próxima</button>
+          <button className="btn btn-secondary" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</button>
         </div>
       </div>
 
@@ -361,7 +460,7 @@ export default function Cronograma() {
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
-        ) : filteredItems.length === 0 ? (
+        ) : filteredAllItems.length === 0 ? (
           <div className="card text-center py-16">
             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <CalendarIcon size={32} className="text-slate-300" />
@@ -373,7 +472,7 @@ export default function Cronograma() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredItems.map((item) => {
+            {pagedItems.map((item) => {
               const statusInfo = getStatusInfo(item.date, item.status, item.type);
               const isValidDate = item.date && !isNaN(item.date.getTime());
               
@@ -434,6 +533,11 @@ export default function Cronograma() {
                       <div className="flex items-center gap-2 text-sm text-slate-600">
                         <MapPin size={14} className="text-slate-400 shrink-0" />
                         <span className="truncate">{item.details}</span>
+                      </div>
+                    )}
+                    {item.empresaLabel && (
+                      <div className="text-[11px] text-slate-400 truncate" title={item.empresaLabel}>
+                        Empresa: {item.empresaLabel}
                       </div>
                     )}
                     <div className="text-[11px] text-slate-400">Código: {item.id}</div>

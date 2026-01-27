@@ -1,8 +1,8 @@
 import { get, post, put, del } from './request';
 
 const agendamentoService = {
-  getAll: async (params) => {
-    return get('/agendamentos', { params });
+  getAll: async (params = {}, config = {}) => {
+    return get('/agendamentos', { ...config, params });
   },
 
   create: async (data) => {

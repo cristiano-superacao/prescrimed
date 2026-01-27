@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import empresaService from '../services/empresa.service';
 import toast from 'react-hot-toast';
+import { emitEmpresaContextChanged } from '../utils/empresaContext';
 
 export default function Header({ onToggleSidebar }) {
   const { user } = useAuthStore();
@@ -52,10 +53,12 @@ export default function Header({ onToggleSidebar }) {
     if (!value) {
       localStorage.removeItem('superadminEmpresaId');
       toast.success('Modo superadmin: exibindo todas as empresas');
+      emitEmpresaContextChanged(null);
       return;
     }
     localStorage.setItem('superadminEmpresaId', value);
     toast.success('Empresa selecionada para navegação');
+    emitEmpresaContextChanged(value);
   };
 
   return (

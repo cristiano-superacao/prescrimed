@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import pacienteService from '../services/paciente.service';
 import prescricaoService from '../services/prescricao.service';
-import empresaService from '../services/empresa.service';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
@@ -18,6 +17,7 @@ import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
 import { openPrintWindow, escapeHtml } from '../utils/printWindow';
 import { useAuthStore } from '../store/authStore';
+import { buildEmpresaHeaderConfig, isSuperadminAllEmpresasSelected, listEmpresasForSuperadmin, subscribeEmpresaContextChanged } from '../utils/empresaContext';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -41,27 +41,30 @@ export default function CensoMP() {
 
   useEffect(() => {
     loadData();
-  }, [page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, user?.role]);
+
+  useEffect(() => {
+    return subscribeEmpresaContextChanged(() => {
+      setPage(1);
+      loadData();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const isSuperadmin = user?.role === 'superadmin';
-      const selectedEmpresaId = localStorage.getItem('superadminEmpresaId');
+      const shouldAggregateAll = isSuperadminAllEmpresasSelected(user);
 
       let pacientes = [];
       let prescricoes = [];
 
-      if (isSuperadmin && !selectedEmpresaId) {
+      if (shouldAggregateAll) {
         toast.loading('Carregando dados de todas as empresas...', { id: 'censo-mp-load-all' });
 
-        const empresasData = await empresaService.getAll();
-        const empresasList = Array.isArray(empresasData)
-          ? empresasData
-          : (empresasData?.empresas || empresasData?.data || []);
-        const empresaIds = (Array.isArray(empresasList) ? empresasList : [])
-          .map((e) => e?.id)
-          .filter(Boolean);
+        const empresasList = await listEmpresasForSuperadmin();
+        const empresaIds = (Array.isArray(empresasList) ? empresasList : []).map((e) => e.id).filter(Boolean);
 
         if (empresaIds.length === 0) {
           setTotal(0);
@@ -72,7 +75,7 @@ export default function CensoMP() {
 
         const results = await Promise.all(
           empresaIds.map(async (empresaId) => {
-            const config = { headers: { 'X-Empresa-Id': String(empresaId) } };
+            const config = buildEmpresaHeaderConfig(empresaId);
             const [pacientesData, prescricoesData] = await Promise.all([
               pacienteService.getAll('', config),
               prescricaoService.getAll({}, config)
