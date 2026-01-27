@@ -1,6 +1,7 @@
 import express from 'express';
 import { Paciente, Empresa } from '../models/index.js';
 import { authenticate, tenantIsolation } from '../middleware/auth.middleware.js';
+import { ensureValidCPF, normalizeCPF } from '../utils/brDocuments.js';
 
 const router = express.Router();
 
@@ -82,6 +83,15 @@ router.post('/', authenticate, tenantIsolation, async (req, res) => {
       return res.status(403).json({ error: 'Acesso negado: seu perfil não pode cadastrar residentes neste módulo', code: 'access_denied' });
     }
 
+    // Valida/normaliza CPF (quando informado)
+    if (req.body?.cpf != null) {
+      try {
+        req.body.cpf = ensureValidCPF(req.body.cpf);
+      } catch (e) {
+        return res.status(400).json({ error: e.message || 'CPF inválido' });
+      }
+    }
+
     const paciente = await Paciente.create(req.body);
     res.status(201).json(paciente);
   } catch (error) {
@@ -123,6 +133,19 @@ router.put('/:id', authenticate, tenantIsolation, async (req, res) => {
 
     // Remove empresaId do body para evitar alteração
     const { empresaId, ...updateData } = req.body;
+
+    if (updateData?.cpf != null) {
+      const raw = String(updateData.cpf).trim();
+      if (raw === '') {
+        updateData.cpf = normalizeCPF(updateData.cpf);
+      } else {
+        try {
+          updateData.cpf = ensureValidCPF(updateData.cpf);
+        } catch (e) {
+          return res.status(400).json({ error: e.message || 'CPF inválido' });
+        }
+      }
+    }
     
     await paciente.update(updateData);
     res.json(paciente);

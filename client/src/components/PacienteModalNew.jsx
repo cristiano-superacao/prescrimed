@@ -3,6 +3,7 @@ import { X, User, MapPin, Phone, AlertCircle } from 'lucide-react';
 import pacienteService from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
+import { formatCPF, isValidCPF } from '../utils/locale';
 
 export default function PacienteModal({ paciente, onClose }) {
   const [formData, setFormData] = useState({
@@ -80,11 +81,13 @@ export default function PacienteModal({ paciente, onClose }) {
     if (!formData.sexo) newErrors.sexo = 'Sexo é obrigatório';
     if (!formData.telefone.trim()) newErrors.telefone = 'Telefone é obrigatório';
     
-    // Validação de CPF
+    // Validação de CPF (dígitos verificadores)
     if (formData.cpf) {
       const cpfClean = formData.cpf.replace(/\D/g, '');
       if (cpfClean.length !== 11) {
         newErrors.cpf = 'CPF deve ter 11 dígitos';
+      } else if (!isValidCPF(cpfClean)) {
+        newErrors.cpf = 'CPF inválido';
       }
     }
     
@@ -158,6 +161,18 @@ export default function PacienteModal({ paciente, onClose }) {
       setErrors({ ...errors, [name]: null });
     }
     
+    if (name === 'cpf') {
+      const digits = String(value || '').replace(/\D/g, '').slice(0, 11);
+      const masked = digits.length === 11 ? formatCPF(digits) : (() => {
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 6) return digits.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+        if (digits.length <= 9) return digits.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+        return digits;
+      })();
+      setFormData({ ...formData, cpf: masked });
+      return;
+    }
+
     setFormData({
       ...formData,
       [name]: value,

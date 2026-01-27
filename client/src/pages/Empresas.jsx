@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
 import { handleApiError } from '../utils/errorHandler';
+import { formatCNPJ, isValidCNPJ } from '../utils/locale';
 
 export default function Empresas() {
   const { user } = useAuthStore();
@@ -101,12 +102,22 @@ export default function Empresas() {
       return;
     }
 
+    const cnpjDigits = (formData.cnpj || '').replace(/\D/g, '');
+    if (cnpjDigits && !isValidCNPJ(cnpjDigits)) {
+      toast.error('CNPJ inválido');
+      return;
+    }
+
     try {
+      const payload = {
+        ...formData,
+        cnpj: cnpjDigits || null
+      };
       if (editingEmpresa) {
-        await empresaService.update(editingEmpresa.id, formData);
+        await empresaService.update(editingEmpresa.id, payload);
         toast.success('Empresa atualizada com sucesso!');
       } else {
-        await empresaService.create(formData);
+        await empresaService.create(payload);
         toast.success('Empresa criada com sucesso!');
       }
       handleCloseModal();
@@ -137,8 +148,19 @@ export default function Empresas() {
   const filteredEmpresas = empresas.filter(empresa =>
     empresa.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     empresa.cnpj?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    empresa.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    empresa.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    empresa.codigo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const maskCNPJ = (value) => {
+    const digits = String(value || '').replace(/\D/g, '').slice(0, 14);
+    // máscara progressiva
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return digits.replace(/(\d{2})(\d{0,3})/, '$1.$2');
+    if (digits.length <= 8) return digits.replace(/(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
+    if (digits.length <= 12) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{0,4})/, '$1.$2.$3/$4');
+    return formatCNPJ(digits);
+  };
 
   const totalEmpresas = empresas.length;
   const ativasEmpresas = empresas.filter((e) => e.ativo).length;
@@ -336,7 +358,13 @@ export default function Empresas() {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Código
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                       Empresa
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Tipo
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                       CNPJ
@@ -365,6 +393,11 @@ export default function Empresas() {
                   {filteredEmpresas.map((empresa) => (
                     <tr key={empresa.id} className="hover:bg-slate-50 transition">
                       <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-3 py-1 text-xs rounded-full font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                          {empresa.codigo || '-'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center">
                             <Building2 className="text-primary-600" size={20} />
@@ -376,7 +409,12 @@ export default function Empresas() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-rose-500 font-medium">{empresa.cnpj || '-'}</span>
+                        <span className="px-3 py-1 text-xs rounded-full font-semibold bg-primary-50 text-primary-700 border border-primary-100">
+                          {formatTipoSistema(empresa.tipoSistema)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-rose-500 font-medium">{empresa.cnpj ? formatCNPJ(empresa.cnpj) : '-'}</span>
                       </td>
                       <td className="px-6 py-4">
                         <div>
@@ -449,7 +487,8 @@ export default function Empresas() {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">{empresa.nome}</p>
-                        <p className="text-xs text-rose-500 font-medium">{empresa.cnpj || 'Sem CNPJ'}</p>
+                        <p className="text-xs text-slate-500 font-semibold">{empresa.codigo || '-'}</p>
+                        <p className="text-xs text-rose-500 font-medium">{empresa.cnpj ? formatCNPJ(empresa.cnpj) : 'Sem CNPJ'}</p>
                       </div>
                     </div>
                     <span
@@ -568,7 +607,7 @@ export default function Empresas() {
                   <input
                     type="text"
                     value={formData.cnpj}
-                    onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, cnpj: maskCNPJ(e.target.value) })}
                     className="input w-full"
                     placeholder="00.000.000/0000-00"
                   />

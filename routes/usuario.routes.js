@@ -1,6 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { Usuario, Empresa } from '../models/index.js';
+import { ensureValidCPF, normalizeCPF } from '../utils/brDocuments.js';
 
 const router = express.Router();
 
@@ -121,7 +122,13 @@ router.put('/me', async (req, res) => {
     const updateData = {};
     if (dados.nome != null) updateData.nome = dados.nome;
     if (dados.email != null) updateData.email = dados.email;
-    if (dados.cpf != null) updateData.cpf = dados.cpf;
+    if (dados.cpf != null) {
+      try {
+        updateData.cpf = ensureValidCPF(dados.cpf);
+      } catch (e) {
+        return res.status(400).json({ error: e.message || 'CPF inválido' });
+      }
+    }
 
     // Frontend usa "telefone"; modelo usa "contato"
     if (dados.telefone != null) updateData.contato = dados.telefone;
@@ -280,6 +287,16 @@ router.post('/', async (req, res) => {
     const permissoes = normalizePermissoes(dados.permissoes);
     delete dados.permissoes;
 
+    if (dados.cpf != null && String(dados.cpf).trim() !== '') {
+      try {
+        dados.cpf = ensureValidCPF(dados.cpf);
+      } catch (e) {
+        return res.status(400).json({ error: e.message || 'CPF inválido' });
+      }
+    } else if (dados.cpf != null) {
+      dados.cpf = normalizeCPF(dados.cpf);
+    }
+
     try {
       const usuario = await Usuario.create({
         ...dados,
@@ -331,6 +348,16 @@ router.put('/:id', async (req, res) => {
 
     if (dadosAtualizados.crmUf != null) {
       dadosAtualizados.crmUf = String(dadosAtualizados.crmUf).toUpperCase();
+    }
+
+    if (dadosAtualizados.cpf != null && String(dadosAtualizados.cpf).trim() !== '') {
+      try {
+        dadosAtualizados.cpf = ensureValidCPF(dadosAtualizados.cpf);
+      } catch (e) {
+        return res.status(400).json({ error: e.message || 'CPF inválido' });
+      }
+    } else if (dadosAtualizados.cpf != null) {
+      dadosAtualizados.cpf = normalizeCPF(dadosAtualizados.cpf);
     }
     
     if (senha) {

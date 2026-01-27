@@ -5,6 +5,7 @@ import HeroBackground from '../components/HeroBackground';
 import authService from '../services/auth.service';
 import toast from 'react-hot-toast';
 import { errorMessage, customErrorMessage } from '../utils/toastMessages';
+import { formatCPF, formatCNPJ, isValidCPF, isValidCNPJ } from '../utils/locale';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -40,11 +41,51 @@ export default function Register() {
   ];
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    const maskCPF = (v) => {
+      const digits = String(v || '').replace(/\D/g, '').slice(0, 11);
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return digits.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+      if (digits.length <= 9) return digits.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+      return formatCPF(digits);
+    };
+
+    const maskCNPJ = (v) => {
+      const digits = String(v || '').replace(/\D/g, '').slice(0, 14);
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 5) return digits.replace(/(\d{2})(\d{0,3})/, '$1.$2');
+      if (digits.length <= 8) return digits.replace(/(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
+      if (digits.length <= 12) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{0,4})/, '$1.$2.$3/$4');
+      return formatCNPJ(digits);
+    };
+
+    if (name === 'cpf') {
+      setFormData({ ...formData, cpf: maskCPF(value) });
+      return;
+    }
+    if (name === 'cnpj') {
+      setFormData({ ...formData, cnpj: maskCNPJ(value) });
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const cpfDigits = (formData.cpf || '').replace(/\D/g, '');
+    const cnpjDigits = (formData.cnpj || '').replace(/\D/g, '');
+
+    if (!isValidCNPJ(cnpjDigits)) {
+      toast.error('CNPJ inválido');
+      return;
+    }
+    if (!isValidCPF(cpfDigits)) {
+      toast.error('CPF inválido');
+      return;
+    }
 
     if (formData.senha !== formData.confirmarSenha) {
       toast.error(customErrorMessage('passwordMismatch'));
@@ -57,11 +98,11 @@ export default function Register() {
       await authService.register({
         tipoSistema: formData.tipoSistema,
         nomeEmpresa: formData.nomeEmpresa,
-        cnpj: formData.cnpj,
+        cnpj: cnpjDigits,
         nomeAdmin: formData.nomeUsuario,
         email: formData.email,
         senha: formData.senha,
-        cpf: formData.cpf,
+        cpf: cpfDigits,
         contato: formData.contato,
       });
 

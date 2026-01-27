@@ -1,7 +1,8 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { Usuario, Empresa } from '../models/index.js';
+import { sequelize, Usuario, Empresa } from '../models/index.js';
+import { ensureValidCPF, ensureValidCNPJ } from '../utils/brDocuments.js';
 
 const router = express.Router();
 
@@ -139,30 +140,57 @@ router.post('/register', async (req, res) => {
 
     // Se houver nomeEmpresa, executa onboarding completo
     if (nomeEmpresa && typeof nomeEmpresa === 'string' && nomeEmpresa.trim().length > 0) {
+      // Valida documentos (somente dígitos no banco)
+      let cnpjDigits = null;
+      let cpfDigits = null;
+      try {
+        cnpjDigits = ensureValidCNPJ(cnpj);
+        cpfDigits = ensureValidCPF(cpf);
+      } catch (e) {
+        return res.status(400).json({ error: e.message || 'Documento inválido', field: e.field });
+      }
+
+      if (!cnpjDigits) {
+        return res.status(400).json({ error: 'CNPJ é obrigatório' });
+      }
+      if (!cpfDigits) {
+        return res.status(400).json({ error: 'CPF é obrigatório' });
+      }
+
       // Cria empresa com tipoSistema (inclui fisioterapia)
-      const empresa = await Empresa.create({
-        nome: nomeEmpresa,
-        tipoSistema: tipoSistema || 'casa-repouso',
-        cnpj,
-        email, // opcionalmente usa o mesmo email como contato da empresa
-        telefone: contato
-      });
+      const { empresa, usuario } = await sequelize.transaction(async (t) => {
+        const empresa = await Empresa.create(
+          {
+            nome: nomeEmpresa,
+            tipoSistema: tipoSistema || 'casa-repouso',
+            cnpj: cnpjDigits,
+            email, // opcionalmente usa o mesmo email como contato da empresa
+            telefone: contato
+          },
+          { transaction: t }
+        );
 
-      const adminNome = nomeAdmin || nomeUsuario || 'Administrador';
+        const adminNome = nomeAdmin || nomeUsuario || 'Administrador';
 
-      const usuario = await Usuario.create({
-        nome: adminNome,
-        email,
-        senha: senhaHash,
-        role: 'admin',
-        empresaId: empresa.id,
-        cpf,
-        contato
+        const usuario = await Usuario.create(
+          {
+            nome: adminNome,
+            email,
+            senha: senhaHash,
+            role: 'admin',
+            empresaId: empresa.id,
+            cpf: cpfDigits,
+            contato
+          },
+          { transaction: t }
+        );
+
+        return { empresa, usuario };
       });
 
       return res.status(201).json({
         message: 'Empresa e usuário administrador criados com sucesso',
-        empresa: { id: empresa.id, nome: empresa.nome, tipoSistema: empresa.tipoSistema },
+        empresa: { id: empresa.id, nome: empresa.nome, tipoSistema: empresa.tipoSistema, codigo: empresa.codigo },
         usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, role: usuario.role }
       });
     }

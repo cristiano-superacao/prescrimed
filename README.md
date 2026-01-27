@@ -244,6 +244,7 @@ npm run predeploy        # Pré-check + build automático
 npm run seed:minimal     # Seed mínimo (1 empresa + 4 usuários + 3 pacientes)
 npm run seed:demo        # Seed completo com dados demo
 npm run create:superadmin # Criar/atualizar super admin
+npm run backfill:empresa:codigo # Preencher codigo/codigoNumero em empresas antigas
 npm run smoke:api        # Smoke test completo da API
 npm run sanity:rules     # Valida regras: inativação (pacientes), histórico de evoluções
 npm run check:railway    # Validar configuração do Railway

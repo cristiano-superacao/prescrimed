@@ -42,6 +42,8 @@
     "export:mysql": "node scripts/export-mysql-data.js",
     "import:railway": "node scripts/import-json-to-railway.js",
     "db:migrate:railway": "powershell -ExecutionPolicy Bypass -File scripts/migrate-local-to-railway.ps1"
+    ,
+    "backfill:empresa:codigo": "node scripts/backfill-empresa-codigo.js"
   },
   "engines": {
     "node": ">=20.0.0",

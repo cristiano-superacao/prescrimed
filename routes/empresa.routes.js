@@ -1,7 +1,8 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { Empresa, Usuario } from '../models/index.js';
+import { sequelize, Empresa, Usuario } from '../models/index.js';
 import { requireRole } from '../middleware/auth.middleware.js';
+import { ensureValidCNPJ, normalizeCNPJ } from '../utils/brDocuments.js';
 
 const router = express.Router();
 
@@ -64,7 +65,13 @@ router.put('/me', async (req, res) => {
     const { nome, cnpj, endereco, telefone, email } = req.body || {};
     const updateData = {};
     if (nome != null) updateData.nome = nome;
-    if (cnpj != null) updateData.cnpj = cnpj;
+    if (cnpj != null) {
+      try {
+        updateData.cnpj = cnpj ? ensureValidCNPJ(cnpj) : null;
+      } catch (e) {
+        return res.status(400).json({ error: e.message || 'CNPJ inválido' });
+      }
+    }
     if (endereco != null) updateData.endereco = endereco;
     if (telefone != null) updateData.telefone = telefone;
     if (email != null) updateData.email = email;
@@ -108,7 +115,15 @@ router.post(
   [
     body('nome').isString().trim().notEmpty().withMessage('Nome é obrigatório'),
     body('tipoSistema').optional().isIn(['casa-repouso', 'fisioterapia', 'petshop']).withMessage('tipoSistema inválido'),
-    body('cnpj').optional().isString().isLength({ min: 5 }).withMessage('CNPJ inválido'),
+    body('cnpj')
+      .optional({ checkFalsy: true })
+      .customSanitizer((v) => normalizeCNPJ(v) || null)
+      .custom((v) => {
+        if (!v) return true;
+        ensureValidCNPJ(v);
+        return true;
+      })
+      .withMessage('CNPJ inválido'),
     body('email').optional().isEmail().withMessage('Email inválido'),
     body('telefone').optional().isString(),
     body('endereco').optional().isString(),
@@ -124,32 +139,44 @@ router.post(
 
       const { nome, tipoSistema, cnpj, email, telefone, endereco, plano } = req.body;
 
-      // Evita duplicidade por CNPJ
-      if (cnpj) {
-        const existente = await Empresa.findOne({ where: { cnpj } });
-        if (existente) {
-          return res.status(409).json({ error: 'CNPJ já cadastrado', empresaId: existente.id });
+      const created = await sequelize.transaction(async (t) => {
+        // Evita duplicidade por CNPJ (normalizado)
+        if (cnpj) {
+          const existente = await Empresa.findOne({ where: { cnpj }, transaction: t });
+          if (existente) {
+            const err = new Error('CNPJ já cadastrado');
+            err.status = 409;
+            err.empresaId = existente.id;
+            throw err;
+          }
         }
-      }
 
-      const novaEmpresa = await Empresa.create({ 
-        nome, 
-        tipoSistema: tipoSistema || 'casa-repouso', 
-        cnpj, 
-        email, 
-        telefone, 
-        endereco, 
-        plano: plano || 'basico',
-        ativo: req.body.ativo !== undefined ? req.body.ativo : true
+        const novaEmpresa = await Empresa.create(
+          {
+            nome,
+            tipoSistema: tipoSistema || 'casa-repouso',
+            cnpj,
+            email,
+            telefone,
+            endereco,
+            plano: plano || 'basico',
+            ativo: req.body.ativo !== undefined ? req.body.ativo : true
+          },
+          { transaction: t }
+        );
+
+        return Empresa.findByPk(novaEmpresa.id, {
+          include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }],
+          transaction: t
+        });
       });
-      
-      const empresaCompleta = await Empresa.findByPk(novaEmpresa.id, {
-        include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }]
-      });
-      
-      return res.status(201).json(empresaCompleta);
+
+      return res.status(201).json(created);
     } catch (error) {
       console.error('Erro ao criar empresa:', error);
+      if (error?.status === 409) {
+        return res.status(409).json({ error: error.message, empresaId: error.empresaId });
+      }
       // Trata erro de unicidade
       if (error.name === 'SequelizeUniqueConstraintError') {
         return res.status(409).json({ error: 'Valor único já existente', details: error.errors });
@@ -166,7 +193,15 @@ router.put(
   [
     body('nome').optional().isString().trim().notEmpty().withMessage('Nome não pode ser vazio'),
     body('tipoSistema').optional().isIn(['casa-repouso', 'fisioterapia', 'petshop']).withMessage('tipoSistema inválido'),
-    body('cnpj').optional().isString().withMessage('CNPJ inválido'),
+    body('cnpj')
+      .optional({ checkFalsy: true })
+      .customSanitizer((v) => normalizeCNPJ(v) || null)
+      .custom((v) => {
+        if (!v) return true;
+        ensureValidCNPJ(v);
+        return true;
+      })
+      .withMessage('CNPJ inválido'),
     body('email').optional().isEmail().withMessage('Email inválido'),
     body('telefone').optional().isString(),
     body('endereco').optional().isString(),
@@ -188,15 +223,16 @@ router.put(
 
       // Verificar CNPJ duplicado (se estiver sendo alterado)
       if (req.body.cnpj && req.body.cnpj !== empresa.cnpj) {
-        const existente = await Empresa.findOne({ 
-          where: { cnpj: req.body.cnpj } 
-        });
+        const existente = await Empresa.findOne({ where: { cnpj: req.body.cnpj } });
         if (existente) {
           return res.status(409).json({ error: 'CNPJ já cadastrado' });
         }
       }
-      
-      await empresa.update(req.body);
+
+      // Não permitir alteração manual do código sequencial
+      const { codigo, codigoNumero, ...safeBody } = req.body || {};
+
+      await empresa.update(safeBody);
       
       const empresaAtualizada = await Empresa.findByPk(req.params.id, {
         include: [{ model: Usuario, as: 'usuarios', attributes: ['id', 'nome', 'email', 'role'] }]

@@ -38,7 +38,7 @@ import { spawn } from 'child_process'; // Executa scripts auxiliares sem bloquea
 // Importa rotas e configuração do banco de dados
 import apiRouter from './routes/index.js'; // Router principal da API
 import { errorHandler } from './middleware/error.middleware.js';
-import { sequelize, Usuario } from './models/index.js'; // Instância do Sequelize (ORM)
+import { sequelize, Usuario, Empresa } from './models/index.js'; // Instância do Sequelize (ORM)
 
 /**
  * Configuração do __dirname para ES Modules
@@ -237,6 +237,21 @@ async function connectDB(retryCount = 0) {
           }
         } catch {
           // Se a tabela ainda não existir (primeiro deploy), precisa criar.
+          useAlter = true;
+        }
+      }
+
+      // Detecta schema desatualizado em empresas (código sequencial por tipo)
+      if (!useAlter) {
+        try {
+          const qi = sequelize.getQueryInterface();
+          const tableName = Empresa.getTableName();
+          const cols = await qi.describeTable(tableName);
+          if (!cols?.codigo || !cols?.codigoNumero) {
+            console.log('🔧 Schema desatualizado detectado (faltando colunas codigo/codigoNumero em empresas) - aplicando alter...');
+            useAlter = true;
+          }
+        } catch {
           useAlter = true;
         }
       }
