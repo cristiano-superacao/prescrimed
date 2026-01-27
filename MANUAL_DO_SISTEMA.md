@@ -6,6 +6,11 @@
 - Casa de Repouso/PetShop: Administrador, Enfermeiro, Assistente Social, Médico (Super Admin sempre pode).
 - Fisioterapia: Administrador, Enfermeiro, Assistente Social, Fisioterapeuta, Médico (Super Admin sempre pode).
 
+### Quem pode editar/excluir Residentes
+
+- As mesmas regras de cadastro se aplicam à edição e à exclusão.
+- Se você não tiver permissão, os botões de Editar/Excluir aparecem desabilitados e, ao tentar acionar, o sistema mostra uma mensagem explicativa.
+
 ### Isolamento por Empresa
 
 - Usuários visualizam e operam apenas dados da própria empresa.

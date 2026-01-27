@@ -7,11 +7,13 @@
 - RBAC no cadastro de Residentes conforme `Empresa.tipoSistema` (Casa de Repouso/PetShop vs Fisioterapia).
 - Proteção de `routes/paciente.routes.js` com `authenticate` + `tenantIsolation` em todas as rotas.
 - Inclusão do role `medico` no enum `usuarios.role` com garantia dinâmica no `server.js`.
+ - RBAC estendido para edição e exclusão de Residentes (PUT/DELETE), com `403` e `code: access_denied` quando sem permissão.
 
 ## Frontend
 - Utilitário `handleApiError` centralizado para mensagens amigáveis.
 - Atualização das páginas principais para usar mensagens claras e traduzidas por código.
 - Botão “Novo Residente” com desabilitação e tooltip quando o perfil não possui permissão.
+ - Ações “Editar” e “Excluir” em Residentes agora respeitam RBAC (botões desabilitados + mensagem amigável quando acionados sem acesso).
 
 ## Documentação
 - README atualizado com seção de Atualizações (26 jan 2026).

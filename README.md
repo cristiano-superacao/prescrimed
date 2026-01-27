@@ -716,3 +716,11 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ---
 
 **Desenvolvido com ❤️ mantendo o layout responsivo e profissional em todas as telas**
+
+---
+
+## Atualizações – 26 jan 2026
+
+- RBAC estendido para edição e exclusão de Residentes, com as mesmas regras já aplicadas ao cadastro por `tipoSistema` da empresa e `role` do usuário (superadmin mantém acesso total).
+- UI atualizada: botões Editar/Excluir ficam desabilitados quando não há permissão e exibem mensagem amigável quando acionados sem acesso.
+- Backend retorna `code: access_denied` padronizado; frontend converte para mensagens claras ao usuário.

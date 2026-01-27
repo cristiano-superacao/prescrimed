@@ -8,6 +8,13 @@
   - Casa de Repouso/PetShop: `admin`, `enfermeiro`, `assistente_social`, `medico`, `superadmin`.
   - Fisioterapia: `admin`, `enfermeiro`, `assistente_social`, `fisioterapeuta`, `medico`, `superadmin`.
 
+### RBAC em Edição e Remoção de Residentes
+
+- As rotas `PUT /api/pacientes/:id` e `DELETE /api/pacientes/:id` agora aplicam as mesmas regras de RBAC do cadastro:
+  - Validação via `Empresa.tipoSistema` e `req.user.role` antes de atualizar/excluir.
+  - Respostas com `403` e `code: access_denied` quando sem permissão.
+  - Filtro de empresa permanece ativo pelo `tenantIsolation` (usuários não conseguem editar/excluir residentes de outra empresa).
+
 ### Isolamento Multi-Tenant
 
 - `middleware/auth.middleware.js`:

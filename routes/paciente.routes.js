@@ -63,6 +63,9 @@ const canCreateResident = (tipoSistema, role) => {
   return casaRepousoPetshopRoles.includes(role);
 };
 
+// Para manter consistência, aplicar mesmas regras para edição/remoção
+const canManageResident = canCreateResident;
+
 // Criar novo paciente
 router.post('/', authenticate, tenantIsolation, async (req, res) => {
   try {
@@ -76,7 +79,7 @@ router.post('/', authenticate, tenantIsolation, async (req, res) => {
     }
 
     if (!canCreateResident(empresa.tipoSistema, role)) {
-      return res.status(403).json({ error: 'Acesso negado: seu perfil não pode cadastrar residentes neste módulo' });
+      return res.status(403).json({ error: 'Acesso negado: seu perfil não pode cadastrar residentes neste módulo', code: 'access_denied' });
     }
 
     const paciente = await Paciente.create(req.body);
@@ -103,6 +106,21 @@ router.put('/:id', authenticate, tenantIsolation, async (req, res) => {
       return res.status(404).json({ error: 'Paciente não encontrado ou sem permissão de acesso' });
     }
     
+    // Verifica permissão de edição conforme tipoSistema da empresa
+    try {
+      const empresa = await Empresa.findByPk(paciente.empresaId);
+      const role = req.user?.role;
+      if (!empresa) {
+        return res.status(400).json({ error: 'Empresa inválida para edição do residente' });
+      }
+      if (!canManageResident(empresa.tipoSistema, role)) {
+        return res.status(403).json({ error: 'Acesso negado: seu perfil não pode editar residentes neste módulo', code: 'access_denied' });
+      }
+    } catch (e) {
+      console.error('Erro ao validar permissão de edição:', e);
+      return res.status(500).json({ error: 'Erro ao validar permissão de edição' });
+    }
+
     // Remove empresaId do body para evitar alteração
     const { empresaId, ...updateData } = req.body;
     
@@ -130,6 +148,21 @@ router.delete('/:id', authenticate, tenantIsolation, async (req, res) => {
       return res.status(404).json({ error: 'Paciente não encontrado ou sem permissão de acesso' });
     }
     
+    // Verifica permissão de exclusão conforme tipoSistema da empresa
+    try {
+      const empresa = await Empresa.findByPk(paciente.empresaId);
+      const role = req.user?.role;
+      if (!empresa) {
+        return res.status(400).json({ error: 'Empresa inválida para exclusão do residente' });
+      }
+      if (!canManageResident(empresa.tipoSistema, role)) {
+        return res.status(403).json({ error: 'Acesso negado: seu perfil não pode excluir residentes neste módulo', code: 'access_denied' });
+      }
+    } catch (e) {
+      console.error('Erro ao validar permissão de exclusão:', e);
+      return res.status(500).json({ error: 'Erro ao validar permissão de exclusão' });
+    }
+
     await paciente.destroy();
     res.json({ message: 'Paciente deletado com sucesso' });
   } catch (error) {

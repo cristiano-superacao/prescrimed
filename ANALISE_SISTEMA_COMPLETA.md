@@ -20,6 +20,8 @@ Sistema analisado e corrigido em **todas as camadas** (atualização 26/01):
 - Inclusão do role `medico` e suporte na UI.
 - Tratamento de erros amigáveis no frontend com utilitário centralizado.
 - Botão “Novo Residente” desabilita quando não permitido, mantendo layout responsivo e acessível.
+ - RBAC estendido para edição e exclusão de Residentes (PUT/DELETE) com retorno padronizado `403`/`code: access_denied`.
+ - Ações “Editar” e “Excluir” nos Residentes obedecem RBAC com desabilitação visual e mensagem amigável.
 
 
 ---

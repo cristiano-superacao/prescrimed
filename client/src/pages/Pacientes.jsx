@@ -162,6 +162,31 @@ export default function Pacientes() {
     idadeMedia
   };
 
+  // RBAC: permissões para editar/excluir residentes conforme tipoSistema e role
+  const { user } = useAuthStore.getState();
+  const role = user?.role;
+  const tipoSistema = user?.empresa?.tipoSistema || 'casa-repouso';
+  const canManage = role === 'superadmin'
+    || (tipoSistema === 'fisioterapia'
+      ? ['admin','enfermeiro','assistente_social','fisioterapeuta','medico'].includes(role)
+      : ['admin','enfermeiro','assistente_social','medico'].includes(role));
+
+  const onEditClick = (paciente) => {
+    if (!canManage) {
+      handleApiError({ response: { data: { code: 'access_denied' } } }, 'Acesso negado: seu perfil não pode editar residentes neste módulo');
+      return;
+    }
+    handleEdit(paciente);
+  };
+
+  const onDeleteClick = (id, nome) => {
+    if (!canManage) {
+      handleApiError({ response: { data: { code: 'access_denied' } } }, 'Acesso negado: seu perfil não pode excluir residentes neste módulo');
+      return;
+    }
+    handleDelete(id, nome);
+  };
+
   const normalizeDate = (value) => {
     if (!value) return undefined;
     if (value instanceof Date && !Number.isNaN(value.getTime())) {
@@ -542,16 +567,17 @@ export default function Pacientes() {
                       <FileText size={18} />
                     </button>
                     <button
-                      onClick={() => handleEdit(paciente)}
+                      onClick={() => onEditClick(paciente)}
                       className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                       title="Editar paciente"
                       aria-label="Editar paciente"
+                      disabled={!canManage}
                     >
                       <Edit2 size={18} />
                     </button>
                     <button
-                      onClick={() => handleDelete(paciente.id || paciente._id, paciente.nome)}
-                      disabled={deletingId === (paciente.id || paciente._id)}
+                      onClick={() => onDeleteClick(paciente.id || paciente._id, paciente.nome)}
+                      disabled={!canManage || deletingId === (paciente.id || paciente._id)}
                       className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Excluir paciente"
                       aria-label="Excluir paciente"
@@ -599,19 +625,20 @@ export default function Pacientes() {
                           variant="emerald"
                         />
                         <ActionIconButton
-                          onClick={() => handleEdit(paciente)}
+                          onClick={() => onEditClick(paciente)}
                           icon={Edit2}
                           tooltip="Editar"
                           ariaLabel="Editar paciente"
                           variant="primary"
+                          disabled={!canManage}
                         />
                         <ActionIconButton
-                          onClick={() => handleDelete(paciente.id || paciente._id, paciente.nome)}
+                          onClick={() => onDeleteClick(paciente.id || paciente._id, paciente.nome)}
                           icon={Trash2}
                           tooltip="Excluir"
                           ariaLabel="Excluir paciente"
                           variant="danger"
-                          disabled={deletingId === (paciente.id || paciente._id)}
+                          disabled={!canManage || deletingId === (paciente.id || paciente._id)}
                           loading={deletingId === (paciente.id || paciente._id)}
                         />
                       </div>
