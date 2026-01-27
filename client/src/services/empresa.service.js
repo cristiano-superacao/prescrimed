@@ -26,6 +26,25 @@ const empresaService = {
     return del(`/empresas/${id}`);
   },
 
+  // Excluir definitivamente (remove dados relacionados) - superadmin
+  deleteForce: async (id) => {
+    return del(`/empresas/${id}?force=true`);
+  },
+
+  // ===== Trial (superadmin) =====
+  trialStart: async (id, dias) => {
+    return post(`/empresas/${id}/trial/start`, { dias });
+  },
+  trialExtend: async (id, dias) => {
+    return post(`/empresas/${id}/trial/extend`, { dias });
+  },
+  trialEnd: async (id) => {
+    return post(`/empresas/${id}/trial/end`, {});
+  },
+  trialConvert: async (id, plano) => {
+    return post(`/empresas/${id}/trial/convert`, { plano });
+  },
+
   // Buscar empresa do usuário autenticado
   getMyCompany: async () => {
     return get('/empresas/me');

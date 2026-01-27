@@ -1,6 +1,20 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { sequelize, Empresa, Usuario } from '../models/index.js';
+import {
+  sequelize,
+  Empresa,
+  Usuario,
+  Paciente,
+  Prescricao,
+  Agendamento,
+  CasaRepousoLeito,
+  Pet,
+  SessaoFisio,
+  EstoqueItem,
+  EstoqueMovimentacao,
+  FinanceiroTransacao,
+  RegistroEnfermagem
+} from '../models/index.js';
 import { requireRole } from '../middleware/auth.middleware.js';
 import { ensureValidCNPJ, normalizeCNPJ } from '../utils/brDocuments.js';
 
@@ -106,6 +120,126 @@ router.get('/:id', requireRole('superadmin'), async (req, res) => {
     res.status(500).json({ error: 'Erro ao buscar empresa' });
   }
 });
+
+// ===== Período de Teste (trial) =====
+// Iniciar teste: define início/fim automaticamente a partir de agora
+router.post(
+  '/:id/trial/start',
+  requireRole('superadmin'),
+  [body('dias').isInt({ min: 1, max: 3650 }).withMessage('dias deve ser um inteiro entre 1 e 3650')],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: 'Dados inválidos', details: errors.array() });
+      }
+
+      const empresa = await Empresa.findByPk(req.params.id);
+      if (!empresa) return res.status(404).json({ error: 'Empresa não encontrada' });
+
+      const dias = Number(req.body.dias);
+      const inicio = new Date();
+      const fim = new Date(inicio.getTime() + dias * 24 * 60 * 60 * 1000);
+
+      await empresa.update({
+        emTeste: true,
+        testeDias: dias,
+        testeInicio: inicio,
+        testeFim: fim,
+        ativo: true
+      });
+
+      return res.json(empresa);
+    } catch (error) {
+      console.error('Erro ao iniciar teste:', error);
+      return res.status(500).json({ error: 'Erro ao iniciar período de teste' });
+    }
+  }
+);
+
+// Prorrogar teste: adiciona dias ao fim (ou reinicia a partir de agora se já venceu)
+router.post(
+  '/:id/trial/extend',
+  requireRole('superadmin'),
+  [body('dias').isInt({ min: 1, max: 3650 }).withMessage('dias deve ser um inteiro entre 1 e 3650')],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: 'Dados inválidos', details: errors.array() });
+      }
+
+      const empresa = await Empresa.findByPk(req.params.id);
+      if (!empresa) return res.status(404).json({ error: 'Empresa não encontrada' });
+
+      const dias = Number(req.body.dias);
+      const now = new Date();
+      const currentFim = empresa.testeFim ? new Date(empresa.testeFim) : null;
+      const base = currentFim && !Number.isNaN(currentFim.getTime()) && currentFim > now ? currentFim : now;
+      const fim = new Date(base.getTime() + dias * 24 * 60 * 60 * 1000);
+      const inicio = empresa.testeInicio ? new Date(empresa.testeInicio) : now;
+
+      await empresa.update({
+        emTeste: true,
+        testeDias: (empresa.testeDias || 0) + dias,
+        testeInicio: inicio,
+        testeFim: fim,
+        ativo: true
+      });
+
+      return res.json(empresa);
+    } catch (error) {
+      console.error('Erro ao prorrogar teste:', error);
+      return res.status(500).json({ error: 'Erro ao prorrogar período de teste' });
+    }
+  }
+);
+
+// Encerrar teste: desativa modo teste (mantém datas para histórico)
+router.post('/:id/trial/end', requireRole('superadmin'), async (req, res) => {
+  try {
+    const empresa = await Empresa.findByPk(req.params.id);
+    if (!empresa) return res.status(404).json({ error: 'Empresa não encontrada' });
+
+    await empresa.update({ emTeste: false });
+    return res.json(empresa);
+  } catch (error) {
+    console.error('Erro ao encerrar teste:', error);
+    return res.status(500).json({ error: 'Erro ao encerrar período de teste' });
+  }
+});
+
+// Converter teste em plano ativo: define plano e desativa modo teste
+router.post(
+  '/:id/trial/convert',
+  requireRole('superadmin'),
+  [body('plano').isIn(['basico', 'profissional', 'empresa']).withMessage('plano inválido')],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: 'Dados inválidos', details: errors.array() });
+      }
+
+      const empresa = await Empresa.findByPk(req.params.id);
+      if (!empresa) return res.status(404).json({ error: 'Empresa não encontrada' });
+
+      await empresa.update({
+        plano: req.body.plano,
+        emTeste: false,
+        testeInicio: null,
+        testeFim: null,
+        testeDias: null,
+        ativo: true
+      });
+
+      return res.json(empresa);
+    } catch (error) {
+      console.error('Erro ao converter teste:', error);
+      return res.status(500).json({ error: 'Erro ao converter teste em plano ativo' });
+    }
+  }
+);
 
 // Criar nova empresa
 // Criar nova empresa (apenas superadmin)
@@ -260,16 +394,44 @@ router.delete('/:id', requireRole('superadmin'), async (req, res) => {
       return res.status(404).json({ error: 'Empresa não encontrada' });
     }
 
-    // Verificar se há usuários vinculados
-    if (empresa.usuarios && empresa.usuarios.length > 0) {
-      return res.status(400).json({ 
-        error: 'Não é possível deletar empresa com usuários vinculados',
+    const force = String(req.query?.force || '').toLowerCase() === 'true';
+
+    // Mantém comportamento seguro por padrão
+    if (!force && empresa.usuarios && empresa.usuarios.length > 0) {
+      return res.status(400).json({
+        error: 'Não é possível deletar empresa com usuários vinculados (use ?force=true para exclusão definitiva)',
         usuariosCount: empresa.usuarios.length
       });
     }
-    
-    await empresa.destroy();
-    res.json({ message: 'Empresa deletada com sucesso' });
+
+    if (!force) {
+      await empresa.destroy();
+      return res.json({ message: 'Empresa deletada com sucesso' });
+    }
+
+    // Exclusão definitiva: remove todos os dados relacionados por empresaId
+    const result = await sequelize.transaction(async (t) => {
+      const empresaId = empresa.id;
+
+      const counts = {};
+      // Ordem importa por FKs
+      counts.estoqueMovimentacoes = await EstoqueMovimentacao.destroy({ where: { empresaId }, transaction: t });
+      counts.estoqueItens = await EstoqueItem.destroy({ where: { empresaId }, transaction: t });
+      counts.financeiroTransacoes = await FinanceiroTransacao.destroy({ where: { empresaId }, transaction: t });
+      counts.registrosEnfermagem = await RegistroEnfermagem.destroy({ where: { empresaId }, transaction: t });
+      counts.prescricoes = await Prescricao.destroy({ where: { empresaId }, transaction: t });
+      counts.agendamentos = await Agendamento.destroy({ where: { empresaId }, transaction: t });
+      counts.leitos = await CasaRepousoLeito.destroy({ where: { empresaId }, transaction: t });
+      counts.pets = await Pet.destroy({ where: { empresaId }, transaction: t });
+      counts.sessoesFisio = await SessaoFisio.destroy({ where: { empresaId }, transaction: t });
+      counts.pacientes = await Paciente.destroy({ where: { empresaId }, transaction: t });
+      counts.usuarios = await Usuario.destroy({ where: { empresaId }, transaction: t });
+
+      await empresa.destroy({ transaction: t });
+      return counts;
+    });
+
+    return res.json({ message: 'Empresa e dados relacionados deletados com sucesso', deleted: result });
   } catch (error) {
     console.error('Erro ao deletar empresa:', error);
     res.status(500).json({ error: 'Erro ao deletar empresa' });

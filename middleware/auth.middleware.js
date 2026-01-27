@@ -22,6 +22,28 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: 'Usuário inválido ou inativo' });
     }
 
+    // Bloqueio por empresa inativa ou teste vencido (não afeta superadmin)
+    if (usuario.role !== 'superadmin') {
+      const empresa = usuario.empresa;
+      if (!empresa || empresa.ativo === false) {
+        return res.status(403).json({
+          error: 'Empresa bloqueada ou inativa. Entre em contato com o suporte.',
+          code: 'empresa_inativa'
+        });
+      }
+
+      if (empresa.emTeste && empresa.testeFim) {
+        const fim = new Date(empresa.testeFim);
+        if (!Number.isNaN(fim.getTime()) && new Date() > fim) {
+          return res.status(403).json({
+            error: 'Período de teste vencido. Entre em contato com o administrador para prorrogar ou ativar um plano.',
+            code: 'trial_expired',
+            details: { testeFim: empresa.testeFim }
+          });
+        }
+      }
+    }
+
     // Anexar informações do usuário à requisição
     req.user = {
       id: usuario.id,

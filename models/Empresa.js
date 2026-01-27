@@ -92,6 +92,24 @@ const Empresa = sequelize.define('Empresa', {
     type: DataTypes.ENUM('basico', 'profissional', 'empresa'),
     defaultValue: 'basico'
   },
+  // Período de teste (trial)
+  emTeste: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  testeInicio: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  testeFim: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  testeDias: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   ativo: {
     type: DataTypes.BOOLEAN,
     defaultValue: true

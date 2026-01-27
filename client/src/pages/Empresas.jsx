@@ -127,19 +127,53 @@ export default function Empresas() {
     }
   };
 
-  const handleDelete = async (id, nome) => {
-    const confirmMessage = `Tem certeza que deseja excluir a empresa "${nome}"?\n\nEsta ação não pode ser desfeita e todos os dados associados serão perdidos.`;
-    if (!window.confirm(confirmMessage)) {
+  const handleDelete = async (id) => {
+    const empresa = empresas.find((e) => String(e.id) === String(id));
+    if (!empresa) return;
+
+    // Comportamento seguro: primeiro inativar; exclusão definitiva apenas se já estiver inativa.
+    if (empresa.ativo) {
+      const ok = window.confirm(
+        `Inativar a empresa "${empresa.nome}"?\n\n` +
+        `Recomendado: a empresa ficará bloqueada para login e uso, mas os dados ficam preservados.\n\n` +
+        `Para excluir definitivamente, primeiro inative e depois exclua.`
+      );
+      if (!ok) return;
+
+      try {
+        setDeletingId(id);
+        await empresaService.update(id, { ativo: false });
+        toast.success('Empresa inativada com sucesso!');
+        await loadEmpresas();
+      } catch (error) {
+        handleApiError(error, 'Erro ao inativar empresa');
+      } finally {
+        setDeletingId(null);
+      }
+      return;
+    }
+
+    const ok = window.confirm(
+      `Excluir DEFINITIVAMENTE a empresa "${empresa.nome}"?\n\n` +
+      `Isso remove a empresa e dados relacionados (pacientes, usuários, prescrições, etc).\n` +
+      `Esta ação NÃO pode ser desfeita.`
+    );
+    if (!ok) return;
+
+    const expected = empresa.codigo || empresa.nome;
+    const typed = window.prompt(`Digite "${expected}" para confirmar a exclusão definitiva:`);
+    if (!typed || typed.trim() !== String(expected)) {
+      toast.error('Confirmação inválida. Exclusão cancelada.');
       return;
     }
 
     try {
       setDeletingId(id);
-      await empresaService.delete(id);
-      toast.success('Empresa excluída com sucesso!');
-      loadEmpresas();
+      await empresaService.deleteForce(id);
+      toast.success('Empresa excluída definitivamente com sucesso!');
+      await loadEmpresas();
     } catch (error) {
-      handleApiError(error, 'Erro ao excluir empresa');
+      handleApiError(error, 'Erro ao excluir definitivamente');
     } finally {
       setDeletingId(null);
     }
@@ -165,7 +199,28 @@ export default function Empresas() {
   const totalEmpresas = empresas.length;
   const ativasEmpresas = empresas.filter((e) => e.ativo).length;
   const inativasEmpresas = empresas.filter((e) => !e.ativo).length;
-  const bloqueadasEmpresas = 0;
+  const isTrialExpired = (empresa) => {
+    if (!empresa?.emTeste) return false;
+    if (!empresa?.testeFim) return false;
+    const fim = new Date(empresa.testeFim);
+    if (Number.isNaN(fim.getTime())) return false;
+    return fim.getTime() < Date.now();
+  };
+
+  const getTrialInfo = (empresa) => {
+    if (!empresa?.emTeste) return { label: 'Sem trial', tone: 'neutral' };
+    const fim = empresa?.testeFim ? new Date(empresa.testeFim) : null;
+    const validFim = fim && !Number.isNaN(fim.getTime());
+    const expired = isTrialExpired(empresa);
+    if (!validFim) return { label: expired ? 'Trial expirado' : 'Em trial', tone: expired ? 'danger' : 'warning' };
+
+    const ms = fim.getTime() - Date.now();
+    const days = Math.ceil(ms / (24 * 60 * 60 * 1000));
+    if (expired) return { label: `Trial expirou em ${formatDate(empresa.testeFim)}`, tone: 'danger' };
+    return { label: `Trial: ${days} dia(s)`, tone: 'warning' };
+  };
+
+  const bloqueadasEmpresas = empresas.filter((e) => e.ativo && isTrialExpired(e)).length;
 
   const formatPlano = (plano) => {
     if (plano === 'profissional') return 'Profissional';
@@ -231,9 +286,8 @@ export default function Empresas() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              disabled
-              title="Em breve"
-              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-500 text-sm font-semibold bg-white/70"
+              onClick={() => navigate('/backups')}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold bg-white hover:bg-slate-50"
             >
               <span className="inline-flex items-center gap-2">
                 <Database size={16} /> Backups
@@ -376,6 +430,9 @@ export default function Empresas() {
                       Plano
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Trial
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                       Usuários
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
@@ -428,6 +485,21 @@ export default function Empresas() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
+                        {(() => {
+                          const info = getTrialInfo(empresa);
+                          const cls = info.tone === 'danger'
+                            ? 'bg-red-50 text-red-700 border-red-200'
+                            : info.tone === 'warning'
+                              ? 'bg-amber-50 text-amber-700 border-amber-200'
+                              : 'bg-slate-100 text-slate-700 border-slate-200';
+                          return (
+                            <span className={`px-3 py-1 text-xs rounded-full font-semibold border ${cls}`}>
+                              {info.label}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-6 py-4">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                           <Users size={12} />
                           {formatUsuariosInfo(empresa)}
@@ -457,10 +529,10 @@ export default function Empresas() {
                             <Edit2 size={18} />
                           </button>
                           <button
-                            onClick={() => handleDelete(empresa.id, empresa.nome)}
+                            onClick={() => handleDelete(empresa.id)}
                             disabled={deletingId === empresa.id}
                             className="p-2 text-red-600 border border-red-200 hover:text-white hover:bg-red-600 rounded-lg transition disabled:opacity-50"
-                            title="Excluir"
+                            title={empresa.ativo ? 'Inativar' : 'Excluir definitivamente'}
                           >
                             {deletingId === empresa.id ? (
                               <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
@@ -512,6 +584,19 @@ export default function Empresas() {
                     <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-100">
                       {formatPlano(empresa.plano)}
                     </span>
+                    {(() => {
+                      const info = getTrialInfo(empresa);
+                      const cls = info.tone === 'danger'
+                        ? 'bg-red-50 text-red-700 border-red-200'
+                        : info.tone === 'warning'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-slate-100 text-slate-700 border-slate-200';
+                      return (
+                        <span className={`px-2.5 py-1 text-xs rounded-full font-semibold border ${cls}`}>
+                          {info.tone === 'neutral' ? 'Sem trial' : info.label}
+                        </span>
+                      );
+                    })()}
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                       <Users size={12} />
                       {formatUsuariosInfo(empresa)}
@@ -531,7 +616,7 @@ export default function Empresas() {
                       Editar
                     </button>
                     <button
-                      onClick={() => handleDelete(empresa.id, empresa.nome)}
+                      onClick={() => handleDelete(empresa.id)}
                       disabled={deletingId === empresa.id}
                       className="flex-1 px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50"
                     >
@@ -696,6 +781,112 @@ export default function Empresas() {
                   </label>
                 </div>
               </div>
+
+              {editingEmpresa && (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Período de teste (trial)</p>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Status: {getTrialInfo(editingEmpresa).label}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Início: {formatDate(editingEmpresa.testeInicio)} · Fim: {formatDate(editingEmpresa.testeFim)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const raw = window.prompt('Quantos dias de trial? (ex.: 7)');
+                        const dias = Number.parseInt(String(raw || '').trim(), 10);
+                        if (!Number.isFinite(dias) || dias <= 0) {
+                          toast.error('Informe um número de dias válido.');
+                          return;
+                        }
+                        try {
+                          const updated = await empresaService.trialStart(editingEmpresa.id, dias);
+                          toast.success('Trial iniciado com sucesso!');
+                          setEditingEmpresa(updated);
+                          await loadEmpresas();
+                        } catch (error) {
+                          handleApiError(error, 'Erro ao iniciar trial');
+                        }
+                      }}
+                      className="px-3 py-2 rounded-xl border border-amber-200 text-amber-800 text-sm font-semibold bg-amber-50 hover:bg-amber-100"
+                    >
+                      Iniciar trial
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const raw = window.prompt('Prorrogar por quantos dias? (ex.: 7)');
+                        const dias = Number.parseInt(String(raw || '').trim(), 10);
+                        if (!Number.isFinite(dias) || dias <= 0) {
+                          toast.error('Informe um número de dias válido.');
+                          return;
+                        }
+                        try {
+                          const updated = await empresaService.trialExtend(editingEmpresa.id, dias);
+                          toast.success('Trial prorrogado com sucesso!');
+                          setEditingEmpresa(updated);
+                          await loadEmpresas();
+                        } catch (error) {
+                          handleApiError(error, 'Erro ao prorrogar trial');
+                        }
+                      }}
+                      className="px-3 py-2 rounded-xl border border-amber-200 text-amber-800 text-sm font-semibold bg-white hover:bg-amber-50"
+                    >
+                      Prorrogar
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const ok = window.confirm('Encerrar o trial? A empresa continuará ativa, mas sem modo teste.');
+                        if (!ok) return;
+                        try {
+                          const updated = await empresaService.trialEnd(editingEmpresa.id);
+                          toast.success('Trial encerrado com sucesso!');
+                          setEditingEmpresa(updated);
+                          await loadEmpresas();
+                        } catch (error) {
+                          handleApiError(error, 'Erro ao encerrar trial');
+                        }
+                      }}
+                      className="px-3 py-2 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold bg-white hover:bg-slate-50"
+                    >
+                      Encerrar
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const ok = window.confirm(`Converter trial em plano "${formatPlano(formData.plano)}" e ativar empresa?`);
+                        if (!ok) return;
+                        try {
+                          const updated = await empresaService.trialConvert(editingEmpresa.id, formData.plano);
+                          toast.success('Trial convertido em plano com sucesso!');
+                          setEditingEmpresa(updated);
+                          await loadEmpresas();
+                        } catch (error) {
+                          handleApiError(error, 'Erro ao converter trial');
+                        }
+                      }}
+                      className="px-3 py-2 rounded-xl border border-emerald-200 text-emerald-800 text-sm font-semibold bg-emerald-50 hover:bg-emerald-100"
+                    >
+                      Converter em plano
+                    </button>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 mt-3">
+                    Dica: para excluir definitivamente, primeiro inative a empresa e depois use o botão Excluir na lista.
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4 border-t border-slate-200">
                 <button

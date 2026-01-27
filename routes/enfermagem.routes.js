@@ -8,11 +8,16 @@ const router = express.Router();
 // Listar todos os registros com filtros
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { pacienteId, tipo, dataInicio, dataFim, prioridade, alerta, page = 1, pageSize = 10 } = req.query;
+    const { pacienteId, tipo, dataInicio, dataFim, prioridade, alerta, empresaId, page = 1, pageSize = 10 } = req.query;
     const where = {};
-    // Aplica isolamento por empresa apenas se não for superadmin
+    // Aplica isolamento por empresa:
+    // - não-superadmin: força empresa do usuário
+    // - superadmin: usa contexto (tenantIsolation) quando fornecido
     if (req.user?.role !== 'superadmin') {
       where.empresaId = req.user.empresaId;
+    } else {
+      const ctxEmpresaId = req.tenantEmpresaId || empresaId || req.headers['x-empresa-id'];
+      if (ctxEmpresaId) where.empresaId = ctxEmpresaId;
     }
 
     if (pacienteId) where.pacienteId = pacienteId;
@@ -106,8 +111,17 @@ router.post('/', authenticate, async (req, res) => {
       anexos
     } = req.body;
 
-    const empresaId = req.user.empresaId;
+    const empresaId = req.user?.role === 'superadmin'
+      ? (req.body?.empresaId || req.tenantEmpresaId || req.headers['x-empresa-id'])
+      : req.user.empresaId;
     const usuarioId = req.user.id;
+
+    if (!empresaId) {
+      return res.status(400).json({
+        error: 'Contexto de empresa é obrigatório para criar registro de enfermagem',
+        code: 'empresa_context_required'
+      });
+    }
 
     // Validações
     if (!pacienteId || !tipo || !titulo || !descricao) {
@@ -184,15 +198,18 @@ router.put('/:id', authenticate, async (req, res) => {
 router.delete('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const empresaId = req.user.empresaId;
+    const empresaId = req.user?.role === 'superadmin'
+      ? (req.tenantEmpresaId || req.headers['x-empresa-id'] || req.query?.empresaId)
+      : req.user.empresaId;
 
     if (req.user?.role !== 'superadmin') {
       return res.status(403).json({ error: 'Exclusão de evolução permitida somente ao Super Administrador', code: 'access_denied' });
     }
 
-    const registro = await RegistroEnfermagem.findOne({
-      where: { id, empresaId }
-    });
+    const where = { id };
+    if (empresaId) where.empresaId = empresaId;
+
+    const registro = await RegistroEnfermagem.findOne({ where });
 
     if (!registro) {
       return res.status(404).json({ error: 'Registro não encontrado' });

@@ -33,7 +33,8 @@ const Usuario = sequelize.define('Usuario', {
       'tecnico_enfermagem',
       'fisioterapeuta',
       'assistente_social',
-      'auxiliar_administrativo'
+      'auxiliar_administrativo',
+      'medico'
     ),
     defaultValue: 'atendente'
   },

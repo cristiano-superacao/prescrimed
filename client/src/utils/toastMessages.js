@@ -53,6 +53,10 @@ export const friendlyErrorFromCode = (code) => {
       return 'Recurso não encontrado.';
     case 'service_unavailable':
       return 'Serviço indisponível no momento. Tente mais tarde.';
+    case 'empresa_inativa':
+      return 'Empresa inativa. Entre em contato com o suporte para reativação.';
+    case 'trial_expired':
+      return 'Período de teste encerrado. Entre em contato com o suporte para renovar ou contratar um plano.';
     default:
       return null;
   }

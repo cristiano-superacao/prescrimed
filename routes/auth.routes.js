@@ -6,6 +6,31 @@ import { ensureValidCPF, ensureValidCNPJ } from '../utils/brDocuments.js';
 
 const router = express.Router();
 
+function checkEmpresaAccessForUser(usuario) {
+  if (!usuario) return null;
+  if (usuario.role === 'superadmin') return null;
+  const empresa = usuario.empresa;
+  if (!empresa || empresa.ativo === false) {
+    return {
+      status: 403,
+      code: 'empresa_inativa',
+      error: 'Empresa bloqueada ou inativa. Entre em contato com o suporte.'
+    };
+  }
+  if (empresa.emTeste && empresa.testeFim) {
+    const fim = new Date(empresa.testeFim);
+    if (!Number.isNaN(fim.getTime()) && new Date() > fim) {
+      return {
+        status: 403,
+        code: 'trial_expired',
+        error: 'Período de teste vencido. Entre em contato com o administrador para prorrogar ou ativar um plano.',
+        details: { testeFim: empresa.testeFim }
+      };
+    }
+  }
+  return null;
+}
+
 // Login
 router.post('/login', async (req, res) => {
   try {
@@ -40,6 +65,16 @@ router.post('/login', async (req, res) => {
 
     if (!usuario.ativo) {
       return res.status(403).json({ error: 'Usuário inativo' });
+    }
+
+    // Bloqueio por empresa inativa ou teste vencido (não afeta superadmin)
+    const accessBlock = checkEmpresaAccessForUser(usuario);
+    if (accessBlock) {
+      return res.status(accessBlock.status).json({
+        error: accessBlock.error,
+        code: accessBlock.code,
+        details: accessBlock.details
+      });
     }
 
     const token = jwt.sign(
@@ -239,6 +274,16 @@ router.post('/refresh', async (req, res) => {
 
       if (!usuario || !usuario.ativo) {
         return res.status(401).json({ error: 'Usuário inválido ou inativo' });
+      }
+
+      // Bloqueio por empresa inativa ou teste vencido (não afeta superadmin)
+      const accessBlock = checkEmpresaAccessForUser(usuario);
+      if (accessBlock) {
+        return res.status(accessBlock.status).json({
+          error: accessBlock.error,
+          code: accessBlock.code,
+          details: accessBlock.details
+        });
       }
 
       // Gera novo token

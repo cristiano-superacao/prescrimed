@@ -4,7 +4,7 @@ import { LogIn, Mail, Lock, Building2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import HeroBackground from '../components/HeroBackground';
 import toast from 'react-hot-toast';
-import { errorMessage, apiErrorMessage } from '../utils/toastMessages';
+import { errorMessage, apiErrorMessage, apiErrorCode, friendlyErrorFromCode } from '../utils/toastMessages';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -35,9 +35,11 @@ export default function Login() {
       else if (error.response?.status === 401) {
         toast.error('Email ou senha incorretos. Verifique suas credenciais e tente novamente.');
       }
-      // Verifica se é erro 403 (usuário inativo)
+      // Verifica se é erro 403 (empresa inativa / trial vencido / acesso negado)
       else if (error.response?.status === 403) {
-        toast.error('Usuário inativo. Entre em contato com o administrador.');
+        const code = apiErrorCode(error);
+        const friendly = friendlyErrorFromCode(code);
+        toast.error(friendly || apiErrorMessage(error, 'Acesso negado.'));
       }
       // Outros erros
       else {

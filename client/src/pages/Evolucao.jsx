@@ -19,6 +19,7 @@ import {
   User
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../store/authStore';
 import enfermagemService from '../services/enfermagem.service';
 import pacienteService from '../services/paciente.service';
 import estoqueService from '../services/estoque.service';
@@ -41,6 +42,9 @@ import {
 } from '../components/common/Table';
 
 export default function Evolucao() {
+  // Auth store
+  const { user } = useAuthStore();
+  
   // Estados principais
   const [registros, setRegistros] = useState([]);
   const [page, setPage] = useState(1);
@@ -395,12 +399,12 @@ export default function Evolucao() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 min-h-screen">
       {/* Cabeçalho fixo e ações */}
       <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md pb-2 pt-4">
         <PageHeader
-          label="Prontuário"
-          title="Registros de Enfermagem"
+          label="ANÁLISE"
+          title="Evolução de Prescrições"
           subtitle="Anotações diárias, evolução clínica e acompanhamento de cuidados."
         >
           <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
@@ -481,10 +485,11 @@ export default function Evolucao() {
         </div>
       </div>
 
-      <TableContainer title="Registros de Enfermagem">
+      <TableContainer title="Evolução Clínica">
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600"></div>
+            <p className="text-sm text-slate-600 dark:text-gray-400">Carregando registros...</p>
           </div>
         ) : filteredRegistros.length > 0 ? (
           <>
@@ -530,7 +535,7 @@ export default function Evolucao() {
                       tooltip="Excluir (somente Super Admin)"
                       title="Excluir registro"
                       ariaLabel="Excluir registro"
-                      disabled={deletingId === registro.id || (useAuthStore.getState().user?.role !== 'superadmin')}
+                      disabled={deletingId === registro.id || (user?.role !== 'superadmin')}
                       loading={deletingId === registro.id}
                     />
                   </div>
@@ -586,10 +591,10 @@ export default function Evolucao() {
                       onClick={() => handleDelete(registro.id, registro.titulo)}
                       icon={Trash2}
                       variant="danger"
-                      tooltip="Excluir"
+                      tooltip="Excluir (somente Super Admin)"
                       title="Excluir registro"
                       ariaLabel="Excluir registro"
-                      disabled={deletingId === registro.id}
+                      disabled={deletingId === registro.id || (user?.role !== 'superadmin')}
                       loading={deletingId === registro.id}
                     />
                   </div>
