@@ -23,6 +23,8 @@ import toast from 'react-hot-toast';
 import { successMessage, errorMessage } from '../utils/toastMessages';
 import PacienteModal from '../components/PacienteModalNew';
 import PageHeader from '../components/common/PageHeader';
+import { useAuthStore } from '../store/authStore';
+import { handleApiError } from '../utils/errorHandler';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
@@ -358,10 +360,27 @@ export default function Pacientes() {
         title="Residentes"
         subtitle="Gerencie os residentes da instituição, histórico clínico e dados pessoais."
       >
+        {(() => {
+          const { user } = useAuthStore.getState();
+          const role = user?.role;
+          const tipo = user?.empresa?.tipoSistema || 'casa-repouso';
+          const canCreate = role === 'superadmin'
+            || (tipo === 'fisioterapia'
+              ? ['admin','enfermeiro','assistente_social','fisioterapeuta','medico'].includes(role)
+              : ['admin','enfermeiro','assistente_social','medico'].includes(role));
+          const onNewClick = () => {
+            if (!canCreate) {
+              handleApiError({ response: { data: { code: 'access_denied' } } }, 'Acesso negado: seu perfil não pode cadastrar residentes neste módulo');
+              return;
+            }
+            setModalOpen(true);
+          };
         <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
           <button
-            onClick={() => setModalOpen(true)}
-            className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
+            onClick={onNewClick}
+            className="btn btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!canCreate}
+            title={!canCreate ? 'Sem permissão para cadastrar residentes neste módulo' : 'Cadastrar novo residente'}
           >
             <Plus size={20} /> Novo Residente
           </button>
@@ -391,6 +410,7 @@ export default function Pacientes() {
             onChange={handleImportExcel}
           />
         </div>
+        })()}
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

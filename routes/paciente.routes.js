@@ -1,10 +1,11 @@
 import express from 'express';
 import { Paciente, Empresa } from '../models/index.js';
+import { authenticate, tenantIsolation } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
 // Listar todos os pacientes
-router.get('/', async (req, res) => {
+router.get('/', authenticate, tenantIsolation, async (req, res) => {
   try {
     const { empresaId, page = 1, pageSize = 10 } = req.query;
     const where = empresaId ? { empresaId } : {};
@@ -26,7 +27,7 @@ router.get('/', async (req, res) => {
 });
 
 // Buscar paciente por ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticate, tenantIsolation, async (req, res) => {
   try {
     const { empresaId } = req.query;
     const where = { id: req.params.id };
@@ -52,10 +53,32 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Helper: verifica se role pode cadastrar residente conforme tipoSistema
+const canCreateResident = (tipoSistema, role) => {
+  if (role === 'superadmin') return true;
+  const casaRepousoPetshopRoles = ['admin', 'enfermeiro', 'assistente_social', 'medico'];
+  const fisioterapiaRoles = ['admin', 'enfermeiro', 'assistente_social', 'fisioterapeuta', 'medico'];
+  if (tipoSistema === 'fisioterapia') return fisioterapiaRoles.includes(role);
+  // casa-repouso e petshop
+  return casaRepousoPetshopRoles.includes(role);
+};
+
 // Criar novo paciente
-router.post('/', async (req, res) => {
+router.post('/', authenticate, tenantIsolation, async (req, res) => {
   try {
     // empresaId já foi forçado pelo middleware tenantIsolation
+    const empresaId = req.body?.empresaId || req.tenantEmpresaId;
+    const empresa = await Empresa.findByPk(empresaId);
+    const role = req.user?.role;
+
+    if (!empresa) {
+      return res.status(400).json({ error: 'Empresa inválida para cadastro do residente' });
+    }
+
+    if (!canCreateResident(empresa.tipoSistema, role)) {
+      return res.status(403).json({ error: 'Acesso negado: seu perfil não pode cadastrar residentes neste módulo' });
+    }
+
     const paciente = await Paciente.create(req.body);
     res.status(201).json(paciente);
   } catch (error) {
@@ -65,7 +88,7 @@ router.post('/', async (req, res) => {
 });
 
 // Atualizar paciente
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticate, tenantIsolation, async (req, res) => {
   try {
     const where = { id: req.params.id };
     
@@ -92,7 +115,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Deletar paciente
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, tenantIsolation, async (req, res) => {
   try {
     const where = { id: req.params.id };
     

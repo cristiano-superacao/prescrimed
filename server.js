@@ -158,7 +158,8 @@ async function connectDB(retryCount = 0) {
           'tecnico_enfermagem',
           'fisioterapeuta',
           'assistente_social',
-          'auxiliar_administrativo'
+          'auxiliar_administrativo',
+          'medico'
         ];
 
         for (const value of roleValues) {

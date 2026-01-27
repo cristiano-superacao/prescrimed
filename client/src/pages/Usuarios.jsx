@@ -116,6 +116,7 @@ export default function Usuarios() {
     if (role === 'fisioterapeuta') return 'Fisioterapeuta';
     if (role === 'assistente_social') return 'Assistente Social';
     if (role === 'auxiliar_administrativo') return 'Auxiliar Administrativo';
+    if (role === 'medico') return 'Médico';
     return 'Usuário';
   };
 
