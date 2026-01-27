@@ -407,6 +407,19 @@ Essas operações usam o isolamento multi-tenant (`empresaId`) e respeitam as pe
 
 Essas capacidades funcionam com **isolamento multi-tenant** via `empresaId` e autenticação JWT. Rotas sensíveis aplicam verificação de propriedade e/ou role.
 
+---
+
+## ❗ Tratamento de Erros (Mensagens Amigáveis)
+
+- Backend retorna erros padronizados com `{ error, code, details }`.
+- Mapeamentos comuns:
+   - `validation_error`: "Alguns dados parecem inválidos..."
+   - `unique_constraint`: "Já existe um registro com esses dados."
+   - `auth_token_error`: "Sessão expirada..."
+   - `access_denied`, `not_found`, `service_unavailable`
+- Frontend exibe toasts claros e orientados ao usuário.
+- Interceptores de API lidam com indisponibilidade, 401/refresh, 5xx e instruções úteis.
+
 ### Verificar Configuração do Railway
 ```bash
 npm run check:railway

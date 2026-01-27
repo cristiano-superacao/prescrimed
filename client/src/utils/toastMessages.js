@@ -35,4 +35,25 @@ export const errorMessage = (action, entity) => {
 export const customErrorMessage = (key) => customErrorMap[key] || key;
 
 export const apiErrorMessage = (error, fallback) =>
-  error?.response?.data?.message || error?.response?.data?.error || fallback;
+  error?.response?.data?.error || error?.response?.data?.message || fallback;
+
+export const apiErrorCode = (error) => error?.response?.data?.code || null;
+
+export const friendlyErrorFromCode = (code) => {
+  switch (code) {
+    case 'validation_error':
+      return 'Alguns dados parecem inválidos. Verifique os campos e tente novamente.';
+    case 'unique_constraint':
+      return 'Já existe um registro com esses dados.';
+    case 'auth_token_error':
+      return 'Sessão expirada. Faça login novamente.';
+    case 'access_denied':
+      return 'Você não tem permissão para esta ação.';
+    case 'not_found':
+      return 'Recurso não encontrado.';
+    case 'service_unavailable':
+      return 'Serviço indisponível no momento. Tente mais tarde.';
+    default:
+      return null;
+  }
+};

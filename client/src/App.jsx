@@ -10,6 +10,7 @@
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 // Biblioteca para notificações toast (alertas visuais)
 import { Toaster } from 'react-hot-toast';
+import './utils/toast';
 
 // ===== PÁGINAS DA APLICAÇÃO =====
 // Páginas públicas (sem necessidade de autenticação)

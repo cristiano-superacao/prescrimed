@@ -37,6 +37,7 @@ import { spawn } from 'child_process'; // Executa scripts auxiliares sem bloquea
 
 // Importa rotas e configuração do banco de dados
 import apiRouter from './routes/index.js'; // Router principal da API
+import { errorHandler } from './middleware/error.middleware.js';
 import { sequelize, Usuario } from './models/index.js'; // Instância do Sequelize (ORM)
 
 /**
@@ -501,6 +502,9 @@ app.use('/api', (req, res, next) => {
  * Todas as rotas da API são prefixadas com /api
  */
 app.use('/api', apiRouter);
+
+// Tratamento global de erros (mensagens amigáveis para o usuário)
+app.use(errorHandler);
 
 /**
  * Servir Arquivos Estáticos do Frontend
