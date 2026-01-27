@@ -203,8 +203,12 @@ export default function Evolucao() {
       };
 
       if (editingId) {
-        await enfermagemService.update(editingId, payload);
-        toast.success(successMessage('update', 'Registro'));
+          // Edição de histórico não é permitida
+          const { handleApiError } = await import('../utils/errorHandler');
+          handleApiError({ response: { data: { code: 'history_immutable' } } }, 'Edição de histórico de evolução não é permitida');
+          setEditingId(null);
+          setModalOpen(false);
+          return;
       } else {
         await enfermagemService.create(payload);
         toast.success(successMessage('create', 'Registro'));
@@ -221,27 +225,9 @@ export default function Evolucao() {
   };
 
   // Função para editar registro
-  const handleEdit = (registro) => {
-    setEditingId(registro.id);
-    setFormData({
-      pacienteId: registro.pacienteId || '',
-      tipo: registro.tipo || 'evolucao',
-      titulo: registro.titulo || '',
-      descricao: registro.descricao || '',
-      estadoGeral: registro.estadoGeral || 'bom',
-      riscoQueda: registro.riscoQueda || '',
-      riscoLesao: registro.riscoLesao || '',
-      alerta: registro.alerta || false,
-      prioridade: registro.prioridade || 'baixa',
-      observacoes: registro.observacoes || '',
-      pa: registro.sinaisVitais?.pa || '',
-      fc: registro.sinaisVitais?.fc || '',
-      fr: registro.sinaisVitais?.fr || '',
-      temp: registro.sinaisVitais?.temp || '',
-      sato2: registro.sinaisVitais?.sato2 || '',
-      glicemia: registro.sinaisVitais?.glicemia || ''
-    });
-    setModalOpen(true);
+  const handleEdit = async () => {
+    const { handleApiError } = await import('../utils/errorHandler');
+    handleApiError({ response: { data: { code: 'history_immutable' } } }, 'Edição de histórico de evolução não é permitida');
   };
 
   // Função para deletar registro
@@ -536,22 +522,15 @@ export default function Evolucao() {
                   </p>
 
                   <div className="flex items-center justify-end gap-2 mt-3">
-                    <ActionIconButton
-                      onClick={() => handleEdit(registro)}
-                      icon={Edit}
-                      variant="primary"
-                      tooltip="Editar"
-                      title="Editar registro"
-                      ariaLabel="Editar registro"
-                    />
+                    {/* Edição bloqueada por regra de negócio */}
                     <ActionIconButton
                       onClick={() => handleDelete(registro.id, registro.titulo)}
                       icon={Trash2}
                       variant="danger"
-                      tooltip="Excluir"
+                      tooltip="Excluir (somente Super Admin)"
                       title="Excluir registro"
                       ariaLabel="Excluir registro"
-                      disabled={deletingId === registro.id}
+                      disabled={deletingId === registro.id || (useAuthStore.getState().user?.role !== 'superadmin')}
                       loading={deletingId === registro.id}
                     />
                   </div>
@@ -602,14 +581,7 @@ export default function Evolucao() {
                   </div>
 
                   <div className="mt-4 flex items-center justify-end gap-2">
-                    <ActionIconButton
-                      onClick={() => handleEdit(registro)}
-                      icon={Edit}
-                      variant="primary"
-                      tooltip="Editar"
-                      title="Editar registro"
-                      ariaLabel="Editar registro"
-                    />
+                    {/* Edição bloqueada por regra de negócio */}
                     <ActionIconButton
                       onClick={() => handleDelete(registro.id, registro.titulo)}
                       icon={Trash2}

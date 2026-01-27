@@ -133,41 +133,34 @@ router.put('/:id', authenticate, tenantIsolation, async (req, res) => {
 });
 
 // Deletar paciente
+// Exclusão de residentes não é permitida (somente inativação por Administrador)
 router.delete('/:id', authenticate, tenantIsolation, async (req, res) => {
+  return res.status(405).json({ error: 'Exclusão de residente não é permitida. Utilize a inativação.', code: 'operation_not_allowed' });
+});
+
+// Inativar residente (exclusivo Administrador da empresa)
+router.put('/:id/inativar', authenticate, tenantIsolation, async (req, res) => {
   try {
     const where = { id: req.params.id };
-    
-    // Força filtro por empresa se não for superadmin
     if (req.tenantEmpresaId) {
       where.empresaId = req.tenantEmpresaId;
     }
-    
+
     const paciente = await Paciente.findOne({ where });
-    
     if (!paciente) {
       return res.status(404).json({ error: 'Paciente não encontrado ou sem permissão de acesso' });
     }
-    
-    // Verifica permissão de exclusão conforme tipoSistema da empresa
-    try {
-      const empresa = await Empresa.findByPk(paciente.empresaId);
-      const role = req.user?.role;
-      if (!empresa) {
-        return res.status(400).json({ error: 'Empresa inválida para exclusão do residente' });
-      }
-      if (!canManageResident(empresa.tipoSistema, role)) {
-        return res.status(403).json({ error: 'Acesso negado: seu perfil não pode excluir residentes neste módulo', code: 'access_denied' });
-      }
-    } catch (e) {
-      console.error('Erro ao validar permissão de exclusão:', e);
-      return res.status(500).json({ error: 'Erro ao validar permissão de exclusão' });
+
+    // Regra: somente Administrador pode inativar
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Apenas Administrador pode inativar residentes', code: 'access_denied' });
     }
 
-    await paciente.destroy();
-    res.json({ message: 'Paciente deletado com sucesso' });
+    await paciente.update({ status: 'inativo' });
+    return res.json({ message: 'Residente inativado com sucesso', paciente });
   } catch (error) {
-    console.error('Erro ao deletar paciente:', error);
-    res.status(500).json({ error: 'Erro ao deletar paciente' });
+    console.error('Erro ao inativar paciente:', error);
+    res.status(500).json({ error: 'Erro ao inativar paciente' });
   }
 });
 

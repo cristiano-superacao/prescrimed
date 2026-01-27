@@ -16,7 +16,8 @@ import {
   Calendar,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  UserX
 } from 'lucide-react';
 import pacienteService from '../services/paciente.service';
 import toast from 'react-hot-toast';
@@ -111,20 +112,17 @@ export default function Pacientes() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (id, nome) => {
-    const confirmMessage = `Tem certeza que deseja excluir o paciente "${nome}"?\n\nEsta ação não pode ser desfeita.`;
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
-
+  const handleInativar = async (id, nome) => {
+    const confirmMessage = `Confirmar inativação do residente "${nome}"?`;
+    if (!window.confirm(confirmMessage)) return;
     try {
       setDeletingId(id);
-      await pacienteService.delete(id);
-      toast.success(successMessage('delete', 'Paciente'));
+      await pacienteService.inactivate(id);
+      toast.success('Residente inativado com sucesso');
       loadPacientes(searchTerm);
     } catch (error) {
       const { handleApiError } = await import('../utils/errorHandler');
-      handleApiError(error, errorMessage('delete', 'paciente'));
+      handleApiError(error, 'Não foi possível inativar o residente');
     } finally {
       setDeletingId(null);
     }
@@ -179,12 +177,14 @@ export default function Pacientes() {
     handleEdit(paciente);
   };
 
-  const onDeleteClick = (id, nome) => {
-    if (!canManage) {
-      handleApiError({ response: { data: { code: 'access_denied' } } }, 'Acesso negado: seu perfil não pode excluir residentes neste módulo');
+  // Nova regra: exclusão não é permitida; somente inativação por Administrador
+  const canInactivate = role === 'admin';
+  const onInativarClick = (id, nome) => {
+    if (!canInactivate) {
+      handleApiError({ response: { data: { code: 'access_denied' } } }, 'Apenas Administrador pode inativar residentes');
       return;
     }
-    handleDelete(id, nome);
+    handleInativar(id, nome);
   };
 
   const normalizeDate = (value) => {
@@ -576,16 +576,16 @@ export default function Pacientes() {
                       <Edit2 size={18} />
                     </button>
                     <button
-                      onClick={() => onDeleteClick(paciente.id || paciente._id, paciente.nome)}
-                      disabled={!canManage || deletingId === (paciente.id || paciente._id)}
+                      onClick={() => onInativarClick(paciente.id || paciente._id, paciente.nome)}
+                      disabled={!canInactivate || deletingId === (paciente.id || paciente._id)}
                       className="group relative p-2.5 text-slate-500 hover:text-white hover:bg-gradient-to-br from-red-500 to-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Excluir paciente"
-                      aria-label="Excluir paciente"
+                      title="Inativar residente"
+                      aria-label="Inativar residente"
                     >
                       {deletingId === (paciente.id || paciente._id) ? (
                         <div className="animate-spin rounded-full h-[18px] w-[18px] border-2 border-white border-t-transparent"></div>
                       ) : (
-                        <Trash2 size={18} />
+                        <UserX size={18} />
                       )}
                     </button>
                   </div>
@@ -633,12 +633,12 @@ export default function Pacientes() {
                           disabled={!canManage}
                         />
                         <ActionIconButton
-                          onClick={() => onDeleteClick(paciente.id || paciente._id, paciente.nome)}
-                          icon={Trash2}
-                          tooltip="Excluir"
-                          ariaLabel="Excluir paciente"
+                          onClick={() => onInativarClick(paciente.id || paciente._id, paciente.nome)}
+                          icon={UserX}
+                          tooltip="Inativar"
+                          ariaLabel="Inativar residente"
                           variant="danger"
-                          disabled={!canManage || deletingId === (paciente.id || paciente._id)}
+                          disabled={!canInactivate || deletingId === (paciente.id || paciente._id)}
                           loading={deletingId === (paciente.id || paciente._id)}
                         />
                       </div>

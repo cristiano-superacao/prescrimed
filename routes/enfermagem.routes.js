@@ -175,81 +175,9 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // Atualizar registro
+// Edição do histórico não é permitida
 router.put('/:id', authenticate, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const empresaId = req.user.empresaId;
-
-    const registro = await RegistroEnfermagem.findOne({
-      where: { id, empresaId }
-    });
-
-    if (!registro) {
-      return res.status(404).json({ error: 'Registro não encontrado' });
-    }
-
-    const {
-      tipo,
-      titulo,
-      descricao,
-      sinaisVitais,
-      riscoQueda,
-      riscoLesao,
-      estadoGeral,
-      alerta,
-      prioridade,
-      observacoes,
-      anexos
-    } = req.body;
-
-    // Serializar objetos
-    const updateData = {
-      tipo,
-      titulo,
-      descricao,
-      riscoQueda,
-      riscoLesao,
-      estadoGeral,
-      alerta,
-      prioridade,
-      observacoes
-    };
-
-    if (sinaisVitais) {
-      updateData.sinaisVitais = typeof sinaisVitais === 'string' 
-        ? sinaisVitais 
-        : JSON.stringify(sinaisVitais);
-    }
-
-    if (anexos) {
-      updateData.anexos = typeof anexos === 'string'
-        ? anexos
-        : JSON.stringify(anexos);
-    }
-
-    await registro.update(updateData);
-
-    // Buscar registro atualizado com relacionamentos
-    const registroAtualizado = await RegistroEnfermagem.findByPk(id, {
-      include: [
-        {
-          model: Paciente,
-          as: 'paciente',
-          attributes: ['id', 'nome', 'cpf']
-        },
-        {
-          model: Usuario,
-          as: 'enfermeiro',
-          attributes: ['id', 'nome', 'role']
-        }
-      ]
-    });
-
-    res.json(registroAtualizado);
-  } catch (error) {
-    console.error('Erro ao atualizar registro:', error);
-    res.status(500).json({ error: 'Erro ao atualizar registro' });
-  }
+  return res.status(405).json({ error: 'Edição de histórico de evolução não é permitida', code: 'history_immutable' });
 });
 
 // Deletar registro
@@ -257,6 +185,10 @@ router.delete('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const empresaId = req.user.empresaId;
+
+    if (req.user?.role !== 'superadmin') {
+      return res.status(403).json({ error: 'Exclusão de evolução permitida somente ao Super Administrador', code: 'access_denied' });
+    }
 
     const registro = await RegistroEnfermagem.findOne({
       where: { id, empresaId }

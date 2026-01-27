@@ -15,6 +15,24 @@
   - Respostas com `403` e `code: access_denied` quando sem permissão.
   - Filtro de empresa permanece ativo pelo `tenantIsolation` (usuários não conseguem editar/excluir residentes de outra empresa).
 
+### Residentes: Inativação (substitui exclusão)
+
+- `DELETE /api/pacientes/:id` → agora retorna **405** (operação não permitida) com `code: operation_not_allowed`.
+- Nova rota: `PUT /api/pacientes/:id/inativar` → inativa o residente (altera `status` para `inativo`).
+  - Permissão: apenas `admin` da empresa; resposta `403`/`code: access_denied` se não autorizado.
+  - Isolamento por empresa se mantém via `tenantIsolation`.
+
+### Evoluções (RegistroEnfermagem): Histórico Imutável
+
+- `PUT /api/enfermagem/:id` → retorna **405** com `code: history_immutable` (edição de histórico não é permitida).
+- `DELETE /api/enfermagem/:id` → permitido apenas para `superadmin`; demais perfis recebem **403** com `code: access_denied`.
+- Visualização: endpoints de listagem/detalhe permanecem para exibir histórico completo sem alterações retroativas.
+
+### Frontend (Adequações)
+
+- `Pacientes.jsx`: ação “Excluir” substituída por “Inativar” (somente `admin`). Serviços atualizados (`paciente.service.inactivate`).
+- `Evolucao.jsx`: botões de edição removidos/bloqueados; exclusão desabilitada para não-superadmin, com mensagem amigável.
+
 ### Isolamento Multi-Tenant
 
 - `middleware/auth.middleware.js`:

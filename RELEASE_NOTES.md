@@ -8,12 +8,16 @@
 - Proteção de `routes/paciente.routes.js` com `authenticate` + `tenantIsolation` em todas as rotas.
 - Inclusão do role `medico` no enum `usuarios.role` com garantia dinâmica no `server.js`.
  - RBAC estendido para edição e exclusão de Residentes (PUT/DELETE), com `403` e `code: access_denied` quando sem permissão.
+ - Residentes: exclusão bloqueada (DELETE → 405 `operation_not_allowed`); adicionada rota `PUT /api/pacientes/:id/inativar` (somente `admin`).
+ - Evoluções: edição bloqueada (PUT → 405 `history_immutable`); exclusão somente `superadmin` (caso contrário 403 `access_denied`).
 
 ## Frontend
 - Utilitário `handleApiError` centralizado para mensagens amigáveis.
 - Atualização das páginas principais para usar mensagens claras e traduzidas por código.
 - Botão “Novo Residente” com desabilitação e tooltip quando o perfil não possui permissão.
  - Ações “Editar” e “Excluir” em Residentes agora respeitam RBAC (botões desabilitados + mensagem amigável quando acionados sem acesso).
+ - Residentes: ação “Excluir” substituída por “Inativar” (somente `admin`), mantendo layout responsivo e profissional.
+ - Evoluções: edição removida/bloqueada; exclusão desabilitada para não-superadmin, com tooltip descritiva.
 
 ## Documentação
 - README atualizado com seção de Atualizações (26 jan 2026).

@@ -22,8 +22,8 @@ const pacienteService = {
     return put(`/pacientes/${id}`, data);
   },
 
-  delete: async (id) => {
-    return del(`/pacientes/${id}`);
+  inactivate: async (id) => {
+    return put(`/pacientes/${id}/inativar`);
   },
 };
 

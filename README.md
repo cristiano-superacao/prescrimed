@@ -724,3 +724,5 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 - RBAC estendido para edição e exclusão de Residentes, com as mesmas regras já aplicadas ao cadastro por `tipoSistema` da empresa e `role` do usuário (superadmin mantém acesso total).
 - UI atualizada: botões Editar/Excluir ficam desabilitados quando não há permissão e exibem mensagem amigável quando acionados sem acesso.
 - Backend retorna `code: access_denied` padronizado; frontend converte para mensagens claras ao usuário.
+ - Residentes: exclusão bloqueada (405). Administrador pode apenas inativar via `PUT /api/pacientes/:id/inativar`; UI exibe ação “Inativar”.
+ - Evoluções: histórico imutável (edição bloqueada com 405 e `code: history_immutable`), exclusão permitida somente ao Super Administrador; UI desabilita editar e restringe excluir.

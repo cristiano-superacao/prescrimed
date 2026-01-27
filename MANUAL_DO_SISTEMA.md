@@ -11,6 +11,12 @@
 - As mesmas regras de cadastro se aplicam à edição e à exclusão.
 - Se você não tiver permissão, os botões de Editar/Excluir aparecem desabilitados e, ao tentar acionar, o sistema mostra uma mensagem explicativa.
 
+### Inativar Residentes (somente Administrador)
+
+- Residentes não podem ser excluídos. A ação correta é “Inativar”, disponível apenas para o perfil **Administrador** da empresa.
+- Para inativar: acesse “Residentes” → botão de ação “Inativar” no cartão/linha do residente → confirme a operação.
+- O residente passa a ter status “Inativo” e permanece no histórico, preservando integridade de dados.
+
 ### Isolamento por Empresa
 
 - Usuários visualizam e operam apenas dados da própria empresa.
@@ -121,6 +127,11 @@ As funções do sistema são:
 
 ### Evolução / Enfermagem
 - Registro de evolução, sinais vitais e observações.
+
+#### Regras de histórico de Evoluções
+- O histórico é imutável: evoluções já registradas não podem ser editadas.
+- Exclusão de evolução é permitida somente para o perfil **Super Administrador**.
+- Todos os perfis com acesso podem visualizar o histórico completo do paciente; alterações posteriores devem ser feitas criando um novo registro (nova evolução).
 
 ### Estoque
 - Itens por tipo (ex.: medicamentos, alimentos)

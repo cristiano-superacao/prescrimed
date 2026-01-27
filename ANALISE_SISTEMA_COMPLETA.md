@@ -22,6 +22,8 @@ Sistema analisado e corrigido em **todas as camadas** (atualização 26/01):
 - Botão “Novo Residente” desabilita quando não permitido, mantendo layout responsivo e acessível.
  - RBAC estendido para edição e exclusão de Residentes (PUT/DELETE) com retorno padronizado `403`/`code: access_denied`.
  - Ações “Editar” e “Excluir” nos Residentes obedecem RBAC com desabilitação visual e mensagem amigável.
+ - Residentes: exclusão desativada (405). Inativação disponível apenas a Administrador via endpoint dedicado; UI atualizada para “Inativar”.
+ - Evoluções: histórico imutável (PUT 405 `history_immutable`); exclusão somente por Super Administrador (403 para demais). Visualização completa preservada.
 
 
 ---
