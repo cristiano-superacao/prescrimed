@@ -389,6 +389,24 @@ Essas operações usam o isolamento multi-tenant (`empresaId`) e respeitam as pe
 - Agenda com ordenação especial por status: **Confirmados → Agendados → Cancelados → Concluídos**.
 - UI com layout responsivo e profissional em todas as listas, incluindo exibição do **Código de cadastro** (ID) em cartões e tabelas.
 
+---
+
+## 👤 Capacidades por Cargo
+
+- **Nutricionista:**
+   - Criar/listar/editar prescrições nutricionais por residente
+   - Ver pacientes e agendamentos da empresa
+   - Acesso aos detalhes de prontuário
+- **Técnico de Enfermagem:**
+   - Criar registros de enfermagem (ex.: sinais vitais, evolução)
+   - Ver pacientes e agendamentos
+   - Atualizar registros próprios
+- **Assistente Social:**
+   - Ler pacientes e agendamentos
+   - Consultar informações do residente (sem escrita clínica)
+
+Essas capacidades funcionam com **isolamento multi-tenant** via `empresaId` e autenticação JWT. Rotas sensíveis aplicam verificação de propriedade e/ou role.
+
 ### Verificar Configuração do Railway
 ```bash
 npm run check:railway

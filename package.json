@@ -17,6 +17,8 @@
     "rebuild:db": "node scripts/rebuild-database.js",
     "smoke:api": "node scripts/smoke-api-flow.js",
     "test:api:complete": "node scripts/test-complete-api.js",
+    "seed:roles": "node scripts/seed-company-role-users.js",
+    "test:roles": "node scripts/test-resident-role-access.js",
     "check:railway": "node scripts/check-railway-config.js",
     "predeploy:check": "node scripts/predeploy-check.js",
     "predeploy": "npm run predeploy:check && npm run railway:build",
