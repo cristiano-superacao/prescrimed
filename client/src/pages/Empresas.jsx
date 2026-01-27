@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, RefreshCcw, Building2, Edit2, Search, X } from 'lucide-react';
+import { Plus, Trash2, RefreshCcw, Building2, Edit2, Search, X, Users, Database } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import empresaService from '../services/empresa.service';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
@@ -7,6 +8,7 @@ import AccessDeniedCard from '../components/common/AccessDeniedCard';
 
 export default function Empresas() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -142,6 +144,38 @@ export default function Empresas() {
     empresa.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalEmpresas = empresas.length;
+  const ativasEmpresas = empresas.filter((e) => e.ativo).length;
+  const inativasEmpresas = empresas.filter((e) => !e.ativo).length;
+  const bloqueadasEmpresas = 0;
+
+  const formatPlano = (plano) => {
+    if (plano === 'profissional') return 'Profissional';
+    if (plano === 'empresa') return 'Empresa';
+    return 'Básico';
+  };
+
+  const formatTipoSistema = (tipo) => {
+    if (tipo === 'fisioterapia') return 'Fisioterapia';
+    if (tipo === 'petshop') return 'Petshop';
+    return 'Casa de Repouso';
+  };
+
+  const formatUsuariosInfo = (empresa) => {
+    const ativos = empresa?.usuariosAtivos ?? (Array.isArray(empresa?.usuarios) ? empresa.usuarios.length : null);
+    const limite = empresa?.limiteUsuarios ?? null;
+    if (ativos === null && limite === null) return '-';
+    if (limite !== null) return `${ativos ?? 0}/${limite}`;
+    return `${ativos ?? 0}`;
+  };
+
+  const formatDate = (value) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('pt-BR');
+  };
+
   if (!isSuperAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -156,92 +190,144 @@ export default function Empresas() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl shadow-xl p-8 text-white">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-2">
+          Institucional
+        </p>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div>
-            <p className="text-primary-100 text-sm font-medium mb-1">Gestão</p>
-            <h1 className="text-3xl font-bold">Empresas</h1>
-            <p className="text-primary-100 mt-2">Gerencie as empresas cadastradas no sistema</p>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-primary-50 flex items-center justify-center">
+                <Building2 className="text-primary-600" size={22} />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Gerenciamento de Empresas</h1>
+                <p className="text-slate-500 text-sm mt-1">Super Administrador</p>
+              </div>
+            </div>
+            <p className="text-slate-500 mt-3 max-w-2xl">
+              Controle completo das empresas cadastradas, planos, status e informações de contato.
+            </p>
           </div>
-          <div className="flex gap-3">
+
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={loadEmpresas}
-              disabled={loading}
-              className="btn bg-white/20 hover:bg-white/30 text-white border-white/30 flex items-center gap-2 disabled:opacity-50"
+              type="button"
+              disabled
+              title="Em breve"
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-500 text-sm font-semibold bg-white/70"
             >
-              <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
-              Atualizar
+              <span className="inline-flex items-center gap-2">
+                <Database size={16} /> Backups
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/usuarios')}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold bg-white hover:bg-slate-50"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Users size={16} /> Usuários
+              </span>
             </button>
             <button
               onClick={() => handleOpenModal()}
-              className="btn bg-white text-primary-600 hover:bg-primary-50 flex items-center gap-2 shadow-lg"
+              className="px-4 py-2 rounded-xl border border-primary-200 text-primary-700 text-sm font-semibold bg-primary-50 hover:bg-primary-100"
             >
-              <Plus size={18} />
-              Nova Empresa
+              <span className="inline-flex items-center gap-2">
+                <Plus size={16} /> Nova Empresa
+              </span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Total de Empresas</p>
-              <p className="text-3xl font-bold text-slate-900 mt-1">{empresas.length}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden">
+          <span className="absolute right-4 top-4 text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-500 font-semibold">
+            TOTAL
+          </span>
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center">
+              <Building2 className="text-slate-500" size={20} />
             </div>
-            <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
-              <Building2 className="text-primary-600" size={24} />
+            <div>
+              <p className="text-2xl font-bold text-slate-900">{totalEmpresas}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Total de empresas</p>
             </div>
           </div>
         </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Empresas Ativas</p>
-              <p className="text-3xl font-bold text-emerald-600 mt-1">
-                {empresas.filter(e => e.ativo).length}
-              </p>
+        <div className="bg-white rounded-2xl shadow-sm border border-emerald-200 p-5 relative overflow-hidden">
+          <span className="absolute right-4 top-4 text-[10px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 font-semibold">
+            ATIVAS
+          </span>
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center">
+              <Building2 className="text-emerald-600" size={20} />
             </div>
-            <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-              <Building2 className="text-emerald-600" size={24} />
+            <div>
+              <p className="text-2xl font-bold text-emerald-600">{ativasEmpresas}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Empresas ativas</p>
             </div>
           </div>
         </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Empresas Inativas</p>
-              <p className="text-3xl font-bold text-red-600 mt-1">
-                {empresas.filter(e => !e.ativo).length}
-              </p>
+        <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-5 relative overflow-hidden">
+          <span className="absolute right-4 top-4 text-[10px] px-2 py-1 rounded-full bg-red-50 text-red-600 font-semibold">
+            BLOQUEADAS
+          </span>
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center">
+              <Building2 className="text-red-600" size={20} />
             </div>
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-              <Building2 className="text-red-600" size={24} />
+            <div>
+              <p className="text-2xl font-bold text-red-600">{bloqueadasEmpresas}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Empresas bloqueadas</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-amber-200 p-5 relative overflow-hidden">
+          <span className="absolute right-4 top-4 text-[10px] px-2 py-1 rounded-full bg-amber-50 text-amber-600 font-semibold">
+            INATIVAS
+          </span>
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center">
+              <Building2 className="text-amber-600" size={20} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-amber-600">{inativasEmpresas}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Empresas inativas</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input
-            type="text"
-            placeholder="Buscar por nome, CNPJ ou email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
-          />
+      <div className="bg-white rounded-2xl shadow-sm p-5 border border-slate-200">
+        <div className="flex flex-col md:flex-row gap-3 md:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar por nome, CNPJ ou email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+            />
+          </div>
+          <button
+            onClick={loadEmpresas}
+            disabled={loading}
+            className="px-4 py-3 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold bg-white hover:bg-slate-50 disabled:opacity-50 flex items-center gap-2"
+          >
+            <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} />
+            Atualizar
+          </button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent"></div>
@@ -260,16 +346,19 @@ export default function Empresas() {
                       CNPJ
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                      Contato
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                      Tipo
+                      Email/Telefone
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                       Plano
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Usuários
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                       Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Data Criação
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
                       Ações
@@ -281,7 +370,7 @@ export default function Empresas() {
                     <tr key={empresa.id} className="hover:bg-slate-50 transition">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                          <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center">
                             <Building2 className="text-primary-600" size={20} />
                           </div>
                           <div>
@@ -291,7 +380,7 @@ export default function Empresas() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-slate-600">{empresa.cnpj || '-'}</span>
+                        <span className="text-rose-500 font-medium">{empresa.cnpj || '-'}</span>
                       </td>
                       <td className="px-6 py-4">
                         <div>
@@ -300,14 +389,14 @@ export default function Empresas() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="px-3 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-700 border border-blue-200">
-                          {empresa.tipoSistema === 'casa-repouso' ? 'Casa de Repouso' : 
-                           empresa.tipoSistema === 'fisioterapia' ? 'Fisioterapia' : 'Petshop'}
+                        <span className="px-3 py-1 text-xs rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                          {formatPlano(empresa.plano)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="px-3 py-1 text-xs rounded-full font-semibold bg-primary-100 text-primary-700 border border-primary-200 uppercase">
-                          {empresa.plano || 'básico'}
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                          <Users size={12} />
+                          {formatUsuariosInfo(empresa)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -321,11 +410,14 @@ export default function Empresas() {
                           {empresa.ativo ? 'Ativo' : 'Inativo'}
                         </span>
                       </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {formatDate(empresa.createdAt)}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleOpenModal(empresa)}
-                            className="p-2 text-slate-600 hover:text-white hover:bg-primary-600 rounded-lg transition"
+                            className="p-2 text-primary-600 border border-primary-200 hover:bg-primary-600 hover:text-white rounded-lg transition"
                             title="Editar"
                           >
                             <Edit2 size={18} />
@@ -333,7 +425,7 @@ export default function Empresas() {
                           <button
                             onClick={() => handleDelete(empresa.id, empresa.nome)}
                             disabled={deletingId === empresa.id}
-                            className="p-2 text-slate-600 hover:text-white hover:bg-red-600 rounded-lg transition disabled:opacity-50"
+                            className="p-2 text-red-600 border border-red-200 hover:text-white hover:bg-red-600 rounded-lg transition disabled:opacity-50"
                             title="Excluir"
                           >
                             {deletingId === empresa.id ? (
@@ -356,12 +448,12 @@ export default function Empresas() {
                 <div key={empresa.id} className="p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center">
                         <Building2 className="text-primary-600" size={20} />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">{empresa.nome}</p>
-                        <p className="text-xs text-slate-500">{empresa.cnpj || 'Sem CNPJ'}</p>
+                        <p className="text-xs text-rose-500 font-medium">{empresa.cnpj || 'Sem CNPJ'}</p>
                       </div>
                     </div>
                     <span
@@ -378,22 +470,27 @@ export default function Empresas() {
                   <div className="space-y-1 text-sm">
                     <p className="text-slate-600">{empresa.email || 'Sem email'}</p>
                     <p className="text-slate-600">{empresa.telefone || 'Sem telefone'}</p>
+                    <p className="text-xs text-slate-500">Criada em: {formatDate(empresa.createdAt)}</p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-700 border border-blue-200">
-                      {empresa.tipoSistema === 'casa-repouso' ? 'Casa de Repouso' : 
-                       empresa.tipoSistema === 'fisioterapia' ? 'Fisioterapia' : 'Petshop'}
+                    <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                      {formatPlano(empresa.plano)}
                     </span>
-                    <span className="px-2.5 py-1 text-xs rounded-full font-semibold bg-primary-100 text-primary-700 border border-primary-200 uppercase">
-                      {empresa.plano || 'básico'}
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                      <Users size={12} />
+                      {formatUsuariosInfo(empresa)}
                     </span>
+                  </div>
+
+                  <div className="text-xs text-slate-500">
+                    Tipo: {formatTipoSistema(empresa.tipoSistema)}
                   </div>
 
                   <div className="flex gap-2 pt-2">
                     <button
                       onClick={() => handleOpenModal(empresa)}
-                      className="flex-1 px-4 py-2 text-primary-600 border border-primary-600 rounded-lg hover:bg-primary-50 transition font-medium flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-2 text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 transition font-medium flex items-center justify-center gap-2"
                     >
                       <Edit2 size={16} />
                       Editar
@@ -401,7 +498,7 @@ export default function Empresas() {
                     <button
                       onClick={() => handleDelete(empresa.id, empresa.nome)}
                       disabled={deletingId === empresa.id}
-                      className="flex-1 px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="flex-1 px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {deletingId === empresa.id ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>

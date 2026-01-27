@@ -12,6 +12,7 @@ import {
   Filter,
   FileText,
   X,
+  ChevronDown,
   Calendar,
   Phone,
   Mail,
@@ -44,6 +45,7 @@ export default function Pacientes() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [residentesOpen, setResidentesOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [viewHistorico, setViewHistorico] = useState(null);
@@ -423,13 +425,39 @@ export default function Pacientes() {
         </button>
       </SearchFilterBar>
 
-      <TableContainer title="Residentes">
-        {loading ? (
-          <div className="flex justify-center py-12">
+      <TableContainer
+        title={
+          <button
+            type="button"
+            onClick={() => setResidentesOpen((v) => !v)}
+            aria-expanded={residentesOpen}
+            aria-controls="residentes-accordion"
+            className="w-full flex items-center justify-between gap-3 text-left"
+            title="Clique para abrir/fechar"
+          >
+            <span className="flex items-center gap-3">
+              <span className="text-lg font-semibold text-gray-800 dark:text-gray-100">Residentes</span>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-gray-200">
+                {filteredPacientes.length}
+              </span>
+            </span>
+            <ChevronDown
+              size={18}
+              className={`text-slate-500 transition-transform ${residentesOpen ? 'rotate-180' : 'rotate-0'}`}
+            />
+          </button>
+        }
+      >
+        {!residentesOpen ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-500 dark:text-gray-400">
+            Clique em “Residentes” para abrir a lista.
+          </div>
+        ) : loading ? (
+          <div id="residentes-accordion" className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : filteredPacientes.length > 0 ? (
-          <>
+          <div id="residentes-accordion">
             {/* Mobile */}
             <MobileGrid>
               {filteredPacientes.map((paciente) => (
@@ -553,15 +581,17 @@ export default function Pacientes() {
                 ))}
               </TBody>
             </TableWrapper>
-          </>
+          </div>
         ) : (
-          <EmptyState
-            icon={Users}
-            title="Nenhum residente encontrado"
-            description="Cadastre o primeiro residente para começar."
-            actionLabel="Cadastrar Residente"
-            onAction={() => setModalOpen(true)}
-          />
+          <div id="residentes-accordion">
+            <EmptyState
+              icon={Users}
+              title="Nenhum residente encontrado"
+              description="Cadastre o primeiro residente para começar."
+              actionLabel="Cadastrar Residente"
+              onAction={() => setModalOpen(true)}
+            />
+          </div>
         )}
       </TableContainer>
 

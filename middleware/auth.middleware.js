@@ -48,6 +48,25 @@ export const tenantIsolation = (req, res, next) => {
 
   // SuperAdmin pode acessar todas as empresas
   if (req.user.role === 'superadmin') {
+    // Opcional: permitir que o superadmin selecione um contexto de empresa
+    // sem perder a capacidade de acessar tudo quando não informado.
+    const headerEmpresaId = req.headers['x-empresa-id'];
+    const contextEmpresaId = req.query?.empresaId || headerEmpresaId;
+
+    if (contextEmpresaId) {
+      if (req.method === 'GET') {
+        req.query.empresaId = contextEmpresaId;
+      }
+
+      if (req.method === 'POST' || req.method === 'PUT') {
+        if (!req.body?.empresaId) {
+          req.body.empresaId = contextEmpresaId;
+        }
+      }
+
+      req.tenantEmpresaId = contextEmpresaId;
+    }
+
     return next();
   }
 

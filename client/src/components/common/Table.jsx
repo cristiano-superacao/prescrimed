@@ -6,7 +6,7 @@ export function TableContainer({ title, actions, emptyMessage, children }) {
       {(title || actions) && (
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
           {title && (
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{title}</h2>
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex-1">{title}</h2>
           )}
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>

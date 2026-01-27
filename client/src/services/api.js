@@ -66,6 +66,21 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Contexto opcional de empresa para superadmin
+    // (permite usar módulos multi-tenant com uma empresa selecionada)
+    try {
+      const userRaw = localStorage.getItem('user');
+      const user = userRaw ? JSON.parse(userRaw) : null;
+      const selectedEmpresaId = localStorage.getItem('superadminEmpresaId');
+
+      if (user?.role === 'superadmin' && selectedEmpresaId) {
+        config.headers['X-Empresa-Id'] = selectedEmpresaId;
+      }
+    } catch {
+      // ignora parsing inválido
+    }
+
     return config;
   },
   (error) => {
