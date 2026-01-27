@@ -43,6 +43,8 @@ tags:
     description: Criação e gerenciamento de prescrições médicas
   - name: Dashboard
     description: Estatísticas e dados para dashboard
+  - name: Enfermagem
+    description: Evoluções clínicas, sinais vitais e registros de enfermagem
 
 components:
   securitySchemes:
@@ -228,6 +230,10 @@ components:
           type: string
         ativo:
           type: boolean
+        status:
+          type: string
+          description: Status do residente (substitui exclusão)
+          enum: [ativo, inativo]
 
     Prescricao:
       type: object
@@ -739,7 +745,26 @@ paths:
     delete:
       tags:
         - Pacientes
-      summary: Desativar paciente
+      summary: Excluir paciente (não permitido)
+      description: Operação bloqueada. Utilize a rota de inativação.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '405':
+          description: Operação não permitida (exclusão bloqueada)
+
+  /pacientes/{id}/inativar:
+    put:
+      tags:
+        - Pacientes
+      summary: Inativar paciente
+      description: Inativa o residente (somente Administrador da empresa)
       security:
         - bearerAuth: []
       parameters:
@@ -750,9 +775,118 @@ paths:
             type: string
       responses:
         '200':
-          description: Paciente desativado
+          description: Residente inativado com sucesso
+        '403':
+          description: Acesso negado (somente Administrador)
         '404':
           description: Paciente não encontrado
+
+  /enfermagem:
+    get:
+      tags:
+        - Enfermagem
+      summary: Listar registros de enfermagem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pacienteId
+          in: query
+          schema:
+            type: string
+        - name: tipo
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de registros (paginada)
+    post:
+      tags:
+        - Enfermagem
+      summary: Criar registro de enfermagem
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pacienteId, tipo, titulo, descricao]
+              properties:
+                pacienteId:
+                  type: string
+                tipo:
+                  type: string
+                titulo:
+                  type: string
+                descricao:
+                  type: string
+      responses:
+        '201':
+          description: Registro criado
+
+  /enfermagem/{id}:
+    get:
+      tags:
+        - Enfermagem
+      summary: Buscar registro por ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registro encontrado
+        '404':
+          description: Registro não encontrado
+    put:
+      tags:
+        - Enfermagem
+      summary: Editar registro (não permitido)
+      description: Histórico de evolução é imutável; edição bloqueada.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '405':
+          description: Operação não permitida (history_immutable)
+    delete:
+      tags:
+        - Enfermagem
+      summary: Excluir registro (somente Super Administrador)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registro excluído com sucesso
+        '403':
+          description: Acesso negado (somente superadmin)
+        '404':
+          description: Registro não encontrado
 
   /prescricoes:
     get:
