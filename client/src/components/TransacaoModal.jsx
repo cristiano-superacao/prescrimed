@@ -3,6 +3,7 @@ import { X, Save, DollarSign } from 'lucide-react';
 import financeiroService from '../services/financeiro.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 
 export default function TransacaoModal({ transacao, onClose }) {
   const [formData, setFormData] = useState({
@@ -39,7 +40,7 @@ export default function TransacaoModal({ transacao, onClose }) {
       }
       onClose();
     } catch (error) {
-      toast.error(errorMessage('save', 'transação'));
+      handleApiError(error, errorMessage('save', 'transação'));
     } finally {
       setLoading(false);
     }

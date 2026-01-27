@@ -101,8 +101,8 @@ export default function Cronograma() {
       setItems(sliced);
 
     } catch (error) {
-      console.error(error);
-      toast.error(errorMessage('load', 'cronograma'));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('load', 'cronograma'));
     } finally {
       setLoading(false);
     }

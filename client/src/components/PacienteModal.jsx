@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { X, User, MapPin, Phone, AlertCircle } from 'lucide-react';
 import pacienteService from '../services/paciente.service';
 import toast from 'react-hot-toast';
-import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
+import { successMessage, errorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 
 export default function PacienteModal({ paciente, onClose }) {
   const [formData, setFormData] = useState({
@@ -47,7 +48,7 @@ export default function PacienteModal({ paciente, onClose }) {
       }
       onClose();
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('save', 'paciente')));
+      handleApiError(error, errorMessage('save', 'paciente'));
     } finally {
       setLoading(false);
     }

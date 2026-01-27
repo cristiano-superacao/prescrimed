@@ -108,7 +108,8 @@ export default function Evolucao() {
         setPageSize(Number(data.pageSize) || 10);
       }
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('load', 'registros')));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('load', 'registros'));
     } finally {
       setLoading(false);
     }
@@ -214,7 +215,8 @@ export default function Evolucao() {
       loadData();
       loadStats();
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('save', 'registro')));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('save', 'registro'));
     }
   };
 
@@ -253,7 +255,8 @@ export default function Evolucao() {
       loadData();
       loadStats();
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('delete', 'registro')));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('delete', 'registro'));
     } finally {
       setDeletingId(null);
     }

@@ -4,6 +4,7 @@ import usuarioService from '../services/usuario.service';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, customErrorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 import UsuarioModal from '../components/UsuarioModal';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
@@ -59,7 +60,7 @@ export default function Usuarios() {
         setPageSize(Number(data.pageSize) || 10);
       }
     } catch (error) {
-      toast.error(errorMessage('load', 'usuários'));
+      handleApiError(error, errorMessage('load', 'usuários'));
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ export default function Usuarios() {
       setFeedback({ type: 'success', message: 'Usuário excluído e lista atualizada.' });
       loadUsuarios();
     } catch (error) {
-      toast.error(errorMessage('delete', 'usuário'));
+      handleApiError(error, errorMessage('delete', 'usuário'));
     } finally {
       setDeletingId(null);
     }

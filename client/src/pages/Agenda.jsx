@@ -10,6 +10,7 @@ import EmptyState from '../components/common/EmptyState';
 import agendamentoService from '../services/agendamento.service';
 import pacienteService from '../services/paciente.service';
 import { openPrintWindow, escapeHtml } from '../utils/printWindow';
+import { handleApiError } from '../utils/errorHandler';
 
 export default function Agenda() {
   const [agendamentos, setAgendamentos] = useState([]);
@@ -56,8 +57,7 @@ export default function Agenda() {
         setPageSize(Number(data.pageSize) || 10);
       }
     } catch (error) {
-      console.error('Erro ao carregar agendamentos:', error);
-      toast.error('Erro ao carregar agendamentos');
+      handleApiError(error, 'Erro ao carregar agendamentos');
       setAgendamentos([]);
     } finally {
       setLoading(false);
@@ -109,7 +109,7 @@ export default function Agenda() {
       toast.success('Agendamento excluído com sucesso!');
       loadAgendamentos();
     } catch (error) {
-      toast.error('Erro ao excluir agendamento');
+      handleApiError(error, 'Erro ao excluir agendamento');
     } finally {
       setDeletingId(null);
     }
@@ -165,7 +165,7 @@ export default function Agenda() {
       resetForm();
       loadAgendamentos();
     } catch (error) {
-      toast.error('Erro ao salvar agendamento');
+      handleApiError(error, 'Erro ao salvar agendamento');
     }
   };
 

@@ -13,6 +13,7 @@ import prescricaoService from '../services/prescricao.service';
 import pacienteService from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import EmptyState from '../components/common/EmptyState';
@@ -103,7 +104,7 @@ export default function Prescricoes() {
         : (pacientesData.pacientes || []);
       setPacientes(pacientesList);
     } catch (error) {
-      toast.error(errorMessage('load', 'dados'));
+      handleApiError(error, errorMessage('load', 'dados'));
     } finally {
       setLoading(false);
     }
@@ -145,7 +146,7 @@ export default function Prescricoes() {
       setFeedback({ type: 'success', message: 'Prescrição cadastrada com sucesso.' });
       loadData();
     } catch (error) {
-      toast.error(errorMessage('create', 'prescrição'));
+      handleApiError(error, errorMessage('create', 'prescrição'));
     }
   };
 
@@ -159,7 +160,7 @@ export default function Prescricoes() {
       setFeedback({ type: 'warning', message: 'Prescrição foi cancelada.' });
       loadData();
     } catch (error) {
-      toast.error(errorMessage('cancel', 'prescrição'));
+      handleApiError(error, errorMessage('cancel', 'prescrição'));
     }
   };
 

@@ -76,7 +76,8 @@ export default function EmpresaModal({ empresa, onClose, onSave }) {
       onSave(response); // Passa a resposta para o componente pai
       onClose();
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('save', 'empresa')));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('save', 'empresa'));
     } finally {
       setLoading(false);
     }

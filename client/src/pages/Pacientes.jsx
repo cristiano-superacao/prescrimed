@@ -81,7 +81,8 @@ export default function Pacientes() {
         setPageSize(Number(data.pageSize) || 10);
       }
     } catch (error) {
-      toast.error(errorMessage('load', 'pacientes'));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('load', 'pacientes'));
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,8 @@ export default function Pacientes() {
       const response = await pacienteService.getHistorico(paciente.id || paciente._id);
       setHistoricoPrescricoes(response.prescricoes || []);
     } catch (error) {
-      toast.error(errorMessage('load', 'histórico'));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('load', 'histórico'));
     }
   };
 
@@ -119,7 +121,8 @@ export default function Pacientes() {
       toast.success(successMessage('delete', 'Paciente'));
       loadPacientes(searchTerm);
     } catch (error) {
-      toast.error(errorMessage('delete', 'paciente'));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('delete', 'paciente'));
     } finally {
       setDeletingId(null);
     }

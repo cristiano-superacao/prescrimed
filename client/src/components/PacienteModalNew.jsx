@@ -144,8 +144,8 @@ export default function PacienteModal({ paciente, onClose }) {
       }
       onClose();
     } catch (error) {
-      console.error('Erro ao salvar paciente:', error);
-      toast.error(apiErrorMessage(error, errorMessage('save', 'residente')));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('save', 'residente'));
     } finally {
       setLoading(false);
     }

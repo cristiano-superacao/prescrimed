@@ -74,8 +74,8 @@ export default function CensoMP() {
       const start = (page - 1) * pageSize;
       setCensoData(ordered.slice(start, start + pageSize));
     } catch (error) {
-      console.error(error);
-      toast.error(errorMessage('load', 'dados do censo'));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('load', 'dados do censo'));
     } finally {
       setLoading(false);
     }

@@ -18,6 +18,7 @@ import financeiroService from '../services/financeiro.service';
 import TransacaoModal from '../components/TransacaoModal';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 import { formatCurrency } from '../utils/currency';
 import { downloadCsv } from '../utils/exportCsv';
 import { openPrintWindow, escapeHtml } from '../utils/printWindow';
@@ -88,8 +89,7 @@ export default function Financeiro() {
         despesasPendentes: Number(statsData?.despesasPendentes) || 0
       });
     } catch (error) {
-      console.error(error);
-      toast.error(errorMessage('load', 'dados financeiros'));
+      handleApiError(error, errorMessage('load', 'dados financeiros'));
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ export default function Financeiro() {
       toast.success('Transação excluída com sucesso');
       loadData();
     } catch (error) {
-      toast.error(errorMessage('delete', 'transação'));
+      handleApiError(error, errorMessage('delete', 'transação'));
     } finally {
       setDeletingId(null);
     }

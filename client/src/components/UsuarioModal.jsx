@@ -85,7 +85,8 @@ export default function UsuarioModal({ usuario, onClose }) {
       }
       onClose();
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('save', 'usuário')));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('save', 'usuário'));
     } finally {
       setLoading(false);
     }

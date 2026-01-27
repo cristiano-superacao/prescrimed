@@ -5,6 +5,7 @@ import usuarioService from '../services/usuario.service';
 import empresaService from '../services/empresa.service';
 import toast from 'react-hot-toast';
 import { successMessage, customErrorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 import PageHeader from '../components/common/PageHeader';
 
 export default function Configuracoes() {
@@ -49,7 +50,7 @@ export default function Configuracoes() {
       const data = await usuarioService.getProfileSummary();
       setSummary(data);
     } catch (error) {
-      toast.error('Não foi possível carregar o resumo do perfil');
+      handleApiError(error, 'Não foi possível carregar o resumo do perfil');
     } finally {
       setSummaryLoading(false);
     }
@@ -67,7 +68,7 @@ export default function Configuracoes() {
         telefone: data?.telefone || '',
       });
     } catch (error) {
-      toast.error('Não foi possível carregar os dados da empresa');
+      handleApiError(error, 'Não foi possível carregar os dados da empresa');
     } finally {
       setEmpresaLoading(false);
     }
@@ -109,8 +110,7 @@ export default function Configuracoes() {
       toast.success(successMessage('update', 'Perfil', { suffix: '!' }));
       loadSummary();
     } catch (error) {
-      const message = error?.response?.data?.error || 'Erro ao atualizar perfil';
-      toast.error(message);
+      handleApiError(error, 'Erro ao atualizar perfil');
     } finally {
       setPerfilSaving(false);
     }
@@ -125,8 +125,7 @@ export default function Configuracoes() {
       toast.success('Dados da empresa atualizados!');
       loadEmpresa();
     } catch (error) {
-      const message = error?.response?.data?.error || 'Erro ao atualizar empresa';
-      toast.error(message);
+      handleApiError(error, 'Erro ao atualizar empresa');
     } finally {
       setEmpresaSaving(false);
     }
@@ -155,8 +154,7 @@ export default function Configuracoes() {
       toast.success('Senha alterada com sucesso!');
       form.reset();
     } catch (error) {
-      const message = error?.response?.data?.error || 'Erro ao alterar senha';
-      toast.error(message);
+      handleApiError(error, 'Erro ao alterar senha');
     } finally {
       setSenhaSaving(false);
     }

@@ -157,8 +157,8 @@ export default function Dashboard() {
       }
       setLastUpdated(new Date());
     } catch (error) {
-      // Exibe mensagem de erro em caso de falha na requisição
-      toast.error(errorMessage('load', 'dados do dashboard'));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('load', 'dados do dashboard'));
     } finally {
       // Desativa estado de carregamento (executado sempre, com ou sem erro)
       setLoading(false);

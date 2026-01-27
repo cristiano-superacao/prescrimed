@@ -5,6 +5,7 @@ import empresaService from '../services/empresa.service';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 import AccessDeniedCard from '../components/common/AccessDeniedCard';
+import { handleApiError } from '../utils/errorHandler';
 
 export default function Empresas() {
   const { user } = useAuthStore();
@@ -42,8 +43,7 @@ export default function Empresas() {
       const empresasList = Array.isArray(data) ? data : (data.empresas || []);
       setEmpresas(empresasList);
     } catch (error) {
-      console.error('Erro ao carregar empresas:', error);
-      toast.error('Erro ao carregar lista de empresas');
+      handleApiError(error, 'Erro ao carregar lista de empresas');
     } finally {
       setLoading(false);
     }
@@ -112,9 +112,7 @@ export default function Empresas() {
       handleCloseModal();
       loadEmpresas();
     } catch (error) {
-      console.error('Erro ao salvar empresa:', error);
-      const errorMsg = error.response?.data?.error || 'Erro ao salvar empresa';
-      toast.error(errorMsg);
+      handleApiError(error, 'Erro ao salvar empresa');
     }
   };
 
@@ -130,9 +128,7 @@ export default function Empresas() {
       toast.success('Empresa excluída com sucesso!');
       loadEmpresas();
     } catch (error) {
-      console.error('Erro ao excluir empresa:', error);
-      const errorMsg = error.response?.data?.error || 'Erro ao excluir empresa';
-      toast.error(errorMsg);
+      handleApiError(error, 'Erro ao excluir empresa');
     } finally {
       setDeletingId(null);
     }

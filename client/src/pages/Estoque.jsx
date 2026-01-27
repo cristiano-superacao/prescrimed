@@ -74,8 +74,8 @@ export default function Estoque() {
         setPageSize(Number(data.pageSize) || 10);
       }
     } catch (error) {
-      toast.error(errorMessage('load', 'itens'));
-      console.error(error);
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('load', 'itens'));
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,8 @@ export default function Estoque() {
       setMovimentacoes(data.movimentacoes || []);
       setShowHistorico(true);
     } catch (error) {
-      toast.error(errorMessage('load', 'histórico'));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('load', 'histórico'));
     }
   };
 
@@ -112,7 +113,8 @@ export default function Estoque() {
       closeModal();
       loadItems();
     } catch (error) {
-      toast.error(errorMessage('create', 'item'));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('create', 'item'));
     }
   };
 
@@ -134,7 +136,8 @@ export default function Estoque() {
       closeModal();
       loadItems();
     } catch (error) {
-      toast.error(apiErrorMessage(error, errorMessage('save', 'movimentação')));
+      const { handleApiError } = await import('../utils/errorHandler');
+      handleApiError(error, errorMessage('save', 'movimentação'));
     }
   };
 
