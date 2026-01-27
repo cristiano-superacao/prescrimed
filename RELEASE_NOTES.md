@@ -1,4 +1,27 @@
 # Prescrimed – Release 2026-01-24
+---
+
+# Prescrimed – Release 2026-01-26
+
+## Backend
+- RBAC no cadastro de Residentes conforme `Empresa.tipoSistema` (Casa de Repouso/PetShop vs Fisioterapia).
+- Proteção de `routes/paciente.routes.js` com `authenticate` + `tenantIsolation` em todas as rotas.
+- Inclusão do role `medico` no enum `usuarios.role` com garantia dinâmica no `server.js`.
+
+## Frontend
+- Utilitário `handleApiError` centralizado para mensagens amigáveis.
+- Atualização das páginas principais para usar mensagens claras e traduzidas por código.
+- Botão “Novo Residente” com desabilitação e tooltip quando o perfil não possui permissão.
+
+## Documentação
+- README atualizado com seção de Atualizações (26 jan 2026).
+- Manual do Sistema revisado com regras por módulo e empresa.
+- Documentação Técnica atualizada com detalhes de middleware, rotas e enum.
+
+## Observações
+- Layout responsivo e profissional mantido.
+- Isolamento por empresa ativo; `superadmin` pode usar contexto via header `x-empresa-id`.
+
 
 ## Backend
 - Removido bloqueio 405 por validação de método em /api (evita erro no login e preflight). Ver arquivo: server.js.

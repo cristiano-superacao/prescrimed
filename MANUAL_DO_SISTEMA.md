@@ -1,4 +1,30 @@
 # Manual do Sistema Prescrimed
+## Atualização (26 jan 2026) – Cadastro de Residentes
+
+### Quem pode cadastrar Residentes
+
+- Casa de Repouso/PetShop: Administrador, Enfermeiro, Assistente Social, Médico (Super Admin sempre pode).
+- Fisioterapia: Administrador, Enfermeiro, Assistente Social, Fisioterapeuta, Médico (Super Admin sempre pode).
+
+### Isolamento por Empresa
+
+- Usuários visualizam e operam apenas dados da própria empresa.
+- Super Administrador pode alternar a empresa de contexto quando necessário.
+
+### Como cadastrar um Residente
+
+1. Acesse o módulo “Residentes”.
+2. Se você tem permissão, o botão “Novo Residente” estará habilitado.
+3. Clique em “Novo Residente”, preencha os dados e confirme.
+4. Se o botão estiver desabilitado, passe o mouse para ver a dica de permissão. Tente com um perfil habilitado.
+
+### Mensagens de Erro Amigáveis
+
+- Em caso de falha (validação, acesso, indisponibilidade), será exibido um aviso claro orientando o usuário.
+- Exemplos:
+	- “Acesso negado: seu perfil não pode cadastrar residentes neste módulo”.
+	- “Sessão expirada: faça login novamente para continuar”.
+
 
 > Manual de uso (operacional) para equipes e administradores.
 >

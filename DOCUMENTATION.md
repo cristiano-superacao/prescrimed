@@ -1,3 +1,36 @@
+# Documentação Técnica - Prescrimed
+
+## Atualização (26 jan 2026)
+### RBAC em Cadastro de Residentes
+
+- `routes/paciente.routes.js` agora é protegido com `authenticate` e `tenantIsolation` em todas as rotas.
+- Criação (`POST /api/pacientes`) verifica `Empresa.tipoSistema` e `req.user.role`:
+  - Casa de Repouso/PetShop: `admin`, `enfermeiro`, `assistente_social`, `medico`, `superadmin`.
+  - Fisioterapia: `admin`, `enfermeiro`, `assistente_social`, `fisioterapeuta`, `medico`, `superadmin`.
+
+### Isolamento Multi-Tenant
+
+- `middleware/auth.middleware.js`:
+  - `authenticate`: valida JWT e anexa `req.user`.
+  - `tenantIsolation`: aplica `empresaId` em `req.query` (GET) e `req.body` (POST/PUT); `superadmin` pode definir contexto via `x-empresa-id`.
+  - `requireRole(...roles)`: valida roles específicas.
+  - `checkResourceOwnership(model)`: verifica se o recurso pertence à empresa do usuário.
+
+### Enum de Roles
+
+- `server.js` garante valores do enum `usuarios.role` e adiciona `medico` quando ausente.
+
+### Frontend – Tratamento de Erros
+
+- `client/src/utils/errorHandler.js` expõe `handleApiError(error, fallback)` que:
+  - Lê `code`/`error` da resposta.
+  - Usa `friendlyErrorFromCode` para mensagem amigável.
+  - Exibe toast via `window.showToast`.
+- As páginas principais (Agenda, Pacientes, Prescrições, Enfermagem, Financeiro, Estoque, Cronograma, CensoMP, Dashboard, Empresas, Configurações) foram atualizadas para usar o utilitário.
+
+### UI – Botão “Novo Residente”
+
+- `client/src/pages/Pacientes.jsx` desabilita o botão quando o usuário não possui permissão, mantendo responsividade e acessibilidade (tooltip). Clique sem permissão exibe toast amigável.
 # 📚 Documentação Técnica - Sistema Prescrimed
 
 > Documentação completa do sistema de gestão de saúde multi-tenant  

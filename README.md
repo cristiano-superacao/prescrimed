@@ -389,7 +389,19 @@ Essas operações usam o isolamento multi-tenant (`empresaId`) e respeitam as pe
 - Agenda com ordenação especial por status: **Confirmados → Agendados → Cancelados → Concluídos**.
 - UI com layout responsivo e profissional em todas as listas, incluindo exibição do **Código de cadastro** (ID) em cartões e tabelas.
 
----
+
+### Atualização (26 jan 2026) — Regras de Acesso de Residentes + Erros Amigáveis
+
+- RBAC para cadastro de Residentes por tipo de sistema:
+   - Casa de Repouso/PetShop: `admin`, `enfermeiro`, `assistente_social`, `medico` (e `superadmin`).
+   - Fisioterapia: `admin`, `enfermeiro`, `assistente_social`, `fisioterapeuta`, `medico` (e `superadmin`).
+- Novo role disponível: `medico` (incluído no enum e na UI).
+- Multi-tenant: todas as rotas protegidas aplicam isolamento por `empresaId`; `superadmin` pode selecionar contexto com `x-empresa-id`.
+- Frontend: botão “Novo Residente” desabilita quando não permitido e exibe tooltip com orientação.
+- Tratamento de erros amigáveis:
+   - Backend padroniza `{ error, code, details }` com mapeamento de códigos comuns.
+   - Frontend usa `client/src/utils/errorHandler.js` (`handleApiError`) para exibir toasts claros.
+
 
 ## 👤 Capacidades por Cargo
 

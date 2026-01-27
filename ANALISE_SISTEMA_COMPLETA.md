@@ -1,5 +1,5 @@
 # 🔍 RELATÓRIO DE ANÁLISE COMPLETA DO SISTEMA PRESCRIMED
-**Data**: 24 de Janeiro de 2026  
+**Data**: 26 de Janeiro de 2026  
 **Commits realizados**: 956354e2, 3a0999f0  
 **Status**: ✅ Sistema totalmente integrado e funcional
 
@@ -7,13 +7,20 @@
 
 ## 📊 RESUMO EXECUTIVO
 
-Sistema analisado e corrigido em **todas as camadas**:
+Sistema analisado e corrigido em **todas as camadas** (atualização 26/01):
 - ✅ **13 Modelos (Tabelas)** - Todos criados e sincronizados
 - ✅ **14 Rotas Backend** - Todas funcionais e autenticadas
 - ✅ **9 Serviços Frontend** - Todos integrados com API
 - ✅ **15 Páginas React** - Layout responsivo mantido
 - ✅ **Autenticação JWT** - Multi-tenant isolamento implementado
 - ✅ **MySQL 8.0** - Banco local configurado e operacional
+
+### Novidades (26 jan 2026)
+- RBAC no cadastro de Residentes por tipo de sistema (Casa de Repouso/PetShop vs Fisioterapia).
+- Inclusão do role `medico` e suporte na UI.
+- Tratamento de erros amigáveis no frontend com utilitário centralizado.
+- Botão “Novo Residente” desabilita quando não permitido, mantendo layout responsivo e acessível.
+
 
 ---
 
