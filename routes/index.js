@@ -13,6 +13,7 @@ import fisioterapiaRoutes from './fisioterapia.routes.js';
 import estoqueRoutes from './estoque.routes.js';
 import financeiroRoutes from './financeiro.routes.js';
 import enfermagemRoutes from './enfermagem.routes.js';
+import backupRoutes from './backup.routes.js';
 import { authenticate, tenantIsolation } from '../middleware/auth.middleware.js';
 import { sequelize } from '../models/index.js';
 
@@ -35,6 +36,7 @@ router.use('/diagnostic', diagnosticRoutes);
 
 // Rotas protegidas com autenticação e isolamento multi-tenant
 router.use('/empresas', authenticate, empresaRoutes);
+router.use('/backups', authenticate, backupRoutes);
 router.use('/usuarios', authenticate, tenantIsolation, usuarioRoutes);
 router.use('/pacientes', authenticate, tenantIsolation, pacienteRoutes);
 router.use('/prescricoes', authenticate, tenantIsolation, prescricaoRoutes);

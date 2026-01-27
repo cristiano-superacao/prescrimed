@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import pacienteService from '../services/paciente.service';
 import prescricaoService from '../services/prescricao.service';
+import empresaService from '../services/empresa.service';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
 import PageHeader from '../components/common/PageHeader';
@@ -16,6 +17,7 @@ import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
 import EmptyState from '../components/common/EmptyState';
 import { openPrintWindow, escapeHtml } from '../utils/printWindow';
+import { useAuthStore } from '../store/authStore';
 import { 
   TableContainer, 
   MobileGrid, 
@@ -28,6 +30,7 @@ import {
 } from '../components/common/Table';
 
 export default function CensoMP() {
+  const { user } = useAuthStore();
   const [censoData, setCensoData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,13 +46,72 @@ export default function CensoMP() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [pacientesData, prescricoesData] = await Promise.all([
-        pacienteService.getAll(),
-        prescricaoService.getAll()
-      ]);
+      const isSuperadmin = user?.role === 'superadmin';
+      const selectedEmpresaId = localStorage.getItem('superadminEmpresaId');
 
-      const pacientes = Array.isArray(pacientesData) ? pacientesData : (pacientesData.pacientes || []);
-      const prescricoes = Array.isArray(prescricoesData) ? prescricoesData : (prescricoesData.prescricoes || []);
+      let pacientes = [];
+      let prescricoes = [];
+
+      if (isSuperadmin && !selectedEmpresaId) {
+        toast.loading('Carregando dados de todas as empresas...', { id: 'censo-mp-load-all' });
+
+        const empresasData = await empresaService.getAll();
+        const empresasList = Array.isArray(empresasData)
+          ? empresasData
+          : (empresasData?.empresas || empresasData?.data || []);
+        const empresaIds = (Array.isArray(empresasList) ? empresasList : [])
+          .map((e) => e?.id)
+          .filter(Boolean);
+
+        if (empresaIds.length === 0) {
+          setTotal(0);
+          setCensoData([]);
+          toast.dismiss('censo-mp-load-all');
+          return;
+        }
+
+        const results = await Promise.all(
+          empresaIds.map(async (empresaId) => {
+            const config = { headers: { 'X-Empresa-Id': String(empresaId) } };
+            const [pacientesData, prescricoesData] = await Promise.all([
+              pacienteService.getAll('', config),
+              prescricaoService.getAll({}, config)
+            ]);
+
+            const pacientesLocal = Array.isArray(pacientesData)
+              ? pacientesData
+              : (pacientesData?.pacientes || pacientesData?.items || []);
+            const prescricoesLocal = Array.isArray(prescricoesData)
+              ? prescricoesData
+              : (prescricoesData?.prescricoes || prescricoesData?.items || []);
+
+            return {
+              empresaId,
+              pacientes: Array.isArray(pacientesLocal) ? pacientesLocal : [],
+              prescricoes: Array.isArray(prescricoesLocal) ? prescricoesLocal : []
+            };
+          })
+        );
+
+        pacientes = results.flatMap((r) =>
+          (r.pacientes || []).map((p) => ({ ...p, __empresaId: r.empresaId }))
+        );
+        prescricoes = results.flatMap((r) =>
+          (r.prescricoes || []).map((p) => ({ ...p, __empresaId: r.empresaId }))
+        );
+
+        toast.dismiss('censo-mp-load-all');
+      } else {
+        const [pacientesData, prescricoesData] = await Promise.all([
+          pacienteService.getAll(),
+          prescricaoService.getAll()
+        ]);
+
+        pacientes = Array.isArray(pacientesData) ? pacientesData : (pacientesData?.pacientes || pacientesData?.items || []);
+        prescricoes = Array.isArray(prescricoesData) ? prescricoesData : (prescricoesData?.prescricoes || prescricoesData?.items || []);
+        pacientes = Array.isArray(pacientes) ? pacientes : [];
+        prescricoes = Array.isArray(prescricoes) ? prescricoes : [];
+      }
 
       // Map patients and check for active prescriptions
       const mappedData = pacientes.map(paciente => {
@@ -74,6 +136,7 @@ export default function CensoMP() {
       const start = (page - 1) * pageSize;
       setCensoData(ordered.slice(start, start + pageSize));
     } catch (error) {
+      toast.dismiss('censo-mp-load-all');
       const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'dados do censo'));
     } finally {

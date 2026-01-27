@@ -24,6 +24,7 @@ import Prescricoes from './pages/Prescricoes'; // Criação e gestão de prescri
 import CensoMP from './pages/CensoMP'; // Censo e mapas de pacientes
 import Usuarios from './pages/Usuarios'; // Gerenciamento de usuários do sistema
 import Empresas from './pages/Empresas'; // Gestão de empresas (multi-tenant)
+import Backups from './pages/Backups'; // Backups (Superadmin)
 import Configuracoes from './pages/Configuracoes'; // Configurações do sistema
 import Agenda from './pages/Agenda'; // Agenda de consultas e atendimentos
 import Cronograma from './pages/Cronograma'; // Cronograma de atividades
@@ -170,6 +171,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Empresas />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Backups - geração/listagem/download (Superadmin) */}
+            <Route
+              path="backups"
+              element={
+                <ProtectedRoute>
+                  <Backups />
                 </ProtectedRoute>
               }
             />

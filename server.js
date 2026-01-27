@@ -39,6 +39,7 @@ import { spawn } from 'child_process'; // Executa scripts auxiliares sem bloquea
 import apiRouter from './routes/index.js'; // Router principal da API
 import { errorHandler } from './middleware/error.middleware.js';
 import { sequelize, Usuario, Empresa } from './models/index.js'; // Instância do Sequelize (ORM)
+import { startBackupScheduler } from './utils/backupScheduler.js';
 
 /**
  * Configuração do __dirname para ES Modules
@@ -213,6 +214,32 @@ async function connectDB(retryCount = 0) {
         // Se tabela não existir ainda, cria com alter
         devAlter = true;
       }
+
+      // Detecta schema desatualizado em empresas (código sequencial + trial)
+      // Importante: sem ALTER, o sync tenta criar o índice (tipoSistema,codigoNumero) e falha
+      // caso a coluna ainda não exista no banco.
+      if (!devAlter) {
+        try {
+          const qi = sequelize.getQueryInterface();
+          const tableName = Empresa.getTableName();
+          const cols = await qi.describeTable(tableName);
+
+          const missingCodigoCols = !cols?.codigo || !cols?.codigoNumero;
+          const missingTrialCols = !cols?.emTeste || !cols?.testeInicio || !cols?.testeFim || !cols?.testeDias;
+
+          if (missingCodigoCols) {
+            console.log('🔧 Schema dev desatualizado (faltando colunas codigo/codigoNumero em empresas) - aplicando alter...');
+            devAlter = true;
+          } else if (missingTrialCols) {
+            console.log('🔧 Schema dev desatualizado (faltando colunas de teste em empresas) - aplicando alter...');
+            devAlter = true;
+          }
+        } catch {
+          // Se a tabela não existir ainda, precisa criar com alter
+          devAlter = true;
+        }
+      }
+
       await sequelize.sync({ force: false, alter: devAlter });
       console.log(`✅ Tabelas sincronizadas (modo desenvolvimento${devAlter ? ' com ALTER' : ''})`);
     } else {
@@ -249,6 +276,21 @@ async function connectDB(retryCount = 0) {
           const cols = await qi.describeTable(tableName);
           if (!cols?.codigo || !cols?.codigoNumero) {
             console.log('🔧 Schema desatualizado detectado (faltando colunas codigo/codigoNumero em empresas) - aplicando alter...');
+            useAlter = true;
+          }
+        } catch {
+          useAlter = true;
+        }
+      }
+
+      // Detecta schema desatualizado em empresas (período de teste)
+      if (!useAlter) {
+        try {
+          const qi = sequelize.getQueryInterface();
+          const tableName = Empresa.getTableName();
+          const cols = await qi.describeTable(tableName);
+          if (!cols?.emTeste || !cols?.testeInicio || !cols?.testeFim || !cols?.testeDias) {
+            console.log('🔧 Schema desatualizado detectado (faltando colunas de teste em empresas) - aplicando alter...');
             useAlter = true;
           }
         } catch {
@@ -292,6 +334,14 @@ async function connectDB(retryCount = 0) {
     }
 
     console.log('🎉 Sistema pronto para uso!');
+
+    // Backups automáticos (opcional)
+    // Ative com BACKUP_AUTO_ENABLED=true
+    try {
+      startBackupScheduler({ logger: console });
+    } catch (e) {
+      console.warn('⚠️ Falha ao iniciar backup scheduler:', e?.message || e);
+    }
 
     // Importa dados exportados de MySQL (JSON) assim que o schema estiver pronto
     if (process.env.IMPORT_JSON_ON_START === 'true') {
@@ -346,7 +396,7 @@ app.get('/health', healthCors, (req, res) => {
   // omitir o header. Forçamos aqui para evitar bloqueios de verificação.
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Empresa-Id');
 
   // Responde imediatamente para evitar timeout do Railway
   res.status(200).json({ 
@@ -366,7 +416,7 @@ app.get('/api/health', healthCors, (req, res) => {
   // Garante CORS universal para o health da API
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Empresa-Id');
 
   // Responde imediatamente para evitar timeout
   res.status(200).json({ 
@@ -409,6 +459,11 @@ const corsOriginEnv = (process.env.CORS_ORIGIN || '').trim();
 
 const baseOrigins = [
   'http://localhost:5173',  // Vite dev server (frontend em desenvolvimento)
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175',
   'http://localhost:3000',  // Backend local
   // Railway frontend (domínio principal em produção)
   'https://prescrimed.up.railway.app',
@@ -456,7 +511,7 @@ const corsOptions = {
   },
   credentials: true, // Permite envio de cookies e headers de autenticação
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Métodos HTTP permitidos
-  allowedHeaders: ['Content-Type', 'Authorization'], // Headers permitidos
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Empresa-Id', 'x-empresa-id'], // Headers permitidos
 };
 
 // Responde preflight (OPTIONS) também fora de /api.
@@ -465,7 +520,7 @@ const globalCors = cors({
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Empresa-Id', 'x-empresa-id'],
 });
 app.options('*', globalCors);
 

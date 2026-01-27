@@ -172,6 +172,26 @@ FRONTEND_URL=https://prescrimed.up.railway.app
 CORS_ORIGIN=https://prescrimed.up.railway.app
 ALLOWED_ORIGINS=https://prescrimed.up.railway.app,http://localhost:8000,http://127.0.0.1:8000,http://localhost:5173,http://127.0.0.1:5173
 
+# Backups (Superadmin)
+# Armazenamento local (pasta). Default: ./data/backups
+# Em Railway, use Volume para persistência se necessário.
+BACKUP_DIR=./data/backups
+
+# Backups automáticos (opcional)
+BACKUP_AUTO_ENABLED=false
+BACKUP_AUTO_INTERVAL_HOURS=24
+BACKUP_AUTO_SEND_EMAIL=true
+BACKUP_RETENTION_COUNT=30
+# BACKUP_RETENTION_DAYS=90
+
+# SMTP (opcional) - envio de backups por e-mail
+# Se não configurar, o sistema cria o arquivo local e marca e-mail como "skipped".
+SMTP_HOST=smtp.seu-provedor.com
+SMTP_PORT=587
+SMTP_USER=seu_usuario
+SMTP_PASS=sua_senha
+SMTP_FROM="Prescrimed <no-reply@prescrimed.com.br>"
+
 # Seed / Deploy Inicial (TEMPORÁRIO - remova após primeiro deploy)
 FORCE_SYNC=true
 SEED_MINIMAL=true

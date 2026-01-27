@@ -25,8 +25,10 @@ export const getApiUrl = () => {
   }
 
   // Em desenvolvimento local
-  console.log('💻 Desenvolvimento local - usando http://localhost:8000/api');
-  return 'http://localhost:8000/api';
+  // Verifica variável de ambiente ou tenta detectar porta automaticamente
+  const devApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
+  console.log('💻 Desenvolvimento local - usando', devApiUrl);
+  return devApiUrl;
 };
 
 // Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
@@ -44,7 +46,8 @@ export const getApiRootUrl = () => {
   }
 
   // Em desenvolvimento local
-  return 'http://localhost:8000';
+  const devBackendRoot = import.meta.env.VITE_BACKEND_ROOT || 'http://localhost:8001';
+  return devBackendRoot;
 };
 
 console.log('🌐 API URL configurada:', getApiUrl());

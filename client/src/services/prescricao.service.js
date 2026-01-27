@@ -1,9 +1,9 @@
 import { get, post, put, buildQueryString } from './request';
 
 const prescricaoService = {
-  getAll: async (filters = {}) => {
+  getAll: async (filters = {}, config = {}) => {
     const qs = buildQueryString(filters);
-    return get(`/prescricoes${qs}`);
+    return get(`/prescricoes${qs}`, config);
   },
 
   getByPaciente: async (pacienteId) => {

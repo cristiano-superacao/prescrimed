@@ -1,9 +1,9 @@
 import { get, post, put, del } from './request';
 
 const pacienteService = {
-  getAll: async (search = '') => {
+  getAll: async (search = '', config = {}) => {
     const url = search ? `/pacientes?${search}` : '/pacientes';
-    return get(url);
+    return get(url, config);
   },
 
   getById: async (id) => {
