@@ -245,6 +245,7 @@ npm run seed:minimal     # Seed mínimo (1 empresa + 4 usuários + 3 pacientes)
 npm run seed:demo        # Seed completo com dados demo
 npm run create:superadmin # Criar/atualizar super admin
 npm run smoke:api        # Smoke test completo da API
+npm run sanity:rules     # Valida regras: inativação (pacientes), histórico de evoluções
 npm run check:railway    # Validar configuração do Railway
 npm run check:health     # Verificar status do backend
 ```
