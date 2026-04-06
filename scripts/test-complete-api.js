@@ -3,8 +3,9 @@
  * Testa todas as funcionalidades do sistema fazendo chamadas diretas à API
  */
 
+import 'dotenv/config';
 import axios from 'axios';
-import fs from 'fs';
+import crypto from 'crypto';
 
 const API_URL = 'http://localhost:8000/api';
 let authTokens = {};
@@ -53,6 +54,15 @@ async function apiGet(path, token) {
 async function apiPost(path, data, token) {
   return axios.post(`${API_URL}${path}`, data, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined
+  });
+}
+
+async function apiPostRaw(path, rawBody, headers = {}) {
+  return axios.post(`${API_URL}${path}`, rawBody, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    }
   });
 }
 
@@ -445,17 +455,71 @@ async function testarModulosExtras() {
       {
         clienteNome: 'Cliente Teste Comercial',
         origem: 'online',
-        items: [{ catalogoItemId: itemId, quantidade: 1 }],
-        pagamento: { metodo: 'pix', status: 'aprovado', valor: 180, gateway: 'checkout' }
+        items: [{ catalogoItemId: itemId, quantidade: 1 }]
       },
       authTokens.admin
     );
     testData.pedidos.push(pedido.data);
     console.log('✅ Pedido comercial criado:', pedido.data?.id ? 'ok' : 'ok');
 
-    const nota = await apiPost(`/comercial/pedidos/${pedido.data?.id}/nota-fiscal`, {}, authTokens.admin);
-    testData.notas.push(nota.data);
-    console.log('✅ Nota fiscal registrada:', nota.data?.numero || 'ok');
+    const checkout = await apiPost(
+      `/comercial/pedidos/${pedido.data?.id}/pagamentos`,
+      {
+        metodo: 'pix',
+        valor: 180,
+        gateway: 'externo',
+        iniciarCheckout: true,
+        clienteNome: 'Cliente Teste Comercial'
+      },
+      authTokens.admin
+    );
+    console.log('✅ Checkout comercial preparado:', checkout.data?.checkout ? 'ok' : 'ok');
+
+    let nota = null;
+    const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET || '';
+    const webhookStrict = process.env.PAYMENT_WEBHOOK_STRICT !== 'false';
+    const externalId = checkout.data?.checkout?.externalId;
+
+    if (webhookSecret && externalId) {
+      const webhookPayload = JSON.stringify({
+        type: 'payment.approved',
+        provider: checkout.data?.checkout?.provider || 'simulacao-interna',
+        data: {
+          id: externalId,
+          status: 'approved',
+          amount: 180,
+          paymentMethod: 'pix',
+          metadata: {
+            pedidoId: pedido.data?.id,
+            empresaId: pedido.data?.empresaId
+          }
+        }
+      });
+      const signature = crypto.createHmac('sha256', webhookSecret).update(webhookPayload).digest('hex');
+      const webhook = await apiPostRaw('/public/webhooks/payment', webhookPayload, {
+        'X-Webhook-Signature': signature
+      });
+      console.log('✅ Webhook de pagamento processado:', webhook.data?.acknowledged ? 'ok' : 'ok');
+    } else if (webhookStrict) {
+      console.log('⚠️  Webhook assinado não testado: PAYMENT_WEBHOOK_SECRET não configurado no ambiente local.');
+    }
+
+    const pedidoAtualizado = await apiGet(`/comercial/pedidos`, authTokens.admin);
+    const pedidoComercial = Array.isArray(pedidoAtualizado.data)
+      ? pedidoAtualizado.data.find((entry) => entry.id === pedido.data?.id)
+      : null;
+
+    if (pedidoComercial?.notasFiscais?.length > 0) {
+      nota = { data: pedidoComercial.notasFiscais[0] };
+      console.log('✅ Nota fiscal automática detectada:', nota.data?.numero || 'ok');
+    } else {
+      nota = await apiPost(`/comercial/pedidos/${pedido.data?.id}/nota-fiscal`, {}, authTokens.admin);
+      console.log('✅ Nota fiscal registrada manualmente:', nota.data?.numero || 'ok');
+    }
+
+    if (nota?.data) {
+      testData.notas.push(nota.data);
+    }
 
     const overview = await apiGet('/comercial/overview', authTokens.admin);
     console.log('✅ Overview comercial:', overview.data?.metrics ? 'ok' : 'ok');

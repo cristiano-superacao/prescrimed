@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   BadgeDollarSign,
+  Copy,
+  ExternalLink,
   Package,
   Plus,
+  QrCode,
   Receipt,
   RefreshCcw,
   ShieldCheck,
@@ -35,6 +38,7 @@ const initialPedidoForm = {
   quantidade: 1,
   metodo: 'pix',
   pagamentoStatus: 'aprovado',
+  iniciarCheckout: false,
   observacoes: '',
 };
 
@@ -68,6 +72,7 @@ export default function ComercialFiscal() {
   const [loading, setLoading] = useState(true);
   const [savingItem, setSavingItem] = useState(false);
   const [savingPedido, setSavingPedido] = useState(false);
+  const [checkoutFeedback, setCheckoutFeedback] = useState(null);
 
   const selectedCatalogItem = useMemo(
     () => catalogo.find((item) => item.id === pedidoForm.catalogoItemId) || null,
@@ -133,7 +138,8 @@ export default function ComercialFiscal() {
 
     setSavingPedido(true);
     try {
-      await comercialService.createPedido({
+      const shouldStartCheckout = pedidoForm.iniciarCheckout || pedidoForm.origem === 'online';
+      const createdPedido = await comercialService.createPedido({
         clienteNome: pedidoForm.clienteNome || null,
         origem: pedidoForm.origem,
         observacoes: pedidoForm.observacoes,
@@ -143,14 +149,39 @@ export default function ComercialFiscal() {
             quantidade: Number(pedidoForm.quantidade) || 1,
           }
         ],
-        pagamento: {
-          metodo: pedidoForm.metodo,
-          status: pedidoForm.pagamentoStatus,
-          valor: projectedOrderTotal,
-          gateway: pedidoForm.origem === 'online' ? 'checkout' : 'manual',
-        }
+        pagamento: shouldStartCheckout
+          ? undefined
+          : {
+              metodo: pedidoForm.metodo,
+              status: pedidoForm.pagamentoStatus,
+              valor: projectedOrderTotal,
+              gateway: 'manual',
+            }
       });
-      toast.success('Pedido criado com sucesso.');
+
+      let checkoutResult = null;
+      if (shouldStartCheckout) {
+        checkoutResult = await comercialService.addPagamento(createdPedido.id, {
+          metodo: pedidoForm.metodo,
+          valor: projectedOrderTotal,
+          gateway: 'externo',
+          iniciarCheckout: true,
+          clienteNome: pedidoForm.clienteNome || null,
+        });
+
+        setCheckoutFeedback({
+          pedidoId: createdPedido.id,
+          clienteNome: createdPedido.clienteNome || pedidoForm.clienteNome || 'Cliente não informado',
+          total: createdPedido.total || projectedOrderTotal,
+          checkout: checkoutResult.checkout || null,
+          notaFiscal: checkoutResult.notaFiscal || null,
+        });
+        toast.success('Pedido criado e checkout preparado.');
+      } else {
+        setCheckoutFeedback(null);
+        toast.success('Pedido criado com sucesso.');
+      }
+
       setPedidoForm(initialPedidoForm);
       await loadData({ silent: true });
     } catch (error) {
@@ -180,6 +211,19 @@ export default function ComercialFiscal() {
 
   const readiness = overview.readiness || {};
   const metrics = overview.metrics || {};
+  const checkoutData = checkoutFeedback?.checkout || null;
+  const qrCodeValue = checkoutData?.qrCode || null;
+  const canRenderQrImage = typeof qrCodeValue === 'string' && (qrCodeValue.startsWith('data:image') || qrCodeValue.startsWith('http'));
+
+  const handleCopyValue = async (value, successLabel) => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(successLabel);
+    } catch (error) {
+      toast.error('Não foi possível copiar o conteúdo.');
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -242,7 +286,10 @@ export default function ComercialFiscal() {
                   </span>
                   <span className="text-sm text-slate-200">{readiness.payment?.provider || 'Sem gateway'}</span>
                 </div>
-                <p className="text-xs text-slate-300 mt-3">{readiness.nextStep}</p>
+                <p className="text-xs text-slate-300 mt-3">
+                  Webhook: {readiness.payment?.webhookConfigured ? 'ok' : 'pendente'} • Assinatura: {readiness.payment?.signatureConfigured ? 'ok' : 'pendente'}
+                </p>
+                <p className="text-xs text-slate-300 mt-2">{readiness.nextStep}</p>
               </div>
             </div>
           </div>
@@ -264,6 +311,105 @@ export default function ComercialFiscal() {
           </div>
         </div>
       </div>
+
+      {checkoutFeedback && (
+        <div className="card bg-gradient-to-br from-emerald-50 via-white to-cyan-50 border-emerald-100">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-emerald-600">Checkout recente</p>
+              <h2 className="text-xl font-semibold text-slate-900 mt-2">Pagamento externo preparado</h2>
+              <p className="text-sm text-slate-600 mt-2 max-w-2xl">
+                Pedido {checkoutFeedback.pedidoId.slice(0, 8)} para {checkoutFeedback.clienteNome}. Assim que o provedor aprovar o pagamento, o webhook baixa o financeiro e dispara a emissão fiscal.
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Valor</p>
+              <p className="text-2xl font-semibold text-slate-900 mt-2">{formatCurrency(checkoutFeedback.total || 0)}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-6 mt-6">
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl border border-emerald-100 bg-white/90">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Canal de cobrança</p>
+                    <p className="text-xs text-slate-500 mt-1">{checkoutData?.provider || 'simulacao-interna'} • status {checkoutData?.status || 'pendente'}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClasses(checkoutData?.status || 'pendente')}`}>
+                    {checkoutData?.simulated ? 'simulado' : (checkoutData?.status || 'pendente')}
+                  </span>
+                </div>
+
+                {checkoutData?.checkoutUrl && (
+                  <div className="mt-4 flex gap-3 flex-wrap">
+                    <a
+                      href={checkoutData.checkoutUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-primary inline-flex items-center gap-2"
+                    >
+                      <ExternalLink size={18} /> Abrir checkout
+                    </a>
+                    <button
+                      type="button"
+                      className="btn btn-secondary inline-flex items-center gap-2"
+                      onClick={() => handleCopyValue(checkoutData.checkoutUrl, 'Link do checkout copiado.')}
+                    >
+                      <Copy size={18} /> Copiar link
+                    </button>
+                  </div>
+                )}
+
+                {checkoutData?.pixCopiaECola && (
+                  <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-2 text-slate-900 font-semibold">
+                        <QrCode size={18} /> PIX copia e cola
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-secondary px-3 py-2 text-sm inline-flex items-center gap-2"
+                        onClick={() => handleCopyValue(checkoutData.pixCopiaECola, 'Código PIX copiado.')}
+                      >
+                        <Copy size={16} /> Copiar
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-3 break-all leading-6">{checkoutData.pixCopiaECola}</p>
+                  </div>
+                )}
+              </div>
+
+              {checkoutFeedback.notaFiscal && (
+                <div className="p-4 rounded-2xl border border-blue-100 bg-blue-50/80">
+                  <p className="text-sm font-semibold text-slate-900">Nota fiscal associada</p>
+                  <p className="text-xs text-slate-600 mt-1">
+                    {checkoutFeedback.notaFiscal.tipoDocumento?.toUpperCase() || 'NF'} #{checkoutFeedback.notaFiscal.numero || 's/num'} • {checkoutFeedback.notaFiscal.status}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 rounded-2xl border border-slate-100 bg-white/90 flex flex-col items-center justify-center text-center">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">QRCode</p>
+              <div className="mt-4 w-full max-w-[220px] aspect-square rounded-3xl border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center p-4 overflow-hidden">
+                {canRenderQrImage ? (
+                  <img src={qrCodeValue} alt="QRCode do pagamento" className="w-full h-full object-contain" />
+                ) : (
+                  <div className="space-y-3 text-slate-500">
+                    <QrCode size={40} className="mx-auto" />
+                    <p className="text-sm">
+                      {checkoutData?.simulated
+                        ? 'Gateway em modo simulado. Configure credenciais para receber QRCode real.'
+                        : 'O provedor não retornou uma imagem de QRCode.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <form className="card space-y-4" onSubmit={handleCreateItem}>
@@ -364,6 +510,23 @@ export default function ComercialFiscal() {
                 <option value="pendente">Pendente</option>
               </select>
             </label>
+            <label className="sm:col-span-2 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600"
+                checked={pedidoForm.iniciarCheckout}
+                onChange={(event) => setPedidoForm((prev) => ({
+                  ...prev,
+                  iniciarCheckout: event.target.checked,
+                  pagamentoStatus: event.target.checked ? 'pendente' : prev.pagamentoStatus,
+                  origem: event.target.checked ? 'online' : prev.origem,
+                }))}
+              />
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Gerar checkout externo</p>
+                <p className="text-xs text-slate-500 mt-1">Usa o endpoint de pagamento para retornar link, QRCode e webhook de aprovação.</p>
+              </div>
+            </label>
             <label className="space-y-2 text-sm font-medium text-slate-700 sm:col-span-2">
               Observações
               <textarea className="input min-h-[110px]" value={pedidoForm.observacoes} onChange={(event) => setPedidoForm((prev) => ({ ...prev, observacoes: event.target.value }))} placeholder="Webhook, origem do atendimento, parcelamento, etc." />
@@ -444,6 +607,16 @@ export default function ComercialFiscal() {
                 </div>
                 <div className="flex items-center justify-between gap-3 mt-4 flex-wrap">
                   <p className="text-xs text-slate-500">Notas geradas: {pedido.notasFiscais?.length || 0}</p>
+                  {pedido.pagamentos?.[0]?.metadados?.checkout?.checkoutUrl && (
+                    <a
+                      href={pedido.pagamentos[0].metadados.checkout.checkoutUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-medium text-primary-700 inline-flex items-center gap-2"
+                    >
+                      <ExternalLink size={16} /> Abrir checkout
+                    </a>
+                  )}
                   {(!pedido.notasFiscais || pedido.notasFiscais.length === 0) && (
                     <button className="btn btn-secondary px-4 py-2 text-sm" onClick={() => handleEmitirNota(pedido)}>
                       Emitir nota

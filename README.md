@@ -2,6 +2,8 @@
 
 Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e clínicas veterinárias (petshop). Oferece prescrições médicas, prontuários eletrônicos, agendamentos, controle de estoque e gestão financeira em uma plataforma multi-tenant moderna e responsiva.
 
+Agora inclui a base comercial/fiscal com catálogo de produtos e serviços, pedidos, pagamentos com webhook público e emissão fiscal preparada para provedor REST externo.
+
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org/)
 [![Railway](https://img.shields.io/badge/Deploy-Railway-purple.svg)](https://railway.app/)
@@ -36,6 +38,7 @@ Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e c
 - **Evolução/Enfermagem:** Registros completos com sinais vitais e avaliação de riscos
 - **Estoque:** Controle de medicamentos, materiais e alertas de validade
 - **Financeiro:** Gestão de receitas e despesas com **exportação PDF/Excel**
+- **Comercial/Fiscal:** Catálogo, pedidos, checkout, webhook de pagamento e emissão de NF-e/NFS-e por provedor REST
 - **Usuários:** Controle de acesso com 9 níveis de permissão
 - **Empresas:** Gestão multi-tenant (Super Admin)
 - **Censo MP:** Mapa de leitos para casas de repouso
@@ -73,6 +76,12 @@ Sistema completo de gestão para casas de repouso, clínicas de fisioterapia e c
 - **Nixpacks** para build automático
 - **Healthcheck** em `/health`
 - Auto-deploy via GitHub
+
+### Integrações comerciais e fiscais
+- Provedor de pagamento via API REST configurável por ambiente
+- Webhook público em `/api/public/webhooks/payment` com validação HMAC SHA-256
+- Emissão automática de nota fiscal após pagamento aprovado
+- Fallback seguro para modo simulado quando o provedor ainda não estiver configurado
 
 ---
 
@@ -171,6 +180,24 @@ SESSION_TIMEOUT=8h
 FRONTEND_URL=https://prescrimed.up.railway.app
 CORS_ORIGIN=https://prescrimed.up.railway.app
 ALLOWED_ORIGINS=https://prescrimed.up.railway.app,http://localhost:8000,http://127.0.0.1:8000,http://localhost:5173,http://127.0.0.1:5173
+PUBLIC_BASE_URL=https://prescrimed.up.railway.app
+
+# Pagamentos
+PAYMENT_PROVIDER=mercado-pago
+PAYMENT_PROVIDER_BASE_URL=https://api.seu-provedor-pagamento.com
+PAYMENT_PROVIDER_TOKEN=seu-token-pagamento
+PAYMENT_PROVIDER_CHECKOUT_PATH=/checkout
+PAYMENT_WEBHOOK_SECRET=segredo-hmac-do-webhook
+PAYMENT_WEBHOOK_STRICT=true
+
+# Fiscal
+FISCAL_PROVIDER=nuvem-fiscal
+FISCAL_PROVIDER_BASE_URL=https://api.seu-provedor-fiscal.com
+FISCAL_PROVIDER_TOKEN=seu-token-fiscal
+FISCAL_PROVIDER_INVOICE_PATH=/invoices
+FISCAL_ENVIRONMENT=producao
+NFSE_CITY_CODE=3550308
+AUTO_EMIT_FISCAL_ON_PAYMENT_APPROVED=true
 
 # Backups (Superadmin)
 # Armazenamento local (pasta). Default: ./data/backups
@@ -214,6 +241,13 @@ DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${PGHOST}:${PGPO
 ```
 
 Isso mantém o layout limpo e permite trocar host/porta/credenciais sem editar a URL diretamente.
+
+#### Webhook público de pagamento
+
+- Endpoint: `POST /api/public/webhooks/payment`
+- Assinatura: HMAC SHA-256 em `X-Webhook-Signature` ou `X-Signature`
+- Corpo esperado: JSON com `id`/`externalId`, `status`, `pedidoId` ou `metadata.pedidoId`
+- Efeito automático: atualização do pagamento, sincronização financeira e tentativa de emissão fiscal
 
 **Gere secrets seguros:**
 ```bash

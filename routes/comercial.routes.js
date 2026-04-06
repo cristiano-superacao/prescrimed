@@ -9,125 +9,11 @@ import {
   NotaFiscal,
   NotaFiscalLog,
   Paciente,
-  FinanceiroTransacao,
 } from '../models/index.js';
+import { buildFiscalReadiness, buildOrderResponse, getEmpresaId, toMoney } from '../services/comercial/helpers.js';
+import { issueInvoiceForPedido, registerPaymentForPedido } from '../services/comercial/flow.js';
 
 const router = express.Router();
-
-function getEmpresaId(req) {
-  return req.query?.empresaId || req.body?.empresaId || req.tenantEmpresaId || req.user?.empresaId || null;
-}
-
-function toMoney(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? Number(number.toFixed(2)) : 0;
-}
-
-function buildFiscalReadiness() {
-  const fiscalProvider = process.env.FISCAL_PROVIDER || process.env.NF_PROVIDER || null;
-  const fiscalConfigured = Boolean(
-    fiscalProvider &&
-    (process.env.FISCAL_PROVIDER_TOKEN || process.env.NF_PROVIDER_TOKEN) &&
-    (process.env.FISCAL_PROVIDER_BASE_URL || process.env.NF_PROVIDER_BASE_URL)
-  );
-
-  const paymentProvider = process.env.PAYMENT_PROVIDER || process.env.CHECKOUT_PROVIDER || null;
-  const paymentConfigured = Boolean(
-    paymentProvider && (process.env.PAYMENT_PROVIDER_TOKEN || process.env.CHECKOUT_PROVIDER_TOKEN)
-  );
-
-  return {
-    fiscal: {
-      provider: fiscalProvider,
-      configured: fiscalConfigured,
-      cityCode: process.env.NFSE_CITY_CODE || null,
-      certificateConfigured: Boolean(process.env.NFE_CERTIFICATE_BASE64 || process.env.A1_CERTIFICATE_BASE64)
-    },
-    payment: {
-      provider: paymentProvider,
-      configured: paymentConfigured,
-    },
-    nextStep: fiscalConfigured
-      ? 'Conectar envio real de XML e retorno do provedor fiscal.'
-      : 'Configurar provedor fiscal REST e credenciais para sair do modo simulado.'
-  };
-}
-
-async function buildOrderResponse(id, empresaId) {
-  const where = { id };
-  if (empresaId) where.empresaId = empresaId;
-
-  const pedido = await Pedido.findOne({
-    where,
-    include: [
-      { model: Paciente, as: 'paciente', attributes: ['id', 'nome'] },
-      {
-        model: PedidoItem,
-        as: 'itens',
-        include: [{ model: CatalogoItem, as: 'catalogoItem', attributes: ['id', 'nome', 'tipo', 'sku'] }]
-      },
-      { model: Pagamento, as: 'pagamentos' },
-      { model: NotaFiscal, as: 'notasFiscais' }
-    ],
-    order: [
-      [{ model: PedidoItem, as: 'itens' }, 'createdAt', 'ASC'],
-      [{ model: Pagamento, as: 'pagamentos' }, 'createdAt', 'DESC'],
-      [{ model: NotaFiscal, as: 'notasFiscais' }, 'createdAt', 'DESC']
-    ]
-  });
-
-  if (!pedido) return null;
-  const json = pedido.toJSON();
-  return {
-    ...json,
-    subtotal: toMoney(json.subtotal),
-    desconto: toMoney(json.desconto),
-    total: toMoney(json.total),
-    itens: (json.itens || []).map((item) => ({
-      ...item,
-      quantidade: toMoney(item.quantidade),
-      valorUnitario: toMoney(item.valorUnitario),
-      total: toMoney(item.total)
-    })),
-    pagamentos: (json.pagamentos || []).map((pagamento) => ({
-      ...pagamento,
-      valor: toMoney(pagamento.valor)
-    }))
-  };
-}
-
-async function syncFinanceiroReceita({ empresaId, pedido, metodo, statusPagamento, transaction }) {
-  const descricao = `Pedido ${pedido.id.slice(0, 8)} - ${pedido.clienteNome || pedido.paciente?.nome || 'Cliente'}`;
-  const [registro] = await FinanceiroTransacao.findOrCreate({
-    where: {
-      empresaId,
-      categoria: 'vendas',
-      descricao
-    },
-    defaults: {
-      empresaId,
-      pacienteId: pedido.pacienteId || null,
-      tipo: 'receita',
-      categoria: 'vendas',
-      descricao,
-      valor: pedido.total,
-      dataVencimento: new Date(),
-      dataPagamento: statusPagamento === 'aprovado' ? new Date() : null,
-      status: statusPagamento === 'aprovado' ? 'pago' : 'pendente',
-      formaPagamento: metodo,
-      observacoes: 'Gerado automaticamente a partir do módulo comercial.'
-    },
-    transaction
-  });
-
-  await registro.update({
-    valor: pedido.total,
-    dataPagamento: statusPagamento === 'aprovado' ? new Date() : null,
-    status: statusPagamento === 'aprovado' ? 'pago' : 'pendente',
-    formaPagamento: metodo || registro.formaPagamento,
-    pacienteId: pedido.pacienteId || null,
-  }, { transaction });
-}
 
 router.get('/overview', async (req, res) => {
   try {
@@ -425,39 +311,21 @@ router.put('/pedidos/:id/status', async (req, res) => {
 });
 
 router.post('/pedidos/:id/pagamentos', async (req, res) => {
-  const empresaId = getEmpresaId(req);
-  const transaction = await sequelize.transaction();
   try {
-    const pedido = await Pedido.findOne({ where: { id: req.params.id, ...(empresaId ? { empresaId } : {}) }, include: [{ model: Paciente, as: 'paciente', attributes: ['id', 'nome'] }], transaction });
-    if (!pedido) {
-      await transaction.rollback();
-      return res.status(404).json({ error: 'Pedido não encontrado' });
-    }
+    const empresaId = getEmpresaId(req);
+    const result = await registerPaymentForPedido({
+      pedidoId: req.params.id,
+      empresaId,
+      payload: req.body,
+      source: 'api'
+    });
 
-    const status = req.body.status || 'pendente';
-    const pagamento = await Pagamento.create({
-      empresaId: pedido.empresaId,
-      pedidoId: pedido.id,
-      metodo: req.body.metodo || 'pix',
-      gateway: req.body.gateway || 'manual',
-      status,
-      valor: toMoney(req.body.valor || pedido.total),
-      externalId: req.body.externalId || null,
-      pagoEm: status === 'aprovado' ? new Date() : null,
-      metadados: req.body.metadados || {}
-    }, { transaction });
-
-    await pedido.update({
-      pagamentoStatus: status === 'aprovado' ? 'pago' : 'pendente',
-      status: status === 'aprovado' ? 'pago' : pedido.status
-    }, { transaction });
-
-    await syncFinanceiroReceita({ empresaId: pedido.empresaId, pedido, metodo: pagamento.metodo, statusPagamento: status, transaction });
-
-    await transaction.commit();
-    res.status(201).json(await buildOrderResponse(pedido.id, pedido.empresaId));
+    res.status(201).json({
+      ...result.pedido,
+      checkout: result.checkout,
+      notaFiscal: result.notaFiscal
+    });
   } catch (error) {
-    await transaction.rollback();
     console.error('Erro ao registrar pagamento:', error);
     res.status(400).json({ error: 'Erro ao registrar pagamento', details: error.message });
   }
@@ -490,67 +358,25 @@ router.get('/notas', async (req, res) => {
 });
 
 router.post('/pedidos/:id/nota-fiscal', async (req, res) => {
-  const empresaId = getEmpresaId(req);
-  const transaction = await sequelize.transaction();
   try {
-    const pedido = await Pedido.findOne({
-      where: { id: req.params.id, ...(empresaId ? { empresaId } : {}) },
-      include: [{ model: PedidoItem, as: 'itens' }],
-      transaction
+    const empresaId = getEmpresaId(req);
+    const result = await issueInvoiceForPedido({
+      pedidoId: req.params.id,
+      empresaId,
+      requestData: req.body,
+      trigger: 'api'
     });
-    if (!pedido) {
-      await transaction.rollback();
-      return res.status(404).json({ error: 'Pedido não encontrado' });
-    }
 
-    const readiness = buildFiscalReadiness();
-    const hasServico = (pedido.itens || []).some((item) => item.tipo === 'servico');
-    const tipoDocumento = req.body.tipoDocumento || (hasServico ? 'nfs-e' : 'nf-e');
-    const simulated = !readiness.fiscal.configured;
-    const numero = `${new Date().getFullYear()}${String(Date.now()).slice(-6)}`;
-    const nota = await NotaFiscal.create({
-      empresaId: pedido.empresaId,
-      pedidoId: pedido.id,
-      tipoDocumento,
-      status: simulated ? 'simulada' : 'pendente',
-      numero,
-      serie: req.body.serie || '1',
-      chaveAcesso: simulated ? `SIM${numero}${pedido.id.replace(/-/g, '').slice(0, 20)}` : null,
-      provedor: req.body.provedor || readiness.fiscal.provider || 'simulacao-interna',
-      ambiente: req.body.ambiente || (process.env.NODE_ENV === 'production' ? 'producao' : 'homologacao'),
-      payload: {
-        pedidoId: pedido.id,
-        total: pedido.total,
-        itens: pedido.itens.map((item) => ({ descricao: item.descricao, quantidade: item.quantidade, total: item.total })),
-      },
-      resposta: simulated ? { mode: 'simulation', message: 'Integração fiscal ainda não configurada. Nota registrada em modo simulado.' } : { mode: 'queued', message: 'Nota aguardando integração com provedor fiscal.' },
-      emitidaEm: simulated ? new Date() : null,
-    }, { transaction });
-
-    await NotaFiscalLog.create({
-      empresaId: pedido.empresaId,
-      notaFiscalId: nota.id,
-      nivel: simulated ? 'warning' : 'info',
-      mensagem: simulated ? 'Nota gerada em modo simulado.' : 'Nota registrada e pendente de integração com provedor fiscal.',
-      detalhes: {
-        readiness,
-        pedidoId: pedido.id,
-        tipoDocumento,
-      }
-    }, { transaction });
-
-    await pedido.update({ status: simulated ? 'faturado' : pedido.status }, { transaction });
-    await transaction.commit();
-
-    const created = await NotaFiscal.findByPk(nota.id, {
+    const created = await NotaFiscal.findByPk(result.nota.id, {
       include: [
         { model: Pedido, as: 'pedido', attributes: ['id', 'clienteNome', 'total', 'status', 'pagamentoStatus'] },
         { model: NotaFiscalLog, as: 'logs' }
       ]
     });
-    res.status(201).json(created);
+
+    const statusCode = result.error ? 502 : result.duplicate ? 200 : 201;
+    res.status(statusCode).json(created);
   } catch (error) {
-    await transaction.rollback();
     console.error('Erro ao gerar nota fiscal:', error);
     res.status(400).json({ error: 'Erro ao gerar nota fiscal', details: error.message });
   }

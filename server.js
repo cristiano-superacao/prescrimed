@@ -37,6 +37,7 @@ import { spawn } from 'child_process'; // Executa scripts auxiliares sem bloquea
 
 // Importa rotas e configuração do banco de dados
 import apiRouter from './routes/index.js'; // Router principal da API
+import publicWebhookRoutes from './routes/public-webhooks.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { sequelize, Usuario, Empresa } from './models/index.js'; // Instância do Sequelize (ORM)
 import { startBackupScheduler } from './utils/backupScheduler.js';
@@ -550,6 +551,9 @@ app.options('/api/*', cors(corsOptions));
 app.head('/api/*', (req, res) => {
   res.status(200).end(); // Retorna 200 OK sem corpo
 });
+
+// Webhooks públicos com corpo bruto para validação de assinatura
+app.use('/api/public/webhooks', express.raw({ type: '*/*', limit: '2mb' }), publicWebhookRoutes);
 
 /**
  * Body Parser - DEVE VIR ANTES das rotas
