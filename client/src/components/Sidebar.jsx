@@ -15,6 +15,7 @@ import {
   DollarSign,
   Building2,
   BookOpen,
+  ShoppingCart,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -31,6 +32,7 @@ export default function Sidebar({ onClose }) {
     { path: '/estoque', label: 'Estoque', icon: Package, permission: 'estoque' },
     { path: '/evolucao', label: 'Evolução', icon: Activity, permission: 'evolucao' },
     { path: '/financeiro', label: 'Financeiro', icon: DollarSign, permission: 'financeiro' },
+    { path: '/comercial', label: 'Comercial', icon: ShoppingCart, permission: null },
     { path: '/usuarios', label: 'Usuários', icon: UserCog, roles: ['admin', 'superadmin'] },
     { path: '/configuracoes', label: 'Configurações', icon: Settings, permission: 'configuracoes' },
     { path: '/manual', label: 'Manual', icon: BookOpen, permission: null },

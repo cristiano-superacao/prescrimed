@@ -38,7 +38,8 @@ import {
   Package,        // Ícone de pacote/estoque
   DollarSign,     // Ícone de dinheiro/financeiro
   Building2,      // Ícone de prédio/empresas
-  Settings        // Ícone de configurações
+  Settings,       // Ícone de configurações
+  ShoppingCart    // Ícone de comercial
 } from 'lucide-react';
 
 // Importa serviço de API do dashboard
@@ -263,6 +264,7 @@ export default function Dashboard() {
     { label: 'Estoque', path: '/estoque', icon: Package, accent: 'from-blue-500 to-indigo-500' },
     { label: 'Evolução', path: '/evolucao', icon: Activity, accent: 'from-teal-500 to-emerald-500' },
     { label: 'Financeiro', path: '/financeiro', icon: DollarSign, accent: 'from-lime-500 to-green-500' },
+    { label: 'Comercial', path: '/comercial', icon: ShoppingCart, accent: 'from-amber-500 to-red-500' },
     { label: 'Usuários', path: '/usuarios', icon: UserCheck, accent: 'from-fuchsia-500 to-purple-600' },
     { label: 'Empresas', path: '/empresas', icon: Building2, accent: 'from-cyan-500 to-blue-500' },
     { label: 'Configurações', path: '/configuracoes', icon: Settings, accent: 'from-slate-500 to-slate-700' },

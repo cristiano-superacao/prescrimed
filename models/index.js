@@ -12,6 +12,12 @@ import EstoqueMovimentacao from './EstoqueMovimentacao.js';
 import FinanceiroTransacao from './FinanceiroTransacao.js';
 import RegistroEnfermagem from './RegistroEnfermagem.js';
 import EmpresaSequencia from './EmpresaSequencia.js';
+import CatalogoItem from './CatalogoItem.js';
+import Pedido from './Pedido.js';
+import PedidoItem from './PedidoItem.js';
+import Pagamento from './Pagamento.js';
+import NotaFiscal from './NotaFiscal.js';
+import NotaFiscalLog from './NotaFiscalLog.js';
 
 // Relacionamentos
 Empresa.hasMany(Usuario, { foreignKey: 'empresaId', as: 'usuarios' });
@@ -79,7 +85,41 @@ RegistroEnfermagem.belongsTo(Paciente, { foreignKey: 'pacienteId', as: 'paciente
 Usuario.hasMany(RegistroEnfermagem, { foreignKey: 'usuarioId', as: 'registrosEnfermagem' });
 RegistroEnfermagem.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'enfermeiro' });
 
-export { sequelize, Usuario, Empresa, Paciente, Prescricao, Agendamento, CasaRepousoLeito, Pet, SessaoFisio, EstoqueItem, EstoqueMovimentacao, FinanceiroTransacao, RegistroEnfermagem };
+// Comercial/Fiscal
+Empresa.hasMany(CatalogoItem, { foreignKey: 'empresaId', as: 'catalogoItens' });
+CatalogoItem.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+Empresa.hasMany(Pedido, { foreignKey: 'empresaId', as: 'pedidos' });
+Pedido.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+Paciente.hasMany(Pedido, { foreignKey: 'pacienteId', as: 'pedidos' });
+Pedido.belongsTo(Paciente, { foreignKey: 'pacienteId', as: 'paciente' });
+
+Pedido.hasMany(PedidoItem, { foreignKey: 'pedidoId', as: 'itens' });
+PedidoItem.belongsTo(Pedido, { foreignKey: 'pedidoId', as: 'pedido' });
+
+CatalogoItem.hasMany(PedidoItem, { foreignKey: 'catalogoItemId', as: 'pedidoItens' });
+PedidoItem.belongsTo(CatalogoItem, { foreignKey: 'catalogoItemId', as: 'catalogoItem' });
+
+Empresa.hasMany(Pagamento, { foreignKey: 'empresaId', as: 'pagamentos' });
+Pagamento.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+Pedido.hasMany(Pagamento, { foreignKey: 'pedidoId', as: 'pagamentos' });
+Pagamento.belongsTo(Pedido, { foreignKey: 'pedidoId', as: 'pedido' });
+
+Empresa.hasMany(NotaFiscal, { foreignKey: 'empresaId', as: 'notasFiscais' });
+NotaFiscal.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+Pedido.hasMany(NotaFiscal, { foreignKey: 'pedidoId', as: 'notasFiscais' });
+NotaFiscal.belongsTo(Pedido, { foreignKey: 'pedidoId', as: 'pedido' });
+
+NotaFiscal.hasMany(NotaFiscalLog, { foreignKey: 'notaFiscalId', as: 'logs' });
+NotaFiscalLog.belongsTo(NotaFiscal, { foreignKey: 'notaFiscalId', as: 'notaFiscal' });
+
+Empresa.hasMany(NotaFiscalLog, { foreignKey: 'empresaId', as: 'notaFiscalLogs' });
+NotaFiscalLog.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+
+export { sequelize, Usuario, Empresa, Paciente, Prescricao, Agendamento, CasaRepousoLeito, Pet, SessaoFisio, EstoqueItem, EstoqueMovimentacao, FinanceiroTransacao, RegistroEnfermagem, CatalogoItem, Pedido, PedidoItem, Pagamento, NotaFiscal, NotaFiscalLog };
 
 // Export adicional (não possui relacionamentos)
 export { EmpresaSequencia };

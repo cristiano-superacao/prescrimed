@@ -31,6 +31,7 @@ import Cronograma from './pages/Cronograma'; // Cronograma de atividades
 import Estoque from './pages/Estoque'; // Controle de estoque de medicamentos
 import Evolucao from './pages/Evolucao'; // Evolução clínica dos pacientes
 import Financeiro from './pages/Financeiro'; // Gestão financeira (receitas/despesas)
+import ComercialFiscal from './pages/ComercialFiscal'; // Comercial + fiscal (catálogo, pedidos e notas)
 import Manual from './pages/Manual'; // Manual de uso do sistema
 
 // ===== COMPONENTES DE LAYOUT E SEGURANÇA =====
@@ -138,6 +139,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Financeiro />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="comercial"
+              element={
+                <ProtectedRoute>
+                  <ComercialFiscal />
                 </ProtectedRoute>
               }
             />

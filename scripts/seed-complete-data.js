@@ -23,6 +23,12 @@ import {
   FinanceiroTransacao,
   CasaRepousoLeito,
   Pet,
+  CatalogoItem,
+  Pedido,
+  PedidoItem,
+  Pagamento,
+  NotaFiscal,
+  NotaFiscalLog,
 } from '../models/index.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -64,6 +70,11 @@ async function seedCompleteData() {
 
   console.log('🧹 Limpando banco de dados (truncate)...');
   // Ordem: dependentes primeiro
+  await safeTruncate(NotaFiscalLog);
+  await safeTruncate(NotaFiscal);
+  await safeTruncate(Pagamento);
+  await safeTruncate(PedidoItem);
+  await safeTruncate(Pedido);
   await safeTruncate(EstoqueMovimentacao);
   await safeTruncate(FinanceiroTransacao);
   await safeTruncate(RegistroEnfermagem);
@@ -73,6 +84,7 @@ async function seedCompleteData() {
   await safeTruncate(Pet);
   await safeTruncate(EstoqueItem);
   await safeTruncate(CasaRepousoLeito);
+  await safeTruncate(CatalogoItem);
   await safeTruncate(Paciente);
   await safeTruncate(Usuario);
   await safeTruncate(Empresa);
@@ -369,6 +381,155 @@ async function seedCompleteData() {
     },
   ]);
 
+  console.log('🛒 Criando catálogo comercial...');
+  const catalogo = await CatalogoItem.bulkCreate([
+    {
+      empresaId: empresa.id,
+      tipo: 'produto',
+      nome: 'Suplemento Premium Pet 1kg',
+      descricao: 'Linha petshop com foco em recuperação nutricional.',
+      categoria: 'petshop',
+      sku: 'PET-SUP-001',
+      preco: 149.90,
+      estoqueAtual: 18,
+      estoqueMinimo: 5,
+      unidade: 'un',
+      ativo: true,
+    },
+    {
+      empresaId: empresa.id,
+      tipo: 'servico',
+      nome: 'Sessão de fisioterapia domiciliar',
+      descricao: 'Atendimento personalizado com protocolo funcional.',
+      categoria: 'fisioterapia',
+      sku: 'FISIO-DOM-001',
+      preco: 220.00,
+      estoqueAtual: 0,
+      estoqueMinimo: 0,
+      unidade: 'sessão',
+      ativo: true,
+    },
+    {
+      empresaId: empresa.id,
+      tipo: 'produto',
+      nome: 'Kit curativo avançado',
+      descricao: 'Insumos para atendimento e evolução clínica.',
+      categoria: 'clinica',
+      sku: 'CLIN-KIT-001',
+      preco: 89.50,
+      estoqueAtual: 7,
+      estoqueMinimo: 4,
+      unidade: 'kit',
+      ativo: true,
+    }
+  ], { returning: true });
+
+  console.log('🧾 Criando pedidos, pagamentos e notas fiscais simuladas...');
+  const pedidoPago = await Pedido.create({
+    empresaId: empresa.id,
+    pacienteId: pacientes[0].id,
+    clienteNome: pacientes[0].nome,
+    origem: 'balcao',
+    status: 'faturado',
+    pagamentoStatus: 'pago',
+    subtotal: 220,
+    desconto: 0,
+    total: 220,
+    observacoes: 'Pedido seed com baixa financeira e nota simulada.'
+  });
+
+  const pedidoPendente = await Pedido.create({
+    empresaId: empresa.id,
+    pacienteId: pacientes[1].id,
+    clienteNome: pacientes[1].nome,
+    origem: 'online',
+    status: 'aberto',
+    pagamentoStatus: 'pendente',
+    subtotal: 149.90,
+    desconto: 0,
+    total: 149.90,
+    observacoes: 'Pedido seed aguardando webhook de pagamento.'
+  });
+
+  await PedidoItem.bulkCreate([
+    {
+      pedidoId: pedidoPago.id,
+      catalogoItemId: catalogo[1].id,
+      tipo: 'servico',
+      descricao: catalogo[1].nome,
+      quantidade: 1,
+      valorUnitario: 220,
+      total: 220,
+    },
+    {
+      pedidoId: pedidoPendente.id,
+      catalogoItemId: catalogo[0].id,
+      tipo: 'produto',
+      descricao: catalogo[0].nome,
+      quantidade: 1,
+      valorUnitario: 149.90,
+      total: 149.90,
+    }
+  ]);
+
+  await Pagamento.bulkCreate([
+    {
+      empresaId: empresa.id,
+      pedidoId: pedidoPago.id,
+      metodo: 'pix',
+      gateway: 'manual',
+      status: 'aprovado',
+      valor: 220,
+      pagoEm: new Date(),
+    },
+    {
+      empresaId: empresa.id,
+      pedidoId: pedidoPendente.id,
+      metodo: 'cartao',
+      gateway: 'checkout',
+      status: 'pendente',
+      valor: 149.90,
+    }
+  ]);
+
+  const nota = await NotaFiscal.create({
+    empresaId: empresa.id,
+    pedidoId: pedidoPago.id,
+    tipoDocumento: 'nfs-e',
+    status: 'simulada',
+    numero: `SIM-${String(Date.now()).slice(-6)}`,
+    serie: '1',
+    chaveAcesso: `SIM${pedidoPago.id.replace(/-/g, '').slice(0, 24)}`,
+    provedor: 'simulacao-interna',
+    ambiente: 'homologacao',
+    payload: { pedidoId: pedidoPago.id, total: 220 },
+    resposta: { mode: 'simulation' },
+    emitidaEm: new Date(),
+  });
+
+  await NotaFiscalLog.create({
+    empresaId: empresa.id,
+    notaFiscalId: nota.id,
+    nivel: 'warning',
+    mensagem: 'Nota fiscal criada em modo simulado pelo seed completo.',
+    detalhes: { pedidoId: pedidoPago.id }
+  });
+
+  await FinanceiroTransacao.create({
+    empresaId: empresa.id,
+    pacienteId: pacientes[0].id,
+    usuarioId: admin.id,
+    tipo: 'receita',
+    categoria: 'vendas',
+    descricao: `Pedido ${pedidoPago.id.slice(0, 8)} - ${pacientes[0].nome}`,
+    valor: 220,
+    dataVencimento: new Date(),
+    dataPagamento: new Date(),
+    status: 'pago',
+    formaPagamento: 'pix',
+    observacoes: 'Receita gerada pelo fluxo comercial/fiscal seed.'
+  });
+
   await sleep(200);
 
   console.log('\n✅ Seed completo finalizado.');
@@ -379,6 +540,7 @@ async function seedCompleteData() {
   console.log('  ana.enf@prescrimed.com / teste123');
   console.log('  julia.fisio@prescrimed.com / teste123');
   console.log('  roberto.atend@prescrimed.com / teste123');
+  console.log('🧾 Fluxo comercial seedado: catálogo, 2 pedidos, 2 pagamentos e 1 nota fiscal simulada.');
 }
 
 seedCompleteData()

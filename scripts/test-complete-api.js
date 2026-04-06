@@ -16,7 +16,10 @@ let testData = {
   registrosEnfermagem: [],
   sessoesFisio: [],
   itensEstoque: [],
-  transacoesFinanceiras: []
+  transacoesFinanceiras: [],
+  catalogo: [],
+  pedidos: [],
+  notas: []
 };
 
 // Aguardar um tempo
@@ -419,6 +422,49 @@ async function testarModulosExtras() {
   } catch (e) {
     console.error('❌ Financeiro falhou:', e.response?.data?.error || e.message);
   }
+
+  // Comercial/Fiscal
+  try {
+    const item = await apiPost(
+      '/comercial/catalogo',
+      {
+        tipo: 'servico',
+        nome: 'Sessão expressa de fisioterapia',
+        categoria: 'fisioterapia',
+        preco: 180,
+        unidade: 'sessão'
+      },
+      authTokens.admin
+    );
+    const itemId = item.data?.id;
+    testData.catalogo.push(item.data);
+    console.log('✅ Item comercial criado:', item.data?.nome || 'ok');
+
+    const pedido = await apiPost(
+      '/comercial/pedidos',
+      {
+        clienteNome: 'Cliente Teste Comercial',
+        origem: 'online',
+        items: [{ catalogoItemId: itemId, quantidade: 1 }],
+        pagamento: { metodo: 'pix', status: 'aprovado', valor: 180, gateway: 'checkout' }
+      },
+      authTokens.admin
+    );
+    testData.pedidos.push(pedido.data);
+    console.log('✅ Pedido comercial criado:', pedido.data?.id ? 'ok' : 'ok');
+
+    const nota = await apiPost(`/comercial/pedidos/${pedido.data?.id}/nota-fiscal`, {}, authTokens.admin);
+    testData.notas.push(nota.data);
+    console.log('✅ Nota fiscal registrada:', nota.data?.numero || 'ok');
+
+    const overview = await apiGet('/comercial/overview', authTokens.admin);
+    console.log('✅ Overview comercial:', overview.data?.metrics ? 'ok' : 'ok');
+
+    const notas = await apiGet('/comercial/notas', authTokens.admin);
+    console.log('✅ Notas listadas:', Array.isArray(notas.data) ? notas.data.length : 'ok');
+  } catch (e) {
+    console.error('❌ Comercial/fiscal falhou:', e.response?.data?.error || e.message);
+  }
 }
 
 // Relatório final
@@ -432,6 +478,9 @@ async function gerarRelatorio() {
   console.log(`✅ Agendamentos criados: ${testData.agendamentos.length}`);
   console.log(`✅ Registros de enfermagem: ${testData.registrosEnfermagem.length}`);
   console.log(`✅ Sessões de fisioterapia: ${testData.sessoesFisio.length}`);
+  console.log(`✅ Itens comerciais: ${testData.catalogo.length}`);
+  console.log(`✅ Pedidos comerciais: ${testData.pedidos.length}`);
+  console.log(`✅ Notas fiscais: ${testData.notas.length}`);
   console.log('='.repeat(70));
   
   console.log('\n📝 CREDENCIAIS DE ACESSO:');

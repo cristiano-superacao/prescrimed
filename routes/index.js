@@ -14,6 +14,7 @@ import estoqueRoutes from './estoque.routes.js';
 import financeiroRoutes from './financeiro.routes.js';
 import enfermagemRoutes from './enfermagem.routes.js';
 import backupRoutes from './backup.routes.js';
+import comercialRoutes from './comercial.routes.js';
 import { authenticate, tenantIsolation } from '../middleware/auth.middleware.js';
 import { sequelize } from '../models/index.js';
 
@@ -51,6 +52,7 @@ router.use('/fisioterapia', authenticate, tenantIsolation, fisioterapiaRoutes);
 // Rotas de estoque e financeiro
 router.use('/estoque', authenticate, tenantIsolation, estoqueRoutes);
 router.use('/financeiro', authenticate, tenantIsolation, financeiroRoutes);
+router.use('/comercial', authenticate, tenantIsolation, comercialRoutes);
 
 // Rotas de enfermagem
 router.use('/enfermagem', authenticate, tenantIsolation, enfermagemRoutes);
