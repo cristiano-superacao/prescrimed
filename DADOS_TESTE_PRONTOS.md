@@ -105,13 +105,10 @@ Use qualquer das credenciais acima:
 
 ## 💾 Banco de Dados
 
-### MySQL Local
+### Banco local historico
 ```
-Host: localhost
-Porta: 3306
-Banco: prescrimed
-Usuário: prescrimed
-Senha: prescrimed123
+Este bloco descreve uma configuracao antiga.
+Use PostgreSQL como referencia atual do projeto.
 ```
 
 ### Tabelas Populadas
@@ -188,7 +185,7 @@ git push origin main
 ```
 
 ### Fase 4: Replicar na Nuvem
-1. Fazer backup do MySQL
+1. Fazer backup dos dados locais validados
 2. Importar no PostgreSQL (Railway)
 3. Testar em produção
 
@@ -197,7 +194,7 @@ git push origin main
 ## 📝 Observações Importantes
 
 ### ✅ O Que Está Funcionando
-- Conexão com MySQL local
+- Conexão com PostgreSQL local ou Railway
 - Autenticação e autorização
 - Criação de usuários e pacientes
 - Layout responsivo
@@ -205,11 +202,11 @@ git push origin main
 
 ### ⚠️ Pontos de Atenção
 - Servidor precisa estar rodando (`npm run dev`)
-- MySQL precisa estar ativo
+- PostgreSQL precisa estar ativo
 - Alguns módulos precisam de dados criados manualmente via interface
 
 ### 🔧 Como Resolver Problemas
-1. **Servidor não inicia**: Verificar se MySQL está rodando
+1. **Servidor não inicia**: Verificar se PostgreSQL está configurado e acessível
 2. **Login falha**: Verificar se usuário foi criado corretamente
 3. **Erro de conexão**: Verificar credenciais do banco
 4. **Layout quebrado**: Limpar cache do navegador
@@ -220,7 +217,7 @@ git push origin main
 
 ✅ **Dados Base Criados com Sucesso!**
 
-O sistema está pronto para testes completos. Todos os usuários e pacientes foram criados e estão disponíveis no banco de dados MySQL local.
+O sistema está pronto para testes completos. Todos os usuários e pacientes foram criados e estão disponíveis no banco configurado do ambiente atual.
 
 Para completar os testes:
 1. Inicie o servidor (`npm run dev`)

@@ -12,6 +12,8 @@ Agora inclui a base comercial/fiscal com catálogo de produtos e serviços, pedi
 > **Última Atualização:** 21 de janeiro de 2026  
 > **Status do Sistema:** ✅ Operacional | 📘 [Manual do Sistema](MANUAL_DO_SISTEMA.md) | 📚 [Documentação Técnica Completa](DOCUMENTATION.md)
 
+> Material histórico de MySQL foi arquivado em [legacy/mysql/README.md](legacy/mysql/README.md) e não faz parte do fluxo atual.
+
 ---
 
 ## 🎯 Funcionalidades

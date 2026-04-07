@@ -1,6 +1,7 @@
 # ✅ SISTEMA TESTADO E COMMITS ENVIADOS
 
 > Nota histórica: este registro descreve uma etapa antiga de migração/local setup. O stack atual suportado do projeto está consolidado em PostgreSQL. Referências a MySQL abaixo devem ser lidas como legado.
+> Os scripts e guias antigos foram arquivados em [legacy/mysql/README.md](legacy/mysql/README.md).
 
 ## 🎉 Resumo da Sessão
 
@@ -8,7 +9,7 @@
 
 1. **✅ Sistema Testado Localmente**
    - Servidor rodando em http://localhost:8000
-   - MySQL conectado e funcionando
+   - Banco legado local conectado e funcionando na fase registrada
    - Frontend responsivo e profissional
    - 12 tabelas sincronizadas
    - Todas as funcionalidades operacionais
@@ -24,27 +25,27 @@
 ### 📦 Arquivos Incluídos no Commit:
 
 #### Código Principal:
-- ✅ `.env` - Configuração MySQL atualizada
+- ✅ `.env` - Configuração local da fase registrada
 - ✅ `client/src/pages/Evolucao.jsx` - Corrigido e funcional
-- ✅ `config/database.js` - Suporte MySQL configurado
+- ✅ `config/database.js` - Configuração de banco da fase registrada
 - ✅ Frontend compilado (dist/)
 
 #### Scripts Criados:
 - ✅ `create-local-admin.js` - Criar usuário admin
-- ✅ `scripts/sync-mysql-tables.js` - Sincronizar tabelas
-- ✅ `setup-mysql.js` - Setup MySQL
+- ✅ `legacy/mysql/sync-mysql-tables.js` - Script legado de sincronização
+- ✅ `legacy/mysql/setup-mysql.js` - Script legado de setup
 - ✅ `test-api.mjs` - Testes API
 - ✅ `test-complete.ps1` - Testes completos
-- ✅ `install-mysql-service.ps1` - Instalação MySQL
-- ✅ Scripts PowerShell de instalação MySQL
+- ✅ `legacy/mysql/install-mysql-service.ps1` - Instalação MySQL legada
+- ✅ Scripts PowerShell legados de instalação MySQL
 
 #### Documentação:
-- ✅ `MIGRACAO_MYSQL_COMPLETA.md` - Guia completo migração
-- ✅ `MYSQL_INSTALL_GUIDE.md` - Guia instalação MySQL
-- ✅ `MYSQL_SETUP.md` - Setup MySQL passo a passo
+- ✅ `legacy/mysql/MIGRACAO_MYSQL_COMPLETA.md` - Guia legado de migração
+- ✅ `legacy/mysql/MYSQL_INSTALL_GUIDE.md` - Guia legado de instalação
+- ✅ `legacy/mysql/MYSQL_SETUP.md` - Setup legado passo a passo
 - ✅ `SISTEMA_PRONTO.md` - Sistema pronto para uso
 - ✅ `TESTES_COMPLETOS.md` - Testes realizados
-- ✅ `INSTALACAO_RAPIDA_MYSQL.md` - Instalação rápida
+- ✅ `legacy/mysql/INSTALACAO_RAPIDA_MYSQL.md` - Instalação rápida legada
 
 ## 🎯 Status do Sistema
 
@@ -57,14 +58,13 @@
 
 ### Backend ✅
 - Node.js + Express rodando
-- MySQL 8.0 conectado
+- Banco legado da fase registrado como conectado
 - Sequelize ORM configurado
 - 12 tabelas sincronizadas
 - JWT autenticação ativa
 
 ### Banco de Dados ✅
-- MySQL 8.0.45 instalado
-- Serviço MySQL80 rodando
+- Serviço legado MySQL80 rodando na fase registrada
 - Banco `prescrimed` criado
 - 12 tabelas criadas:
   1. empresas
@@ -115,9 +115,9 @@ cd prescrimed
 npm install
 ```
 
-### 3. Configurar Banco (MySQL Local):
+### 3. Configurar Banco da Fase Histórica:
 ```bash
-# Ver MYSQL_SETUP.md para instruções completas
+# Ver legacy/mysql/MYSQL_SETUP.md para instruções históricas
 node create-local-admin.js
 ```
 

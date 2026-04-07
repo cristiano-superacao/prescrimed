@@ -39,12 +39,9 @@
     "streamlit:install": "cd streamlit-app && pip install -r requirements.txt",
     "dev:all": "concurrently \"npm run dev\" \"npm run client\" \"npm run streamlit\"",
     "smoke:railway": "node scripts/smoke-railway.mjs",
-    "export:mysql": "node scripts/export-mysql-data.js",
     "import:railway": "node scripts/import-json-to-railway.js",
-    "db:migrate:railway": "powershell -ExecutionPolicy Bypass -File scripts/migrate-local-to-railway.ps1"
-    ,
-    "backfill:empresa:codigo": "node scripts/backfill-empresa-codigo.js"
-    ,
+    "db:migrate:railway": "powershell -ExecutionPolicy Bypass -File scripts/migrate-local-to-railway.ps1",
+    "backfill:empresa:codigo": "node scripts/backfill-empresa-codigo.js",
     "seed:testplan": "node scripts/seed-testplan-9-companies.js",
     "test:testplan": "node scripts/testplan-run.js"
   },
@@ -72,7 +69,6 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "mysql2": "^3.16.1",
     "nodemailer": "^6.10.1",
     "pg": "^8.17.2",
     "pg-hstore": "^2.3.4",

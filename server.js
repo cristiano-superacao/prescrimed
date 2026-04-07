@@ -344,7 +344,7 @@ async function connectDB(retryCount = 0) {
       console.warn('⚠️ Falha ao iniciar backup scheduler:', e?.message || e);
     }
 
-    // Importa dados exportados de MySQL (JSON) assim que o schema estiver pronto
+    // Importa dados JSON de uma exportacao legada para o PostgreSQL assim que o schema estiver pronto
     if (process.env.IMPORT_JSON_ON_START === 'true') {
       try {
         console.log('📦 IMPORT_JSON_ON_START=true - iniciando importação de JSON para Postgres...');

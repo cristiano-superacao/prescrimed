@@ -21,7 +21,7 @@ Para instruções completas e atualizadas, use:
 ## ⚠️ Nota sobre documentos antigos
 
 Este arquivo foi atualizado para não indicar SQLite/MySQL como padrão.
-Se você encontrar guias de MySQL na raiz, trate como **legado**.
+Os guias e scripts antigos de MySQL foram arquivados em [legacy/mysql/README.md](legacy/mysql/README.md) e devem ser tratados apenas como **legado**.
 
 ## 📋 Tabelas Criadas Automaticamente
 

@@ -240,7 +240,7 @@ tenantIsolation() // Força empresaId nas queries
 ├── Pedro Oliveira (456.789.012-34)
 └── Carla Souza (567.890.123-45)
 
-MySQL Database: prescrimed
+Banco local historico: prescrimed
 └── 12 tabelas sincronizadas
 ```
 
@@ -379,8 +379,10 @@ O sistema **Prescrimed** está **100% funcional** e **totalmente integrado**:
 - ✅ Todas as páginas com layout responsivo
 - ✅ Sistema multi-tenant isolado
 - ✅ Autenticação JWT implementada
-- ✅ MySQL local operacional
+- ✅ Banco local historico operacional na fase registrada
 - ✅ Código versionado no GitHub
+
+> Atualização: o fluxo ativo do projeto foi consolidado em PostgreSQL. Os artefatos antigos de MySQL foram arquivados em [legacy/mysql/README.md](legacy/mysql/README.md).
 
 **Sistema pronto para testes completos e deploy em produção!** 🚀
 
