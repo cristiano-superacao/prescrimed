@@ -41,7 +41,6 @@ import {
   Td 
 } from '../components/common/Table';
 import { openPrintWindow, escapeHtml } from '../utils/printWindow';
-import * as XLSX from 'xlsx';
 
 export default function Pacientes() {
   const [pacientes, setPacientes] = useState([]);
@@ -234,6 +233,68 @@ export default function Pacientes() {
     fileInputRef.current?.click();
   };
 
+  const parseSpreadsheetRows = async (file) => {
+    const fileName = String(file?.name || '').toLowerCase();
+
+    if (fileName.endsWith('.csv')) {
+      const { default: Papa } = await import('papaparse');
+      const text = await file.text();
+      const parsed = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true
+      });
+
+      if (parsed.errors?.length) {
+        throw new Error('Erro ao ler CSV');
+      }
+
+      return Array.isArray(parsed.data) ? parsed.data : [];
+    }
+
+    if (fileName.endsWith('.xls')) {
+      throw new Error('Formato .xls não é suportado. Use .xlsx ou .csv.');
+    }
+
+    const { default: ExcelJS } = await import('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const arrayBuffer = await file.arrayBuffer();
+    await workbook.xlsx.load(arrayBuffer);
+
+    const worksheet = workbook.worksheets?.[0];
+    if (!worksheet) {
+      throw new Error('Arquivo inválido: nenhuma planilha encontrada');
+    }
+
+    const headers = [];
+    worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+      headers[columnNumber - 1] = String(cell.text || cell.value || '').trim();
+    });
+
+    return worksheet.getRows(2, Math.max(worksheet.rowCount - 1, 0))
+      ?.map((row) => {
+        const entry = {};
+        let hasValue = false;
+
+        headers.forEach((header, index) => {
+          if (!header) return;
+
+          const cell = row.getCell(index + 1);
+          const value = cell.value instanceof Date
+            ? cell.value
+            : String(cell.text || cell.value || '').trim();
+
+          if (value !== '' && value !== null && value !== undefined) {
+            hasValue = true;
+          }
+
+          entry[header] = value;
+        });
+
+        return hasValue ? entry : null;
+      })
+      .filter(Boolean) || [];
+  };
+
   const handleImportExcel = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -241,16 +302,7 @@ export default function Pacientes() {
 
     try {
       setImporting(true);
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
-      const sheetName = workbook.SheetNames?.[0];
-      const sheet = sheetName ? workbook.Sheets[sheetName] : null;
-      if (!sheet) {
-        toast.error('Arquivo inválido: nenhuma planilha encontrada');
-        return;
-      }
-
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+      const rows = await parseSpreadsheetRows(file);
       if (!Array.isArray(rows) || rows.length === 0) {
         toast.error('Planilha vazia');
         return;
@@ -309,7 +361,7 @@ export default function Pacientes() {
       loadPacientes(searchTerm);
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao importar planilha');
+      toast.error(error?.message || 'Erro ao importar planilha');
     } finally {
       setImporting(false);
     }
@@ -420,14 +472,14 @@ export default function Pacientes() {
             onClick={handleImportExcelClick}
             disabled={importing}
             className="btn btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Importar planilha (Excel)"
+            title="Importar planilha (.xlsx ou .csv)"
           >
-            <FileUp size={18} /> {importing ? 'Importando...' : 'Importar Excel'}
+            <FileUp size={18} /> {importing ? 'Importando...' : 'Importar Planilha'}
           </button>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+            accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
             className="hidden"
             onChange={handleImportExcel}
           />
