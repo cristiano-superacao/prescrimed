@@ -10,9 +10,9 @@ Agora inclui a base comercial/fiscal com catálogo de produtos e serviços, pedi
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-blue.svg)](https://www.postgresql.org/)
 
 > **Última Atualização:** 21 de janeiro de 2026  
-> **Status do Sistema:** ✅ Operacional | 📘 [Manual do Sistema](MANUAL_DO_SISTEMA.md) | 📚 [Documentação Técnica Completa](DOCUMENTATION.md)
-
+> **Status do Sistema:** ✅ Operacional | 📘 [Manual do Sistema](docs/guides/MANUAL_DO_SISTEMA.md) | 📚 [Documentação Técnica Completa](docs/guides/DOCUMENTATION.md)
 > Material histórico de MySQL foi arquivado em [legacy/mysql/README.md](legacy/mysql/README.md) e não faz parte do fluxo atual.
+> Guias operacionais e relatórios foram organizados em [docs/guides/README.md](docs/guides/README.md).
 
 ---
 
@@ -128,7 +128,7 @@ npm run client
 
 Frontend estará em [http://localhost:5173](http://localhost:5173)
 
-### 📊 Dashboard Analytics (Streamlit) - NOVO!
+### 📊 Dashboard Analytics (Streamlit) - Novo
 
 O Prescrimed agora inclui um **dashboard interativo** desenvolvido com Streamlit para visualização de dados e análises avançadas:
 
@@ -153,7 +153,7 @@ Dashboard estará em [http://localhost:8501](http://localhost:8501)
 - 🎨 Design responsivo e profissional
 - 🔌 Integração com API do backend
 
-📄 **Documentação completa:** [STREAMLIT_GUIDE.md](STREAMLIT_GUIDE.md)
+📄 **Documentação completa:** [docs/guides/STREAMLIT_GUIDE.md](docs/guides/STREAMLIT_GUIDE.md)
 
 ---
 

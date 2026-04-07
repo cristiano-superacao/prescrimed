@@ -31,11 +31,11 @@
 - ✅ Frontend compilado (dist/)
 
 #### Scripts Criados:
-- ✅ `create-local-admin.js` - Criar usuário admin
+- ✅ `scripts/create-local-admin.js` - Criar usuário admin
 - ✅ `legacy/mysql/sync-mysql-tables.js` - Script legado de sincronização
 - ✅ `legacy/mysql/setup-mysql.js` - Script legado de setup
-- ✅ `test-api.mjs` - Testes API
-- ✅ `test-complete.ps1` - Testes completos
+- ✅ `scripts/test-api.mjs` - Testes API
+- ✅ `scripts/windows/test-complete.ps1` - Testes completos
 - ✅ `legacy/mysql/install-mysql-service.ps1` - Instalação MySQL legada
 - ✅ Scripts PowerShell legados de instalação MySQL
 
@@ -118,7 +118,7 @@ npm install
 ### 3. Configurar Banco da Fase Histórica:
 ```bash
 # Ver legacy/mysql/MYSQL_SETUP.md para instruções históricas
-node create-local-admin.js
+npm run create:local-admin
 ```
 
 ### 4. Iniciar Servidor:

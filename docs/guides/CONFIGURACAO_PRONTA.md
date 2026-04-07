@@ -8,7 +8,7 @@
 ## ✅ Arquivos Gerados
 
 Referências úteis no repositório:
-- ✅ **setup-railway.ps1** - Script auxiliar (geração de chaves/assistente)
+- ✅ **../../scripts/windows/setup-railway.ps1** - Script auxiliar (geração de chaves/assistente)
 - ✅ **RAILWAY_SETUP_GUIDE.md** - Guia completo passo a passo
 - ✅ **MIGRACAO_RAILWAY_POSTGRES.md** - Migração/overwrite local → Railway (Postgres)
 

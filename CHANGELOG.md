@@ -31,7 +31,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Padrão visual consistente (vermelho PDF, verde Excel)
 
 #### Documentação Completa
-- **DOCUMENTATION.md:** Documentação técnica detalhada (823 linhas)
+- **docs/guides/DOCUMENTATION.md:** Documentação técnica detalhada (823 linhas)
 - Arquitetura backend e frontend explicada
 - Todos os 9 módulos documentados com endpoints
 - Modelos de dados com exemplos

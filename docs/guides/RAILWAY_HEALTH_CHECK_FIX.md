@@ -74,7 +74,7 @@ Antes de fazer redeploy, **verifique**:
 ### Backend ("prescrito")
 - [ ] Variáveis de ambiente configuradas:
   - `DATABASE_URL` (do plugin PostgreSQL)
-  - `JWT_SECRET` (gerado via `setup-railway.ps1`)
+  - `JWT_SECRET` (gerado via `../../scripts/windows/setup-railway.ps1`)
   - `JWT_REFRESH_SECRET`
   - `NODE_ENV=production`
   - `TZ=America/Sao_Paulo`

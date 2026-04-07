@@ -49,7 +49,7 @@ Foram criados usuários representando todas as funções do sistema:
 ### Scripts
 1. **scripts/seed-complete-data.js** - Script completo para popular banco de dados
 2. **scripts/test-complete-api.js** - Script de testes automatizados via API
-3. **create-local-admin.js** - Script para criar usuário administrador
+3. **../../scripts/create-local-admin.js** - Script para criar usuário administrador
 
 ### Documentação
 1. **RELATORIO_TESTES_COMPLETOS.md** - Relatório detalhado de todos os testes

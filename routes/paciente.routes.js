@@ -96,6 +96,10 @@ router.post('/', authenticate, tenantIsolation, async (req, res) => {
     res.status(201).json(paciente);
   } catch (error) {
     console.error('Erro ao criar paciente:', error);
+    if (error?.name === 'SequelizeUniqueConstraintError') {
+      const field = error.errors?.[0]?.path || 'campo';
+      return res.status(409).json({ error: `${field} já cadastrado` });
+    }
     res.status(500).json({ error: 'Erro ao criar paciente' });
   }
 });

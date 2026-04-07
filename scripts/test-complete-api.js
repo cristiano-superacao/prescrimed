@@ -25,6 +25,7 @@ let testData = {
 
 // Aguardar um tempo
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const normalizeCpf = (value) => String(value || '').replace(/\D/g, '');
 
 // Função de login
 async function login(email, senha) {
@@ -49,6 +50,18 @@ async function apiGet(path, token) {
   return axios.get(`${API_URL}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined
   });
+}
+
+async function buscarPacienteExistente(cpf, token) {
+  const response = await apiGet('/pacientes?page=1&pageSize=200', token);
+  const items = Array.isArray(response.data)
+    ? response.data
+    : Array.isArray(response.data?.items)
+      ? response.data.items
+      : [];
+
+  const targetCpf = normalizeCpf(cpf);
+  return items.find((paciente) => normalizeCpf(paciente.cpf) === targetCpf) || null;
 }
 
 async function apiPost(path, data, token) {
@@ -203,7 +216,21 @@ async function criarPacientes() {
       console.log(`✅ Paciente criado: ${pacienteData.nome}`);
       await sleep(500);
     } catch (error) {
-      console.error(`❌ Erro ao criar paciente ${pacienteData.nome}:`, error.response?.data?.message || error.message);
+      if (error.response?.status === 409) {
+        try {
+          const existente = await buscarPacienteExistente(pacienteData.cpf, authTokens.admin);
+          if (existente) {
+            testData.pacientes.push(existente);
+            console.log(`ℹ️ Paciente já existia e foi reaproveitado: ${pacienteData.nome}`);
+            await sleep(500);
+            continue;
+          }
+        } catch (lookupError) {
+          console.error(`❌ Erro ao reaproveitar paciente ${pacienteData.nome}:`, lookupError.response?.data?.error || lookupError.message);
+        }
+      }
+
+      console.error(`❌ Erro ao criar paciente ${pacienteData.nome}:`, error.response?.data?.error || error.response?.data?.message || error.message);
     }
   }
 }
