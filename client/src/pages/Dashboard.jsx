@@ -49,6 +49,7 @@ import dashboardService from '../services/dashboard.service';
 import SimpleChart from '../components/SimpleChart'; // Gráfico simples de linhas
 import toast from 'react-hot-toast'; // Sistema de notificações toast
 import { errorMessage } from '../utils/toastMessages'; // Utilitário para mensagens de erro
+import { handleApiError } from '../utils/errorHandler';
 import PageHeader from '../components/common/PageHeader'; // Cabeçalho de página
 import StatsCard from '../components/common/StatsCard'; // Card de estatísticas
 import { useAuthStore } from '../store/authStore'; // Store de autenticação
@@ -158,7 +159,6 @@ export default function Dashboard() {
       }
       setLastUpdated(new Date());
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'dados do dashboard'));
     } finally {
       // Desativa estado de carregamento (executado sempre, com ou sem erro)

@@ -4,6 +4,7 @@ import pacienteService from '../services/paciente.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
 import { formatCPF, isValidCPF } from '../utils/locale';
+import { handleApiError } from '../utils/errorHandler';
 
 export default function PacienteModal({ paciente, onClose }) {
   const [formData, setFormData] = useState({
@@ -147,7 +148,6 @@ export default function PacienteModal({ paciente, onClose }) {
       }
       onClose();
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('save', 'residente'));
     } finally {
       setLoading(false);

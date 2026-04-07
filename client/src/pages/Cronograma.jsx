@@ -15,6 +15,7 @@ import agendamentoService from '../services/agendamento.service';
 import prescricaoService from '../services/prescricao.service';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import { openPrintWindow, escapeHtml } from '../utils/printWindow';
@@ -182,7 +183,6 @@ export default function Cronograma() {
 
     } catch (error) {
       toast.dismiss('cronograma-load-all');
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'cronograma'));
     } finally {
       setLoading(false);

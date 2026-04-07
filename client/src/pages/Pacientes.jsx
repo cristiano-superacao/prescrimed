@@ -84,7 +84,6 @@ export default function Pacientes() {
         setPageSize(Number(data.pageSize) || 10);
       }
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'pacientes'));
     } finally {
       setLoading(false);
@@ -97,7 +96,6 @@ export default function Pacientes() {
       const response = await pacienteService.getHistorico(paciente.id || paciente._id);
       setHistoricoPrescricoes(response.prescricoes || []);
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'histórico'));
     }
   };
@@ -121,7 +119,6 @@ export default function Pacientes() {
       toast.success('Residente inativado com sucesso');
       loadPacientes(searchTerm);
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, 'Não foi possível inativar o residente');
     } finally {
       setDeletingId(null);

@@ -11,6 +11,7 @@ import pacienteService from '../services/paciente.service';
 import prescricaoService from '../services/prescricao.service';
 import toast from 'react-hot-toast';
 import { errorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -140,7 +141,6 @@ export default function CensoMP() {
       setCensoData(ordered.slice(start, start + pageSize));
     } catch (error) {
       toast.dismiss('censo-mp-load-all');
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'dados do censo'));
     } finally {
       setLoading(false);

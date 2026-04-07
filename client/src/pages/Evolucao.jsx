@@ -24,6 +24,7 @@ import enfermagemService from '../services/enfermagem.service';
 import pacienteService from '../services/paciente.service';
 import estoqueService from '../services/estoque.service';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import SearchFilterBar from '../components/common/SearchFilterBar';
@@ -168,7 +169,6 @@ export default function Evolucao() {
       }
     } catch (error) {
       toast.dismiss('evolucao-load-all');
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'registros'));
     } finally {
       setLoading(false);
@@ -353,7 +353,6 @@ export default function Evolucao() {
 
       if (editingId) {
           // Edição de histórico não é permitida
-          const { handleApiError } = await import('../utils/errorHandler');
           handleApiError({ response: { data: { code: 'history_immutable' } } }, 'Edição de histórico de evolução não é permitida');
           setEditingId(null);
           setModalOpen(false);
@@ -379,14 +378,12 @@ export default function Evolucao() {
       loadData();
       loadStats();
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('save', 'registro'));
     }
   };
 
   // Função para editar registro
   const handleEdit = async () => {
-    const { handleApiError } = await import('../utils/errorHandler');
     handleApiError({ response: { data: { code: 'history_immutable' } } }, 'Edição de histórico de evolução não é permitida');
   };
 
@@ -412,7 +409,6 @@ export default function Evolucao() {
       loadData();
       loadStats();
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('delete', 'registro'));
     } finally {
       setDeletingId(null);

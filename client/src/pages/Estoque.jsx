@@ -17,6 +17,7 @@ import {
 import estoqueService from '../services/estoque.service';
 import toast from 'react-hot-toast';
 import { errorMessage, apiErrorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 import { downloadCsv } from '../utils/exportCsv';
 import { openPrintWindow, escapeHtml } from '../utils/printWindow';
 import PageHeader from '../components/common/PageHeader';
@@ -74,7 +75,6 @@ export default function Estoque() {
         setPageSize(Number(data.pageSize) || 10);
       }
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'itens'));
     } finally {
       setLoading(false);
@@ -96,7 +96,6 @@ export default function Estoque() {
       setMovimentacoes(data.movimentacoes || []);
       setShowHistorico(true);
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('load', 'histórico'));
     }
   };
@@ -113,7 +112,6 @@ export default function Estoque() {
       closeModal();
       loadItems();
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('create', 'item'));
     }
   };
@@ -136,7 +134,6 @@ export default function Estoque() {
       closeModal();
       loadItems();
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('save', 'movimentação'));
     }
   };

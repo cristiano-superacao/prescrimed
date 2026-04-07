@@ -1,3 +1,5 @@
+import empresaService from '../services/empresa.service';
+
 export const SUPERADMIN_EMPRESA_STORAGE_KEY = 'superadminEmpresaId';
 export const EMPRESA_CONTEXT_CHANGED_EVENT = 'empresaContextChanged';
 
@@ -34,7 +36,6 @@ export function subscribeEmpresaContextChanged(handler) {
 }
 
 export async function listEmpresasForSuperadmin() {
-  const { default: empresaService } = await import('../services/empresa.service');
   const data = await empresaService.getAll();
   const list = Array.isArray(data) ? data : (data?.empresas || data?.data || []);
   return (Array.isArray(list) ? list : [])

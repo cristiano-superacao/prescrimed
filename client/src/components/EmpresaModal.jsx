@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import empresaService from '../services/empresa.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, apiErrorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 
 export default function EmpresaModal({ empresa, onClose, onSave }) {
   const [formData, setFormData] = useState({
@@ -76,7 +77,6 @@ export default function EmpresaModal({ empresa, onClose, onSave }) {
       onSave(response); // Passa a resposta para o componente pai
       onClose();
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('save', 'empresa'));
     } finally {
       setLoading(false);

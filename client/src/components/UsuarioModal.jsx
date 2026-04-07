@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import usuarioService from '../services/usuario.service';
 import toast from 'react-hot-toast';
 import { successMessage, errorMessage, customErrorMessage, apiErrorMessage } from '../utils/toastMessages';
+import { handleApiError } from '../utils/errorHandler';
 
 export default function UsuarioModal({ usuario, onClose }) {
   const [formData, setFormData] = useState({
@@ -85,7 +86,6 @@ export default function UsuarioModal({ usuario, onClose }) {
       }
       onClose();
     } catch (error) {
-      const { handleApiError } = await import('../utils/errorHandler');
       handleApiError(error, errorMessage('save', 'usuário'));
     } finally {
       setLoading(false);
