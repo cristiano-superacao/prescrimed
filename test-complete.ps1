@@ -105,32 +105,34 @@ foreach ($endpoint in $endpoints) {
 Write-Host "`n[4] TESTE DE BANCO DE DADOS" -ForegroundColor Cyan
 
 try {
-    $mysqlPath = "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe"
-    
-    $tables = & $mysqlPath -u root -e "USE prescrimed; SHOW TABLES;" 2>&1
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Conexao MySQL" -ForegroundColor Yellow -NoNewline
+    $health = Invoke-RestMethod -Uri "$baseUrl/health" -Method GET
+
+    if ($health.database -eq "connected") {
+        Write-Host "Conexao banco atual" -ForegroundColor Yellow -NoNewline
         Write-Host " SUCESSO" -ForegroundColor Green
         $testsPassed++
-        
-        $tableCount = ($tables | Measure-Object -Line).Lines - 1
-        Write-Host "Total de tabelas: $tableCount" -ForegroundColor Gray
+        Write-Host "Driver/estado reportado: $($health.database)" -ForegroundColor Gray
     } else {
-        Write-Host "Conexao MySQL FALHA" -ForegroundColor Red
+        Write-Host "Conexao banco atual FALHA" -ForegroundColor Red
         $testsFailed++
     }
 } catch {
-    Write-Host "Conexao MySQL FALHA" -ForegroundColor Red
+    Write-Host "Conexao banco atual FALHA" -ForegroundColor Red
     $testsFailed++
 }
 
 # 5. Teste de Criacao de Paciente
 Write-Host "`n[5] TESTE DE CRIACAO DE DADOS" -ForegroundColor Cyan
 
+$cpfsValidos = @(
+    "529.982.247-25",
+    "111.444.777-35",
+    "935.411.347-80"
+)
+
 $novoPaciente = @{
     nome = "Paciente Teste $(Get-Random -Minimum 1000 -Maximum 9999)"
-    cpf = "$(Get-Random -Minimum 100 -Maximum 999).$(Get-Random -Minimum 100 -Maximum 999).$(Get-Random -Minimum 100 -Maximum 999)-$(Get-Random -Minimum 10 -Maximum 99)"
+    cpf = $cpfsValidos | Get-Random
     dataNascimento = "1980-01-01"
     telefone = "(11) 98765-4321"
     email = "paciente.teste@example.com"

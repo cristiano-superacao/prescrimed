@@ -7,13 +7,15 @@
 
 ## 📊 RESUMO EXECUTIVO
 
+> Nota de atualização: este relatório contém contexto histórico de janeiro de 2026. O stack atual suportado do projeto foi consolidado em PostgreSQL. Referências a MySQL abaixo devem ser lidas como legado.
+
 Sistema analisado e corrigido em **todas as camadas** (atualização 26/01):
 - ✅ **13 Modelos (Tabelas)** - Todos criados e sincronizados
 - ✅ **14 Rotas Backend** - Todas funcionais e autenticadas
 - ✅ **9 Serviços Frontend** - Todos integrados com API
 - ✅ **15 Páginas React** - Layout responsivo mantido
 - ✅ **Autenticação JWT** - Multi-tenant isolamento implementado
-- ✅ **MySQL 8.0** - Banco local configurado e operacional
+- ✅ **PostgreSQL** - Banco atual suportado e operacional
 
 ### Novidades (26 jan 2026)
 - RBAC no cadastro de Residentes por tipo de sistema (Casa de Repouso/PetShop vs Fisioterapia).

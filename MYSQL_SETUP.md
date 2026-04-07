@@ -1,10 +1,12 @@
 # 🔧 Guia de Configuração do MySQL
 
+> Documento legado. O projeto atual foi consolidado em PostgreSQL. Use este guia apenas como referência histórica.
+
 ## ⚠️ Status Atual
 
-O MySQL foi instalado via winget mas o **serviço Windows não foi configurado automaticamente**.
+O MySQL foi instalado via winget, mas esta não é mais a trilha principal do projeto.
 
-**Banco de dados atual:** SQLite (funcionando perfeitamente)
+**Banco de dados atual do projeto:** PostgreSQL
 
 ---
 

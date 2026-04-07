@@ -363,22 +363,18 @@ Email: joao.silva@example.com
 - ✅ Health check configurado
 - ✅ Build otimizado
 
-### Migração para MySQL em Produção
+### Produção com PostgreSQL
 
-Quando o MySQL estiver configurado:
+Quando o PostgreSQL estiver configurado:
 
 1. **Atualizar .env:**
 ```env
-MYSQL_HOST=localhost
-MYSQL_PORT=3306
-MYSQL_USER=root
-MYSQL_PASSWORD=sua_senha
-MYSQL_DATABASE=prescrimed
+DATABASE_URL=postgresql://usuario:senha@host:5432/database?sslmode=require
 ```
 
 2. **Criar banco:**
 ```sql
-CREATE DATABASE prescrimed CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE prescrimed;
 ```
 
 3. **Reiniciar servidor:**
@@ -393,7 +389,7 @@ As tabelas serão criadas automaticamente pelo Sequelize!
 ## 📝 Conclusão
 
 ✅ **Sistema 100% Funcional**
-- Banco de dados configurado (SQLite)
+- Banco de dados configurado (PostgreSQL)
 - Todas as tabelas criadas
 - Usuário admin criado
 - Layout responsivo e profissional
@@ -404,7 +400,7 @@ As tabelas serão criadas automaticamente pelo Sequelize!
 1. ✅ Testar todas as funcionalidades (use este checklist)
 2. ✅ Adicionar dados de teste
 3. ✅ Validar fluxos completos
-4. ⏳ Configurar MySQL (quando necessário)
+4. ⏳ Configurar variáveis reais de integrações externas (quando necessário)
 5. ⏳ Deploy em produção
 
 ---

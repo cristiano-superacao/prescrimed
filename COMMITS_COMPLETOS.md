@@ -1,5 +1,7 @@
 # ✅ SISTEMA TESTADO E COMMITS ENVIADOS
 
+> Nota histórica: este registro descreve uma etapa antiga de migração/local setup. O stack atual suportado do projeto está consolidado em PostgreSQL. Referências a MySQL abaixo devem ser lidas como legado.
+
 ## 🎉 Resumo da Sessão
 
 ### ✅ Tarefas Concluídas:

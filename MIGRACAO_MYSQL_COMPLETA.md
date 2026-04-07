@@ -1,5 +1,7 @@
 # ✅ MIGRAÇÃO MYSQL CONCLUÍDA COM SUCESSO!
 
+> Documento legado. O stack atual do Prescrimed foi consolidado em PostgreSQL. Este arquivo permanece apenas como histórico de uma etapa anterior.
+
 ## 📊 Status da Migração
 
 ### ✅ Tarefas Concluídas:

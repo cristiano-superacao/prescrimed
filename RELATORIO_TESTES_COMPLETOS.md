@@ -1,8 +1,10 @@
 # 📊 RELATÓRIO DE TESTES COMPLETOS DO SISTEMA PRESCRIMED
 
+> Nota de atualização: este relatório foi mantido como registro histórico. O stack atual suportado do projeto está consolidado em PostgreSQL; referências a MySQL abaixo são legado.
+
 ## ✅ Status Atual
 
-### Dados Criados no Banco de Dados MySQL Local
+### Dados Criados em Ambiente Local de Testes
 
 #### 🏢 **Empresa**
 - Nome: Casa de Repouso Vida Plena / Prescrimed

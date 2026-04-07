@@ -1,8 +1,10 @@
 # ✅ SISTEMA PRESCRIMED - DADOS DE TESTE CRIADOS
 
+> Nota de atualização: este documento registra uma fase anterior de preparação local. O ambiente atual do projeto usa PostgreSQL como caminho principal. Menções a MySQL abaixo são históricas.
+
 ## 📊 Resumo Executivo
 
-Todos os dados de teste foram criados com sucesso no banco de dados MySQL local e estão prontos para serem replicados na nuvem (Railway/PostgreSQL).
+Todos os dados de teste foram criados com sucesso em ambiente local e hoje devem ser validados preferencialmente com PostgreSQL, que é o banco principal do projeto e da hospedagem no Railway.
 
 ---
 

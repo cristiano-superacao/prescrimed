@@ -145,6 +145,21 @@ async function criarUsuarios() {
       
       await sleep(500);
     } catch (error) {
+      if (error.response?.status === 409 || error.response?.status === 400) {
+        const token = await login(userData.email, userData.senha);
+        if (token) {
+          authTokens[userData.email] = token;
+          testData.usuarios.push({
+            nome: userData.nome,
+            email: userData.email,
+            role: userData.role
+          });
+          console.log(`ℹ️ Usuário já existia e foi reaproveitado: ${userData.nome} (${userData.role})`);
+          await sleep(500);
+          continue;
+        }
+      }
+
       console.error(`❌ Erro ao criar ${userData.nome}:`, error.response?.data?.message || error.message);
     }
   }
@@ -160,21 +175,21 @@ async function criarPacientes() {
     {
       nome: 'José Ferreira',
       dataNascimento: '1945-03-15',
-      cpf: '123.456.789-01',
+      cpf: '529.982.247-25',
       telefone: '(11) 3456-7890',
       email: 'jose.ferreira@email.com'
     },
     {
       nome: 'Maria Aparecida Silva',
       dataNascimento: '1952-07-20',
-      cpf: '234.567.890-12',
+      cpf: '111.444.777-35',
       telefone: '(11) 3456-7891',
       email: 'maria.aparecida@email.com'
     },
     {
       nome: 'Antonio Carlos Oliveira',
       dataNascimento: '1958-11-10',
-      cpf: '345.678.901-23',
+      cpf: '935.411.347-80',
       telefone: '(11) 3456-7892',
       email: 'antonio.carlos@email.com'
     }

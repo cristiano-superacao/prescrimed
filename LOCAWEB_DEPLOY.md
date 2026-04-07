@@ -1,25 +1,23 @@
-<<<<<<< HEAD
-# Deploy Locaweb - Prescrimed (MySQL)
+# Deploy externo - Prescrimed (PostgreSQL)
 
-## 1. Banco de Dados MySQL
-- Crie um banco de dados MySQL no painel da Locaweb.
-- Anote host, usuário, senha, nome do banco.
+> Nota: este projeto foi consolidado em PostgreSQL. Instruções antigas de MySQL devem ser tratadas como legado.
+
+## 1. Banco de Dados PostgreSQL
+- Crie um banco PostgreSQL no provedor escolhido.
+- Anote host, porta, usuário, senha e nome do banco.
 
 ## 2. Variáveis de Ambiente
 - Copie `.env.locaweb.example` para `.env` e preencha com seus dados.
+- Defina `DATABASE_URL` no formato PostgreSQL.
 
 ## 3. Instale dependências
 ```sh
 npm ci
 ```
 
-## 4. Gere as tabelas no MySQL
-- O Sequelize pode criar as tabelas automaticamente no primeiro start.
-- Se preferir, gere o SQL com:
-```sh
-npx sequelize-cli db:migrate
-```
-- Ou use o script de sync automático (já incluso no server.js).
+## 4. Gere as tabelas
+- O Sequelize cria as tabelas automaticamente no primeiro start quando o banco estiver acessível.
+- Em produção, prefira iniciar com a configuração final já apontando para o banco correto.
 
 ## 5. Start do servidor
 ```sh
@@ -27,59 +25,15 @@ NODE_ENV=production node server.js
 ```
 
 ## 6. Rotas e layout
-- Todas as rotas e layout frontend permanecem iguais.
-- O backend detecta automaticamente se está usando MySQL, PostgreSQL ou SQLite.
+- Todas as rotas e o layout frontend permanecem iguais.
+- O layout responsivo e profissional do frontend não é alterado por essa configuração.
 
 ## 7. Observações
-- O layout responsivo e profissional do frontend não é alterado.
-- O backend está pronto para rodar em ambiente Locaweb (MySQL).
-- Se precisar de dump SQL para criar tabelas manualmente, rode o sistema localmente e exporte via MySQL Workbench ou `mysqldump`.
+- O backend atual usa PostgreSQL como caminho suportado.
+- Para customizações, mantenha compatibilidade com Express, Sequelize e o modelo multi-tenant.
 
 ---
 
-**Dúvidas?**
+## Dúvidas?
 - Consulte a documentação dos models em `/models` e as rotas em `/routes`.
-- Para customizações, mantenha a compatibilidade com Sequelize.
-=======
-# Deploy Locaweb - Prescrimed (MySQL)
-
-## 1. Banco de Dados MySQL
-- Crie um banco de dados MySQL no painel da Locaweb.
-- Anote host, usuário, senha, nome do banco.
-
-## 2. Variáveis de Ambiente
-- Copie `.env.locaweb.example` para `.env` e preencha com seus dados.
-
-## 3. Instale dependências
-```sh
-npm ci
-```
-
-## 4. Gere as tabelas no MySQL
-- O Sequelize pode criar as tabelas automaticamente no primeiro start.
-- Se preferir, gere o SQL com:
-```sh
-npx sequelize-cli db:migrate
-```
-- Ou use o script de sync automático (já incluso no server.js).
-
-## 5. Start do servidor
-```sh
-NODE_ENV=production node server.js
-```
-
-## 6. Rotas e layout
-- Todas as rotas e layout frontend permanecem iguais.
-- O backend detecta automaticamente se está usando MySQL, PostgreSQL ou SQLite.
-
-## 7. Observações
-- O layout responsivo e profissional do frontend não é alterado.
-- O backend está pronto para rodar em ambiente Locaweb (MySQL).
-- Se precisar de dump SQL para criar tabelas manualmente, rode o sistema localmente e exporte via MySQL Workbench ou `mysqldump`.
-
----
-
-**Dúvidas?**
-- Consulte a documentação dos models em `/models` e as rotas em `/routes`.
-- Para customizações, mantenha a compatibilidade com Sequelize.
->>>>>>> f8df367ce1ca1ff650c477905d008af90ee9fc68
+- Para ambientes externos, replique a mesma estrutura usada no Railway: `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `ALLOWED_ORIGINS` e `PUBLIC_BASE_URL`.
