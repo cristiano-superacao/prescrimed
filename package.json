@@ -30,6 +30,7 @@
     "reset:local:ps": "powershell -ExecutionPolicy Bypass -File scripts/reset-local-config.ps1",
     "client": "cd client && npm run dev",
     "build:client": "cd client && npm install && npm run build",
+    "build:template": "cd client && npm install && npm run build:hostgator && cd .. && node scripts/publish-template.js",
     "build:pages": "cd client && npm install && npm run build:github",
     "pages:publish": "node scripts/publish-pages.js",
     "build:full": "npm install --production=false && cd client && npm install && npm run build && cd ..",

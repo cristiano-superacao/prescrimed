@@ -62,7 +62,24 @@ npm run client
 - `npm run test:api:quick` para smoke test rápido.
 - `npm run create:local-admin` para criar admin local.
 - `npm run build:client` para gerar o frontend de produção.
+- `npm run build:template` para gerar a pasta `Template/` pronta para upload na HostGator.
 - `npm run streamlit` para subir o dashboard analítico.
+
+## Publicação na HostGator
+
+Para hospedagem compartilhada, use:
+
+```bash
+npm run build:template
+```
+
+Esse comando gera a pasta `Template/` com o frontend estático, arquivo `.htaccess` e instruções de upload.
+
+Importante:
+
+- A publicação em HostGator via `Template/` cobre o frontend React.
+- O backend Node.js/Express com PostgreSQL precisa continuar em um ambiente compatível, como Railway, VPS ou plano com suporte real a Node.js e banco correspondente.
+- O endpoint usado nesse build fica configurado em `client/.env.hostgator`.
 
 ## Observações
 

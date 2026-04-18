@@ -288,12 +288,11 @@ export default function Evolucao() {
         return;
       }
 
-      const medicamentos = await estoqueService.getMedicamentos();
-      const alimentos = await estoqueService.getAlimentos();
-      setItensEstoque([
-        ...(medicamentos || []),
-        ...(alimentos || [])
-      ]);
+      const medicamentosRes = await estoqueService.getMedicamentos();
+      const alimentosRes = await estoqueService.getAlimentos();
+      const medicamentos = Array.isArray(medicamentosRes) ? medicamentosRes : (medicamentosRes?.items || []);
+      const alimentos = Array.isArray(alimentosRes) ? alimentosRes : (alimentosRes?.items || []);
+      setItensEstoque([...medicamentos, ...alimentos]);
     } catch (error) {
       console.error('Erro ao carregar itens do estoque:', error);
     }

@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "build:netlify": "vite build",
+    "build:hostgator": "vite build --mode hostgator",
     "build:railway": "vite build --mode railway",
     "build:github": "vite build --mode github",
     "start:railway": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",

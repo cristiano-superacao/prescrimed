@@ -13,6 +13,8 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import comercialService from '../services/comercial.service';
+import { useAuthStore } from '../store/authStore';
+import { getSelectedEmpresaId } from '../utils/empresaContext';
 import PageHeader from '../components/common/PageHeader';
 import StatsCard from '../components/common/StatsCard';
 import { formatCurrency } from '../utils/currency';
@@ -63,6 +65,9 @@ function statusBadgeClasses(status) {
 }
 
 export default function ComercialFiscal() {
+  const { user } = useAuthStore();
+  const isSuperadmin = user?.role === 'superadmin';
+  const empresaContextoSelecionado = isSuperadmin ? getSelectedEmpresaId() : true;
   const [overview, setOverview] = useState({ metrics: {}, readiness: {} });
   const [catalogo, setCatalogo] = useState([]);
   const [pedidos, setPedidos] = useState([]);
@@ -227,6 +232,14 @@ export default function ComercialFiscal() {
 
   return (
     <div className="space-y-8">
+      {isSuperadmin && !empresaContextoSelecionado && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+          <AlertTriangle size={18} className="shrink-0 text-amber-500" />
+          <span>
+            Você está como <strong>Super Admin</strong> sem uma empresa selecionada. Selecione uma empresa no menu superior para criar pedidos e itens de catálogo.
+          </span>
+        </div>
+      )}
       <PageHeader
         label="Expansão ERP"
         title="Comercial & Fiscal"

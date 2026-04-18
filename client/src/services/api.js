@@ -1,53 +1,65 @@
 import axios from 'axios';
 import { getSelectedEmpresaId } from '../utils/empresaContext';
 
-// Raiz do backend em produção (configurável via Vite)
-const VITE_BACKEND_ROOT = import.meta.env.VITE_BACKEND_ROOT;
-// Fallback para domínio padrão caso variável não esteja definida
-const DEFAULT_RAILWAY_URL = 'https://prescrimed-backend-production.up.railway.app';
-const RAILWAY_URL = VITE_BACKEND_ROOT || DEFAULT_RAILWAY_URL;
+const DEFAULT_RAILWAY_URL = 'https://prescrimed.up.railway.app';
+const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+const explicitApiUrl = import.meta.env.VITE_API_URL?.trim();
+const explicitBackendRoot = import.meta.env.VITE_BACKEND_ROOT?.trim();
+
+const getRootFromApiUrl = (apiUrl) => {
+  if (!apiUrl) return '';
+  return apiUrl.replace(/\/api\/?$/, '');
+};
+
+const RAILWAY_URL = explicitBackendRoot || getRootFromApiUrl(explicitApiUrl) || DEFAULT_RAILWAY_URL;
 
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
-  // Detectar se está no Railway
-  const isRailwayHost = window.location.hostname.includes('railway.app');
+  const isRailwayHost = hostname.includes('railway.app');
+  const isGitHubPages = hostname.includes('github.io');
+
+  if (import.meta.env.PROD && explicitApiUrl) {
+    console.log('🌍 Produção com API explícita configurada:', explicitApiUrl);
+    return explicitApiUrl;
+  }
   
-  // Se está no Railway, sempre usar /api (mesmo serviço)
   if (isRailwayHost && import.meta.env.PROD) {
     console.log('🚂 Railway detectado - usando /api (mesmo serviço)');
     return '/api';
   }
 
-  // Se está no GitHub Pages
-  const isGitHubPages = window.location.hostname.includes('github.io');
   if (isGitHubPages && import.meta.env.PROD) {
     console.log('📄 GitHub Pages detectado - conectando ao backend configurado');
     return `${RAILWAY_URL}/api`;
   }
 
-  // Em desenvolvimento local
-  // Verifica variável de ambiente ou tenta detectar porta automaticamente
-  const devApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
+  const devApiUrl = explicitApiUrl || 'http://localhost:8000/api';
   console.log('💻 Desenvolvimento local - usando', devApiUrl);
   return devApiUrl;
 };
 
 // Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
 export const getApiRootUrl = () => {
-  // Se está no Railway
-  const isRailwayHost = window.location.hostname.includes('railway.app');
+  const isRailwayHost = hostname.includes('railway.app');
+  const isGitHubPages = hostname.includes('github.io');
+
+  if (import.meta.env.PROD && explicitBackendRoot) {
+    return explicitBackendRoot;
+  }
+
+  if (import.meta.env.PROD && explicitApiUrl) {
+    return getRootFromApiUrl(explicitApiUrl);
+  }
+
   if (isRailwayHost && import.meta.env.PROD) {
     return ''; // Mesma origem
   }
 
-  // Se está no GitHub Pages
-  const isGitHubPages = window.location.hostname.includes('github.io');
   if (isGitHubPages && import.meta.env.PROD) {
     return RAILWAY_URL;
   }
 
-  // Em desenvolvimento local
-  const devBackendRoot = import.meta.env.VITE_BACKEND_ROOT || 'http://localhost:8001';
+  const devBackendRoot = explicitBackendRoot || getRootFromApiUrl(explicitApiUrl) || 'http://localhost:8000';
   return devBackendRoot;
 };
 
