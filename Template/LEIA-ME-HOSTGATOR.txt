@@ -1,0 +1,43 @@
+=============================================================
+  PRESCRIMED - PUBLICACAO HOSTGATOR
+  Gerado automaticamente por: npm run build:template
+=============================================================
+
+CONTEUDO DESTA PASTA
+---------------------
+  index.html     -> Entrada principal do SPA React
+  assets/        -> JS, CSS e fontes minificados (cache longo)
+  .htaccess      -> Rewrite rules para SPA + segurança + gzip
+  404.html       -> Pagina de fallback que redireciona ao root
+  favicon.ico    -> Icone do sistema
+  robots.txt     -> Instrucoes para indexadores
+
+COMO PUBLICAR NO HOSTGATOR
+---------------------------
+1. Acesse o cPanel da sua conta Hostgator.
+2. Abra o Gerenciador de Arquivos e navegue ate public_html
+   (ou uma subpasta, ex: public_html/prescrimed/).
+3. Envie TODO o conteudo desta pasta (incluindo .htaccess e a pasta assets/).
+4. Certifique-se de que o arquivo .htaccess foi enviado
+   (arquivos que começam com ponto podem estar ocultos no FTP – habilite "mostrar arquivos ocultos").
+5. Acesse o dominio no navegador e teste o login.
+
+CONFIGURACAO DA API
+-------------------
+  -> O frontend aponta para: https://prescrimed.up.railway.app/api
+  -> O backend continua rodando no Railway (Node.js + PostgreSQL).
+  -> Se o dominio do backend mudar, edite:
+       client/.env.hostgator  (variavel VITE_API_URL)
+     e rebuild com:
+       npm run build:template
+
+RESPONSIVIDADE
+--------------
+  -> Layout 100% responsivo: mobile, tablet e desktop.
+  -> Testado com Tailwind CSS e componentes adaptativos.
+
+SUPORTE
+-------
+  -> Sistema: Prescrimed v1.0
+  -> Em caso de duvidas, contate o desenvolvedor.
+=============================================================
