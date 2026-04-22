@@ -1,43 +1,64 @@
 =============================================================
   PRESCRIMED - PUBLICACAO HOSTGATOR
   Gerado automaticamente por: npm run build:template
+  Data: 21/04/2026, 20:46:59
 =============================================================
 
 CONTEUDO DESTA PASTA
 ---------------------
-  index.html     -> Entrada principal do SPA React
-  assets/        -> JS, CSS e fontes minificados (cache longo)
-  .htaccess      -> Rewrite rules para SPA + segurança + gzip
-  404.html       -> Pagina de fallback que redireciona ao root
-  favicon.ico    -> Icone do sistema
-  robots.txt     -> Instrucoes para indexadores
+  index.html          -> Entrada principal do SPA React
+  assets/             -> JS, CSS e fontes minificados (cache longo)
+  .htaccess           -> Fallback SPA + seguranca + cache + gzip
+  404.html            -> Fallback visual de redirecionamento
+  favicon.ico         -> Icone do sistema
+  robots.txt          -> Instrucoes para indexadores
+  limpar-cache.html   -> Ajuda para limpar cache apos atualizar a publicacao
 
 COMO PUBLICAR NO HOSTGATOR
 ---------------------------
-1. Acesse o cPanel da sua conta Hostgator.
+1. Acesse o cPanel da sua conta HostGator.
 2. Abra o Gerenciador de Arquivos e navegue ate public_html
    (ou uma subpasta, ex: public_html/prescrimed/).
-3. Envie TODO o conteudo desta pasta (incluindo .htaccess e a pasta assets/).
-4. Certifique-se de que o arquivo .htaccess foi enviado
-   (arquivos que começam com ponto podem estar ocultos no FTP – habilite "mostrar arquivos ocultos").
-5. Acesse o dominio no navegador e teste o login.
+3. Remova arquivos antigos do frontend para evitar conflito de cache.
+4. Envie TODO o conteudo desta pasta, incluindo .htaccess e assets/.
+5. Se usar FTP, habilite a exibicao de arquivos ocultos antes do upload.
+6. Confirme que index.html, .htaccess e assets/ ficaram no mesmo nivel.
+7. Acesse o dominio e teste navegacao, login e recarga de pagina em rota interna.
+
+PUBLICAR NA RAIZ OU SUBPASTA
+-----------------------------
+  -> Este pacote usa assets relativos e fallback SPA relativo.
+  -> Pode ser publicado diretamente em public_html.
+  -> Tambem pode ser publicado em subpastas como public_html/prescrimed.
+  -> Se a API estiver no mesmo dominio, mantenha VITE_API_URL=/api no build.
+
+CHECKLIST RAPIDO POS-UPLOAD
+---------------------------
+  [ ] index.html abre sem erro 404
+  [ ] assets/ carrega CSS e JS minificados
+  [ ] login funciona
+  [ ] atualizar a pagina em /dashboard nao quebra
+  [ ] layout permanece responsivo no celular
+  [ ] limpar-cache.html abre corretamente
 
 CONFIGURACAO DA API
 -------------------
-  -> O frontend aponta para: https://prescrimed.up.railway.app/api
-  -> O backend continua rodando no Railway (Node.js + PostgreSQL).
-  -> Se o dominio do backend mudar, edite:
-       client/.env.hostgator  (variavel VITE_API_URL)
-     e rebuild com:
+  -> Este build assume API no mesmo dominio usando /api.
+  -> Para publicar frontend + backend no HostGator, o plano precisa ter Node.js.
+  -> Se a API ficar em outro dominio, ajuste client/.env.hostgator:
+       VITE_API_URL=https://sua-api/api
+       VITE_BACKEND_ROOT=https://sua-api
+     e gere novamente:
        npm run build:template
 
-RESPONSIVIDADE
---------------
-  -> Layout 100% responsivo: mobile, tablet e desktop.
-  -> Testado com Tailwind CSS e componentes adaptativos.
+PADRAO VISUAL
+-------------
+  -> O Template nao altera o layout do sistema.
+  -> O build preserva a interface responsiva e profissional do frontend atual.
+  -> As paginas auxiliares geradas para HostGator seguem o mesmo cuidado visual.
 
-SUPORTE
--------
+SUPORTE OPERACIONAL
+-------------------
   -> Sistema: Prescrimed v1.0
-  -> Em caso de duvidas, contate o desenvolvedor.
+  -> Build indicado para publicacao estatica profissional em HostGator.
 =============================================================

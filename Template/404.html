@@ -3,21 +3,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prescrimed - Redirecionando...</title>
+  <meta name="theme-color" content="#0f766e">
+  <title>Prescrimed - Redirecionando</title>
   <style>
-    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center;
-           min-height: 100vh; margin: 0; background: #f1f5f9; color: #334155; }
-    .box { text-align: center; padding: 2rem; }
-    a { color: #6366f1; text-decoration: none; font-weight: 600; }
+    :root {
+      --bg-a: #ecfeff;
+      --bg-b: #f8fafc;
+      --ink: #0f172a;
+      --muted: #475569;
+      --accent: #0f766e;
+      --accent-2: #14b8a6;
+      --panel: rgba(255, 255, 255, 0.92);
+      --shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 30%),
+        linear-gradient(180deg, var(--bg-a), var(--bg-b));
+    }
+
+    .shell {
+      width: min(720px, 100%);
+      background: var(--panel);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero {
+      padding: 32px 32px 16px;
+      background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(20, 184, 166, 0.18));
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.74);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 20px 0 8px;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.04;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    .content {
+      padding: 24px 32px 32px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .card {
+      display: grid;
+      gap: 10px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .button-primary {
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 12px 28px rgba(15, 118, 110, 0.24);
+    }
+
+    .button-secondary {
+      color: var(--ink);
+      background: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+    }
+
+    .button:hover { transform: translateY(-1px); }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+      .hero, .content { padding-left: 20px; padding-right: 20px; }
+      .actions { flex-direction: column; }
+      .button { width: 100%; }
+    }
   </style>
   <script>
-    // Redireciona para a raiz do site preservando o hash (para HashRouter)
-    window.location.replace('./');
+    setTimeout(function () {
+      window.location.replace('./');
+    }, 1800);
   </script>
 </head>
 <body>
-  <div class="box">
-    <p>Redirecionando... <a href="./">clique aqui</a> se não for redirecionado automaticamente.</p>
-  </div>
+  <main class="shell" aria-labelledby="titulo-404">
+    <section class="hero">
+      <div class="brand">Prescrimed HostGator</div>
+      <h1 id="titulo-404">Publicacao pronta e fallback configurado.</h1>
+      <p>
+        Esta pagina aparece quando uma rota do aplicativo precisa voltar para a entrada principal.
+        O redirecionamento sera feito automaticamente para preservar a navegacao do sistema.
+      </p>
+    </section>
+
+    <section class="content">
+      <article class="card">
+        <div class="label">Redirecionamento</div>
+        <div>Se nada acontecer em instantes, abra manualmente a entrada principal do sistema.</div>
+        <div class="actions">
+          <a class="button button-primary" href="./">Abrir Prescrimed</a>
+          <a class="button button-secondary" href="./limpar-cache.html">Limpar cache do navegador</a>
+        </div>
+      </article>
+
+      <article class="card small">
+        <div class="label">Publicacao estavel</div>
+        <div>
+          O pacote Template foi preparado para HostGator com assets relativos, compressao e fallback SPA.
+          Isso preserva o layout responsivo no desktop, tablet e mobile.
+        </div>
+      </article>
+    </section>
+  </main>
 </body>
 </html>
