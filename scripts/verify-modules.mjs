@@ -1,7 +1,20 @@
 /* Verifica módulos: agenda, evolução, censo MP (prescrições + pacientes), casa de repouso, petshop e fisioterapia.
    Usa login; se 401, tenta registrar empresa/admin demo e logar novamente. */
 
-const BASE = process.env.BASE_URL || 'https://prescrimed-backend-production.up.railway.app';
+import 'dotenv/config';
+
+function resolveBaseUrl() {
+  const value = (
+    process.env.BASE_URL ||
+    process.env.API_BASE_URL ||
+    process.env.PUBLIC_BASE_URL ||
+    'http://localhost:8000'
+  ).trim();
+
+  return value.replace(/\/api\/?$/, '');
+}
+
+const BASE = resolveBaseUrl();
 const EMAIL = process.env.EMAIL || 'jeansoares@gmail.com';
 const SENHA = process.env.SENHA || '123456';
 
@@ -23,8 +36,8 @@ async function ensureLogin() {
   const register = await fetchJson(`${BASE}/api/auth/register`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      nomeEmpresa: 'Clínica Demo', tipoSistema: 'casa-repouso', cnpj: '12345678000199',
-      nomeAdmin: 'Jean Soares', email: EMAIL, senha: SENHA, cpf: '12345678900', contato: '(71) 99658-2310'
+      nomeEmpresa: 'Clínica Demo', tipoSistema: 'casa-repouso', cnpj: '00000000000191',
+      nomeAdmin: 'Jean Soares', email: EMAIL, senha: SENHA, cpf: '12345678909', contato: '(71) 99658-2310'
     })
   });
   if (!register.ok) {

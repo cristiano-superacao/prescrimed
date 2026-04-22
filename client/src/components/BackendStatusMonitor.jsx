@@ -99,8 +99,8 @@ export default function BackendStatusMonitor() {
             return;
           }
 
-          // Em produção Railway integrada, use a mesma origem
-          if (window.location.hostname.includes('railway.app')) {
+          // Em produção sem backend root explícito, use a mesma origem
+          if (import.meta.env.PROD) {
             const response = await fetch('/health', {
               method: 'GET',
               signal: AbortSignal.timeout(5000)
@@ -121,9 +121,8 @@ export default function BackendStatusMonitor() {
 
         // Evitar tentar localhost em produção hospedada
         if (healthUrlRoot.includes('localhost') && 
-          (window.location.hostname.includes('railway.app') || 
-           window.location.hostname.includes('github.io'))) {
-          console.error('❌ BackendStatusMonitor: tentando acessar localhost em produção! Configure VITE_BACKEND_ROOT.');
+          import.meta.env.PROD) {
+          console.error('❌ BackendStatusMonitor: tentando acessar localhost em produção! Configure VITE_BACKEND_ROOT/VITE_API_URL ou use mesma origem.');
           setStatus('offline');
           setDbStatus(null);
           setShowAlert(true);
@@ -222,9 +221,9 @@ export default function BackendStatusMonitor() {
           <p className="text-sm text-white/90">
             <strong>Como resolver:</strong>{' '}
             {isOffline ? (
-              <>Verifique se a API está rodando no Railway e se as variáveis <code className="bg-black/20 px-2 py-1 rounded text-xs">VITE_BACKEND_ROOT</code> ou <code className="bg-black/20 px-2 py-1 rounded text-xs">VITE_API_URL</code> estão configuradas corretamente no frontend.</>
+              <>Verifique se a API está rodando no mesmo domínio ou se as variáveis <code className="bg-black/20 px-2 py-1 rounded text-xs">VITE_BACKEND_ROOT</code> e <code className="bg-black/20 px-2 py-1 rounded text-xs">VITE_API_URL</code> apontam para o backend correto.</>
             ) : (
-              <>No Railway, confirme se o Postgres foi criado e se <code className="bg-black/20 px-2 py-1 rounded text-xs">DATABASE_URL</code> está presente. Enquanto isso, o sistema pode ficar parcialmente indisponível.</>
+              <>Confirme se o PostgreSQL está acessível e se <code className="bg-black/20 px-2 py-1 rounded text-xs">DATABASE_URL</code> ou <code className="bg-black/20 px-2 py-1 rounded text-xs">PGHOST</code> estão configuradas. Enquanto isso, o sistema pode ficar parcialmente indisponível.</>
             )}
           </p>
         </div>

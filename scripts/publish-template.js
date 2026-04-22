@@ -5,6 +5,7 @@ import path from 'path';
 const root = process.cwd();
 const distDir = path.join(root, 'client', 'dist');
 const templateDir = path.join(root, 'Template');
+const generatedAt = new Date().toLocaleString('pt-BR');
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -42,38 +43,38 @@ function copyDir(src, dest) {
 const htaccessContent = `Options -Indexes
 DirectoryIndex index.html
 
-# ── SPA: redireciona tudo para index.html (HashRouter) ──────────────────────
+# Fallback SPA relativo para public_html ou subpastas
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-  # Permite acesso a arquivos e diretórios reais (assets, favicon, robots.txt…)
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # Redireciona qualquer outra requisição para index.html
   RewriteRule ^ index.html [L]
 </IfModule>
 
-# ── página de erro personalizada ─────────────────────────────────────────────
-ErrorDocument 404 /404.html
-
-# ── cabeçalhos de segurança ──────────────────────────────────────────────────
+# Cabecalhos recomendados para entrega estatica
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-Frame-Options "SAMEORIGIN"
   Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
   Header always set X-XSS-Protection "1; mode=block"
+  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+  Header always set Cross-Origin-Resource-Policy "same-site"
 
-  # CORS para chamadas à API externa (Railway)
-  <FilesMatch "\.(json|js|css)$">
-    Header set Access-Control-Allow-Origin "*"
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+  </FilesMatch>
+
+  <FilesMatch "\.(css|js|mjs|svg|ico|png|jpg|jpeg|gif|webp|woff|woff2|ttf)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 </IfModule>
 
-# ── cache de longa duração para assets versionados ─────────────────────────
+# Cache longo para assets versionados
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresByType text/html "access plus 0 seconds"
@@ -90,7 +91,7 @@ ErrorDocument 404 /404.html
   ExpiresByType font/ttf "access plus 1 year"
 </IfModule>
 
-# ── compressão gzip ──────────────────────────────────────────────────────────
+# Compressao gzip
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/css
   AddOutputFilterByType DEFLATE application/javascript application/json
@@ -104,67 +105,248 @@ const page404Content = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prescrimed - Redirecionando...</title>
+  <meta name="theme-color" content="#0f766e">
+  <title>Prescrimed - Redirecionando</title>
   <style>
-    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center;
-           min-height: 100vh; margin: 0; background: #f1f5f9; color: #334155; }
-    .box { text-align: center; padding: 2rem; }
-    a { color: #6366f1; text-decoration: none; font-weight: 600; }
+    :root {
+      --bg-a: #ecfeff;
+      --bg-b: #f8fafc;
+      --ink: #0f172a;
+      --muted: #475569;
+      --accent: #0f766e;
+      --accent-2: #14b8a6;
+      --panel: rgba(255, 255, 255, 0.92);
+      --shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 30%),
+        linear-gradient(180deg, var(--bg-a), var(--bg-b));
+    }
+
+    .shell {
+      width: min(720px, 100%);
+      background: var(--panel);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero {
+      padding: 32px 32px 16px;
+      background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(20, 184, 166, 0.18));
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.74);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 20px 0 8px;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.04;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    .content {
+      padding: 24px 32px 32px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .card {
+      display: grid;
+      gap: 10px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .button-primary {
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 12px 28px rgba(15, 118, 110, 0.24);
+    }
+
+    .button-secondary {
+      color: var(--ink);
+      background: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+    }
+
+    .button:hover { transform: translateY(-1px); }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+      .hero, .content { padding-left: 20px; padding-right: 20px; }
+      .actions { flex-direction: column; }
+      .button { width: 100%; }
+    }
   </style>
   <script>
-    // Redireciona para a raiz do site preservando o hash (para HashRouter)
-    window.location.replace('./');
+    setTimeout(function () {
+      window.location.replace('./');
+    }, 1800);
   </script>
 </head>
 <body>
-  <div class="box">
-    <p>Redirecionando... <a href="./">clique aqui</a> se não for redirecionado automaticamente.</p>
-  </div>
+  <main class="shell" aria-labelledby="titulo-404">
+    <section class="hero">
+      <div class="brand">Prescrimed HostGator</div>
+      <h1 id="titulo-404">Publicacao pronta e fallback configurado.</h1>
+      <p>
+        Esta pagina aparece quando uma rota do aplicativo precisa voltar para a entrada principal.
+        O redirecionamento sera feito automaticamente para preservar a navegacao do sistema.
+      </p>
+    </section>
+
+    <section class="content">
+      <article class="card">
+        <div class="label">Redirecionamento</div>
+        <div>Se nada acontecer em instantes, abra manualmente a entrada principal do sistema.</div>
+        <div class="actions">
+          <a class="button button-primary" href="./">Abrir Prescrimed</a>
+          <a class="button button-secondary" href="./limpar-cache.html">Limpar cache do navegador</a>
+        </div>
+      </article>
+
+      <article class="card small">
+        <div class="label">Publicacao estavel</div>
+        <div>
+          O pacote Template foi preparado para HostGator com assets relativos, compressao e fallback SPA.
+          Isso preserva o layout responsivo no desktop, tablet e mobile.
+        </div>
+      </article>
+    </section>
+  </main>
 </body>
 </html>`;
 
 const instructionsContent = `=============================================================
   PRESCRIMED - PUBLICACAO HOSTGATOR
   Gerado automaticamente por: npm run build:template
+  Data: ${generatedAt}
 =============================================================
 
 CONTEUDO DESTA PASTA
 ---------------------
-  index.html     -> Entrada principal do SPA React
-  assets/        -> JS, CSS e fontes minificados (cache longo)
-  .htaccess      -> Rewrite rules para SPA + segurança + gzip
-  404.html       -> Pagina de fallback que redireciona ao root
-  favicon.ico    -> Icone do sistema
-  robots.txt     -> Instrucoes para indexadores
+  index.html          -> Entrada principal do SPA React
+  assets/             -> JS, CSS e fontes minificados (cache longo)
+  .htaccess           -> Fallback SPA + seguranca + cache + gzip
+  404.html            -> Fallback visual de redirecionamento
+  favicon.ico         -> Icone do sistema
+  robots.txt          -> Instrucoes para indexadores
+  limpar-cache.html   -> Ajuda para limpar cache apos atualizar a publicacao
 
 COMO PUBLICAR NO HOSTGATOR
 ---------------------------
-1. Acesse o cPanel da sua conta Hostgator.
+1. Acesse o cPanel da sua conta HostGator.
 2. Abra o Gerenciador de Arquivos e navegue ate public_html
    (ou uma subpasta, ex: public_html/prescrimed/).
-3. Envie TODO o conteudo desta pasta (incluindo .htaccess e a pasta assets/).
-4. Certifique-se de que o arquivo .htaccess foi enviado
-   (arquivos que começam com ponto podem estar ocultos no FTP – habilite "mostrar arquivos ocultos").
-5. Acesse o dominio no navegador e teste o login.
+3. Remova arquivos antigos do frontend para evitar conflito de cache.
+4. Envie TODO o conteudo desta pasta, incluindo .htaccess e assets/.
+5. Se usar FTP, habilite a exibicao de arquivos ocultos antes do upload.
+6. Confirme que index.html, .htaccess e assets/ ficaram no mesmo nivel.
+7. Acesse o dominio e teste navegacao, login e recarga de pagina em rota interna.
+
+PUBLICAR NA RAIZ OU SUBPASTA
+-----------------------------
+  -> Este pacote usa assets relativos e fallback SPA relativo.
+  -> Pode ser publicado diretamente em public_html.
+  -> Tambem pode ser publicado em subpastas como public_html/prescrimed.
+  -> Se a API estiver no mesmo dominio, mantenha VITE_API_URL=/api no build.
+
+CHECKLIST RAPIDO POS-UPLOAD
+---------------------------
+  [ ] index.html abre sem erro 404
+  [ ] assets/ carrega CSS e JS minificados
+  [ ] login funciona
+  [ ] atualizar a pagina em /dashboard nao quebra
+  [ ] layout permanece responsivo no celular
+  [ ] limpar-cache.html abre corretamente
 
 CONFIGURACAO DA API
 -------------------
-  -> O frontend aponta para: https://prescrimed.up.railway.app/api
-  -> O backend continua rodando no Railway (Node.js + PostgreSQL).
-  -> Se o dominio do backend mudar, edite:
-       client/.env.hostgator  (variavel VITE_API_URL)
-     e rebuild com:
+  -> Este build assume API no mesmo dominio usando /api.
+  -> Para publicar frontend + backend no HostGator, o plano precisa ter Node.js.
+  -> Se a API ficar em outro dominio, ajuste client/.env.hostgator:
+       VITE_API_URL=https://sua-api/api
+       VITE_BACKEND_ROOT=https://sua-api
+     e gere novamente:
        npm run build:template
 
-RESPONSIVIDADE
---------------
-  -> Layout 100% responsivo: mobile, tablet e desktop.
-  -> Testado com Tailwind CSS e componentes adaptativos.
+PADRAO VISUAL
+-------------
+  -> O Template nao altera o layout do sistema.
+  -> O build preserva a interface responsiva e profissional do frontend atual.
+  -> As paginas auxiliares geradas para HostGator seguem o mesmo cuidado visual.
 
-SUPORTE
--------
+SUPORTE OPERACIONAL
+-------------------
   -> Sistema: Prescrimed v1.0
-  -> Em caso de duvidas, contate o desenvolvedor.
+  -> Build indicado para publicacao estatica profissional em HostGator.
 =============================================================
 `;
 

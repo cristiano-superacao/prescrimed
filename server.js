@@ -316,12 +316,12 @@ async function connectDB(retryCount = 0) {
     // Garante flag de pronto após sincronização
     app.locals.dbReady = true;
 
-    // Seed opcional (útil no primeiro deploy do Railway)
+    // Seed opcional (útil no primeiro deploy em Postgres gerenciado)
     // Executa somente quando explicitamente ativado via variável de ambiente.
     if (process.env.SEED_MINIMAL === 'true') {
       const dialect = typeof sequelize.getDialect === 'function' ? sequelize.getDialect() : undefined;
       if (dialect && dialect !== 'postgres') {
-        console.warn(`⚠️ SEED_MINIMAL=true ignorado: dialeto atual é '${dialect}'. Configure DATABASE_URL (Postgres) no Railway.`);
+        console.warn(`⚠️ SEED_MINIMAL=true ignorado: dialeto atual é '${dialect}'. Configure DATABASE_URL (Postgres gerenciado).`);
       } else {
         try {
           console.log('🌱 SEED_MINIMAL=true - executando seed mínimo...');
@@ -348,7 +348,7 @@ async function connectDB(retryCount = 0) {
     if (process.env.IMPORT_JSON_ON_START === 'true') {
       try {
         console.log('📦 IMPORT_JSON_ON_START=true - iniciando importação de JSON para Postgres...');
-        const child = spawn(process.execPath, ['scripts/import-json-to-railway.js'], {
+        const child = spawn(process.execPath, ['scripts/import-json-to-postgres.js'], {
           env: process.env,
           stdio: ['ignore', 'pipe', 'pipe']
         });
@@ -386,7 +386,7 @@ const healthCors = cors({ origin: true, methods: ['GET', 'OPTIONS'] });
 /**
  * Rota de Health Check
  * Endpoint simples para verificar se servidor está online
- * Usado por sistemas de monitoramento (Railway, Render, AWS, etc)
+ * Usado por sistemas de monitoramento (HostGator, Render, AWS, etc)
  */
 app.options('/health', healthCors);
 app.get('/health', healthCors, (req, res) => {
@@ -399,7 +399,7 @@ app.get('/health', healthCors, (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Empresa-Id');
 
-  // Responde imediatamente para evitar timeout do Railway
+  // Responde imediatamente para evitar timeout do monitoramento externo
   res.status(200).json({ 
     status: 'ok',                              // Status do servidor
     uptime: process.uptime(),                  // Tempo ativo em segundos
@@ -450,7 +450,7 @@ app.use(morgan('dev'));
  */
 
 // Lista base de origens permitidas
-// Compatibilidade com variáveis comuns no Railway
+// Compatibilidade com variáveis comuns de deploy
 // (alguns projetos usam URL_FRONTEND/CORS_ORIGIN em vez de FRONTEND_URL/ALLOWED_ORIGINS)
 if (!process.env.FRONTEND_URL && process.env.URL_FRONTEND) {
   process.env.FRONTEND_URL = process.env.URL_FRONTEND;
@@ -466,11 +466,14 @@ const baseOrigins = [
   'http://127.0.0.1:5174',
   'http://127.0.0.1:5175',
   'http://localhost:3000',  // Backend local
-  // Railway frontend (domínio principal em produção)
+  // Deploys legados / domínios históricos
   'https://prescrimed.up.railway.app',
   'https://prescrimed-production.up.railway.app',
-  // Railway backend (API em produção)
+  // Backend legado público
   'https://prescrimed-backend-production.up.railway.app',
+  // Domínio customizado em produção
+  'https://prescrimed.com.br',
+  'https://www.prescrimed.com.br',
   // GitHub Pages (hospedagem alternativa)
   'https://cristiano-superacao.github.io',
   'https://cristiano-superacao.github.io/prescrimed',
@@ -538,7 +541,7 @@ app.use('/api', (req, res, next) => {
   if (!app.locals.dbReady) {
     return res.status(503).json({
       error: 'Banco de dados indisponível no momento',
-      hint: 'Verifique se o PostgreSQL do Railway está criado e se DATABASE_URL está configurada.'
+      hint: 'Verifique se o PostgreSQL/Supabase está acessível e se DATABASE_URL está configurada.'
     });
   }
   next();

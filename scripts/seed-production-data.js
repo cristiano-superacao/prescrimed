@@ -1,11 +1,23 @@
 #!/usr/bin/env node
 /**
- * Script para popular Railway com dados de teste realistas
+ * Script para popular um backend remoto com dados de teste realistas
  * Cria 3 empresas (Casa Repouso, Fisioterapia, Petshop)
  * Com admins, funcionários e residentes/pacientes/pets
  */
 
-const BASE_URL = process.env.API_BASE_URL || 'https://prescrimed.up.railway.app';
+import 'dotenv/config';
+
+function resolveBaseUrl() {
+  const value = (
+    process.env.API_BASE_URL ||
+    process.env.PUBLIC_BASE_URL ||
+    'http://localhost:8000'
+  ).trim();
+
+  return value.replace(/\/api\/?$/, '');
+}
+
+const BASE_URL = resolveBaseUrl();
 
 // Dados das 3 empresas
 const empresas = [
@@ -78,7 +90,7 @@ const empresas = [
 ];
 
 async function seedData() {
-  console.log('🌱 Iniciando seed de dados no Railway...\n');
+  console.log('🌱 Iniciando seed de dados no backend remoto...\n');
   console.log(`Base URL: ${BASE_URL}\n`);
 
   const results = {
@@ -236,7 +248,7 @@ async function seedData() {
     console.log(`      Senha: ${emp.admin.senha}\n`);
   });
 
-  console.log(`🌐 Acesse: https://prescrimed.up.railway.app\n`);
+  console.log(`🌐 Acesse: ${BASE_URL}\n`);
 }
 
 seedData().catch(error => {

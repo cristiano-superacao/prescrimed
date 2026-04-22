@@ -3,8 +3,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configuração exclusivamente PostgreSQL (Railway/Local)
+// Configuração exclusivamente PostgreSQL (Supabase/HostGator/Local)
 let sequelize;
+
+const resolvedDatabaseUrl =
+  process.env.DATABASE_URL ||
+  process.env.SUPABASE_DB_URL ||
+  process.env.SUPABASE_POOLER_URL ||
+  process.env.DATABASE_URL_OVERRIDE;
+
+if (!process.env.DATABASE_URL && resolvedDatabaseUrl) {
+  process.env.DATABASE_URL = resolvedDatabaseUrl;
+}
 
 // Produção: se DATABASE_URL/PGHOST ausente, ativa modo degradado (frontend ok, API 503), sem SQLite.
 const missingDbConfigInProd =
@@ -19,7 +29,7 @@ if (missingDbConfigInProd) {
 
 if (process.env.DATABASE_URL) {
   console.log('📡 Usando DATABASE_URL (PostgreSQL)');
-  const isInternalConnection = process.env.DATABASE_URL.includes('railway.internal');
+  const isInternalConnection = process.env.DATABASE_URL.includes('.internal');
   let isLocalConnection = false;
   let sslMode = null;
   try {
@@ -31,11 +41,11 @@ if (process.env.DATABASE_URL) {
     // Se não for uma URL válida, mantém comportamento antigo
   }
 
-  // Postgres local frequentemente não suporta SSL (e pg também tenta por padrão se ssl for setado).
+  // Postgres local frequentemente não suporta SSL. Em Supabase/hosts externos, SSL costuma ser obrigatório.
   const shouldUseSsl = !isInternalConnection && !isLocalConnection && sslMode !== 'disable';
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
-    dialectOptions: shouldUseSsl ? { ssl: { rejectUnauthorized: false } } : {},
+    dialectOptions: shouldUseSsl ? { ssl: { rejectUnauthorized: false }, keepAlive: true } : { keepAlive: true },
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: { max: 10, min: 2, acquire: 60000, idle: 10000 }
   });

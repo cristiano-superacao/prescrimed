@@ -3,7 +3,19 @@
  * Script para criar usuário administrador via API
  */
 
-const BASE_URL = process.env.API_BASE_URL || 'https://prescrimed-backend-production.up.railway.app';
+import 'dotenv/config';
+
+function resolveBaseUrl() {
+  const value = (
+    process.env.API_BASE_URL ||
+    process.env.PUBLIC_BASE_URL ||
+    'http://localhost:8000'
+  ).trim();
+
+  return value.replace(/\/api\/?$/, '');
+}
+
+const BASE_URL = resolveBaseUrl();
 
 async function createAdminUser() {
   console.log('🔧 Criando usuário administrador...\n');
@@ -18,11 +30,11 @@ async function createAdminUser() {
       body: JSON.stringify({
         nomeEmpresa: 'Clínica Demo',
         tipoSistema: 'casa-repouso',
-        cnpj: '12345678000199',
+        cnpj: '00000000000191',
         nomeAdmin: 'Jean Soares',
         email: 'jeansoares@gmail.com',
         senha: '123456',
-        cpf: '12345678900',
+        cpf: '12345678909',
         contato: '(71) 99658-2310'
       })
     });

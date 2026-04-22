@@ -77,8 +77,9 @@ Esse comando gera a pasta `Template/` com o frontend estático, arquivo `.htacce
 
 Importante:
 
-- A publicação em HostGator via `Template/` cobre o frontend React.
-- O backend Node.js/Express com PostgreSQL precisa continuar em um ambiente compatível, como Railway, VPS ou plano com suporte real a Node.js e banco correspondente.
+- O projeto é compatível com HostGator apenas se o plano oferecer Node.js em execução contínua e acesso a PostgreSQL local ou remoto.
+- Se o backend também rodar no mesmo domínio, use o build HostGator apontando para `/api` na mesma origem.
+- Se a conta HostGator for apenas hospedagem estática/shared sem Node.js, a pasta `Template/` cobre somente o frontend React e a API precisa continuar em outro ambiente compatível.
 - O endpoint usado nesse build fica configurado em `client/.env.hostgator`.
 
 ## Observações

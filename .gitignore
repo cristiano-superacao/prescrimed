@@ -5,6 +5,7 @@ client/node_modules/
 # Variáveis de ambiente (locais)
 .env
 .env.local
+.env.*.local
 client/.env
 
 # Build
@@ -48,6 +49,8 @@ data/export/
 # Testes e desenvolvimento
 .playwright-mcp/
 coverage/
+hostgator-artifacts/
+Template.rar
 
 # Sistema operacional
 .DS_Store

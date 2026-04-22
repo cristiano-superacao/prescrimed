@@ -5,6 +5,11 @@ import pg from 'pg';
 
 dotenv.config();
 
+const JSON_COLUMNS_BY_TABLE = {
+  usuarios: ['permissoes'],
+  prescricoes: ['itens']
+};
+
 async function tableExists(client, table) {
   // tenta com nome exato entre aspas (case-sensitive)
   try {
@@ -30,19 +35,31 @@ function buildUpsertSQL(table, columns, jsonColumns = []) {
 }
 
 function coerceJsonForTable(table, row) {
-  // Trata colunas JSON específicas por tabela
-  if (table === 'prescricoes') {
-    if (typeof row.itens === 'string') {
-      const s = row.itens.trim();
-      if (!s || s === 'null') {
-        row.itens = [];
-      } else {
-        try { row.itens = JSON.parse(s); }
-        catch { row.itens = []; }
+  const jsonColumns = JSON_COLUMNS_BY_TABLE[table] || [];
+
+  for (const column of jsonColumns) {
+    const value = row[column];
+
+    if (value == null) {
+      row[column] = [];
+      continue;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim();
+      if (!normalized || normalized === 'null') {
+        row[column] = [];
+        continue;
+      }
+
+      try {
+        row[column] = JSON.parse(normalized);
+      } catch {
+        row[column] = [];
       }
     }
-    if (row.itens == null) row.itens = [];
   }
+
   return row;
 }
 
@@ -54,7 +71,7 @@ async function importTable(client, dir, table) {
   }
 
   if (!(await tableExists(client, table))) {
-    console.warn(`⚠ Tabela ${table} não existe no Postgres (Railway). Pulando.`);
+    console.warn(`⚠ Tabela ${table} não existe no Postgres de destino. Pulando.`);
     return { table, imported: 0, missingTable: true };
   }
 
@@ -65,7 +82,7 @@ async function importTable(client, dir, table) {
 
   // Determina colunas a partir do primeiro registro
   const columns = Object.keys(rows[0]);
-  const jsonColumns = table === 'prescricoes' ? ['itens'] : [];
+  const jsonColumns = JSON_COLUMNS_BY_TABLE[table] || [];
   const sql = buildUpsertSQL(table, columns, jsonColumns);
 
   let imported = 0;
@@ -94,7 +111,7 @@ async function importTable(client, dir, table) {
 async function main() {
   const DATABASE_URL = process.env.DATABASE_URL_OVERRIDE || process.env.DATABASE_URL;
   if (!DATABASE_URL) {
-    console.error('❌ DATABASE_URL não definido. Este script deve rodar dentro do ambiente Railway (ou com URL externa válida).');
+    console.error('❌ DATABASE_URL não definido. Informe DATABASE_URL ou DATABASE_URL_OVERRIDE com a URL do Postgres de destino.');
     process.exit(1);
   }
   const isInternal = DATABASE_URL.includes('railway.internal');

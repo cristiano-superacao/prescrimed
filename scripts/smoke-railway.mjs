@@ -1,8 +1,21 @@
-/* Smoke test Railway: health + login + lista pacientes */
-const BASE = process.env.BASE_URL;
+/* Smoke test remoto: health + login + lista pacientes */
+import 'dotenv/config';
+
+function resolveBaseUrl() {
+  const value = (
+    process.env.BASE_URL ||
+    process.env.API_BASE_URL ||
+    process.env.PUBLIC_BASE_URL ||
+    ''
+  ).trim();
+
+  return value.replace(/\/api\/?$/, '');
+}
+
+const BASE = resolveBaseUrl();
 
 if (!BASE) {
-  console.error('❌ BASE_URL não definida. Use: BASE_URL=https://seu-servico.up.railway.app node scripts/smoke-railway.mjs');
+  console.error('❌ BASE_URL não definida. Use BASE_URL, API_BASE_URL ou PUBLIC_BASE_URL para apontar para o backend remoto.');
   process.exit(1);
 }
 
@@ -62,7 +75,7 @@ async function main() {
     console.log(`${label}:`, res.status, count);
   }
 
-  console.log('\n🎉 Smoke Railway concluído.');
+  console.log('\n🎉 Smoke remoto concluído.');
 }
 
 main().catch(err => { console.error('❌ Erro:', err.message); process.exit(1); });

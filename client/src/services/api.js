@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { getSelectedEmpresaId } from '../utils/empresaContext';
 
-const DEFAULT_RAILWAY_URL = 'https://prescrimed.up.railway.app';
 const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+const isProduction = import.meta.env.PROD;
 const explicitApiUrl = import.meta.env.VITE_API_URL?.trim();
 const explicitBackendRoot = import.meta.env.VITE_BACKEND_ROOT?.trim();
 
@@ -11,26 +11,23 @@ const getRootFromApiUrl = (apiUrl) => {
   return apiUrl.replace(/\/api\/?$/, '');
 };
 
-const RAILWAY_URL = explicitBackendRoot || getRootFromApiUrl(explicitApiUrl) || DEFAULT_RAILWAY_URL;
-
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
   const isRailwayHost = hostname.includes('railway.app');
-  const isGitHubPages = hostname.includes('github.io');
 
-  if (import.meta.env.PROD && explicitApiUrl) {
+  if (isProduction && explicitApiUrl) {
     console.log('🌍 Produção com API explícita configurada:', explicitApiUrl);
     return explicitApiUrl;
   }
   
-  if (isRailwayHost && import.meta.env.PROD) {
+  if (isRailwayHost && isProduction) {
     console.log('🚂 Railway detectado - usando /api (mesmo serviço)');
     return '/api';
   }
 
-  if (isGitHubPages && import.meta.env.PROD) {
-    console.log('📄 GitHub Pages detectado - conectando ao backend configurado');
-    return `${RAILWAY_URL}/api`;
+  if (isProduction) {
+    console.log('🌐 Produção em domínio próprio - usando /api na mesma origem');
+    return '/api';
   }
 
   const devApiUrl = explicitApiUrl || 'http://localhost:8000/api';
@@ -41,22 +38,21 @@ export const getApiUrl = () => {
 // Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
 export const getApiRootUrl = () => {
   const isRailwayHost = hostname.includes('railway.app');
-  const isGitHubPages = hostname.includes('github.io');
 
-  if (import.meta.env.PROD && explicitBackendRoot) {
+  if (isProduction && explicitBackendRoot) {
     return explicitBackendRoot;
   }
 
-  if (import.meta.env.PROD && explicitApiUrl) {
+  if (isProduction && explicitApiUrl) {
     return getRootFromApiUrl(explicitApiUrl);
   }
 
-  if (isRailwayHost && import.meta.env.PROD) {
+  if (isRailwayHost && isProduction) {
     return ''; // Mesma origem
   }
 
-  if (isGitHubPages && import.meta.env.PROD) {
-    return RAILWAY_URL;
+  if (isProduction) {
+    return ''; // Domínio próprio servindo API e frontend na mesma origem
   }
 
   const devBackendRoot = explicitBackendRoot || getRootFromApiUrl(explicitApiUrl) || 'http://localhost:8000';
