@@ -16,6 +16,7 @@
     "seed:hostgator": "node scripts/seed-hostgator-bootstrap.js",
     "seed:remote": "node scripts/seed-production-data.js",
     "supabase:check": "node scripts/check-supabase-connection.js",
+    "supabase:hardening": "node scripts/apply-supabase-hardening.js",
     "postgres:export": "node scripts/export-postgres-to-json.js",
     "supabase:import": "node scripts/import-json-to-postgres.js",
     "supabase:migrate": "node scripts/migrate-postgres-to-supabase.js",

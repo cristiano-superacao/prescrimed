@@ -41,6 +41,7 @@ import publicWebhookRoutes from './routes/public-webhooks.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { sequelize, Usuario, Empresa } from './models/index.js'; // Instância do Sequelize (ORM)
 import { startBackupScheduler } from './utils/backupScheduler.js';
+import { applyDatabaseHardening } from './utils/databaseHardening.js';
 
 /**
  * Configuração do __dirname para ES Modules
@@ -312,6 +313,8 @@ async function connectDB(retryCount = 0) {
         console.log('✅ Modelos sincronizados (produção)');
       }
     }
+
+    await applyDatabaseHardening(sequelize);
     
     // Garante flag de pronto após sincronização
     app.locals.dbReady = true;
