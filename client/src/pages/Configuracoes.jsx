@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Save, Building, Lock, Bell, User } from 'lucide-react';
+import { Save, Building, Lock, Bell, User, Database, Link2, Copy } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import usuarioService from '../services/usuario.service';
 import empresaService from '../services/empresa.service';
@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { successMessage, customErrorMessage } from '../utils/toastMessages';
 import { handleApiError } from '../utils/errorHandler';
 import PageHeader from '../components/common/PageHeader';
+import { getSupabaseConfigStatus, getSupabaseProjectRef, getSupabaseUrl } from '../lib/supabase';
 
 export default function Configuracoes() {
   const { user } = useAuthStore();
@@ -16,6 +17,9 @@ export default function Configuracoes() {
   const [perfilSaving, setPerfilSaving] = useState(false);
   const [empresaSaving, setEmpresaSaving] = useState(false);
   const [senhaSaving, setSenhaSaving] = useState(false);
+  const [supabaseStatus] = useState(() => getSupabaseConfigStatus());
+  const [supabaseUrl] = useState(() => getSupabaseUrl());
+  const [supabaseProjectRef] = useState(() => getSupabaseProjectRef());
   const [formData, setFormData] = useState({
     nome: user?.nome || '',
     email: user?.email || '',
@@ -164,7 +168,8 @@ export default function Configuracoes() {
     { id: 'perfil', nome: 'Perfil', icon: User },
     { id: 'empresa', nome: 'Empresa', icon: Building },
     { id: 'seguranca', nome: 'Segurança', icon: Lock },
-    { id: 'notificacoes', nome: 'Notificações', icon: Bell }
+    { id: 'notificacoes', nome: 'Notificações', icon: Bell },
+    { id: 'integracoes', nome: 'Integrações', icon: Database }
   ];
 
   const lastProfileUpdate = summary?.lastUpdate
@@ -174,6 +179,40 @@ export default function Configuracoes() {
   const securityScore = summary?.securityScore
     ? Math.round(summary.securityScore * 100)
     : 0;
+
+  const supabaseStatusMeta = {
+    ready: {
+      label: 'Pronto para uso no frontend',
+      badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      description: 'URL e anon key foram carregadas no build atual. O cliente já pode consumir tabelas, auth ou storage conforme as políticas do projeto.',
+    },
+    partial: {
+      label: 'Configuração parcial',
+      badge: 'bg-amber-100 text-amber-700 border-amber-200',
+      description: 'A URL do projeto está preenchida, mas a anon key ainda precisa ser definida para habilitar chamadas reais pelo SDK no navegador.',
+    },
+    missing: {
+      label: 'Não configurado',
+      badge: 'bg-slate-100 text-slate-700 border-slate-200',
+      description: 'O frontend ainda não recebeu as variáveis necessárias do Supabase.',
+    },
+  };
+
+  const currentSupabaseMeta = supabaseStatusMeta[supabaseStatus] || supabaseStatusMeta.missing;
+
+  const handleCopySupabaseEnv = async () => {
+    const block = [
+      `VITE_SUPABASE_URL=${supabaseUrl || 'https://bytfmgzozogdacsajllh.supabase.co'}`,
+      'VITE_SUPABASE_ANON_KEY=<cole-aqui-a-anon-key-publica>',
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(block);
+      toast.success('Bloco de variáveis do Supabase copiado.');
+    } catch {
+      toast.error('Não foi possível copiar automaticamente.');
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -217,6 +256,11 @@ export default function Configuracoes() {
           <p className="text-xs text-slate-500 mt-1">
             {summary?.planDescription || 'Suporte prioritário e integrações liberadas.'}
           </p>
+        </div>
+        <div className="card md:col-span-3 lg:col-span-1">
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Supabase</p>
+          <p className="text-xl font-semibold text-slate-900 mt-2">{currentSupabaseMeta.label}</p>
+          <p className="text-xs text-slate-500 mt-1">{supabaseProjectRef || 'project-ref pendente'} • frontend</p>
         </div>
       </div>
 
@@ -468,6 +512,70 @@ export default function Configuracoes() {
               <Save size={18} />
               Salvar Preferências
             </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'integracoes' && (
+        <div className="card space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-1">Integrações</p>
+            <h2 className="text-xl font-semibold text-slate-900">Supabase no Frontend</h2>
+            <p className="text-sm text-slate-500 mt-2">
+              O backend continua operando com PostgreSQL via Sequelize. Esta área prepara o React para usar o SDK do Supabase quando você definir a anon key pública do projeto.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:col-span-2">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Status</p>
+                  <p className="text-lg font-semibold text-slate-900 mt-2">{currentSupabaseMeta.label}</p>
+                </div>
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${currentSupabaseMeta.badge}`}>
+                  {supabaseStatus}
+                </span>
+              </div>
+              <p className="text-sm text-slate-600 mt-3">{currentSupabaseMeta.description}</p>
+
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="rounded-xl bg-white border border-slate-200 p-3">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Projeto</p>
+                  <p className="font-medium text-slate-900 break-all">{supabaseProjectRef || 'Não identificado'}</p>
+                </div>
+                <div className="rounded-xl bg-white border border-slate-200 p-3">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">URL</p>
+                  <p className="font-medium text-slate-900 break-all">{supabaseUrl || 'Não definida'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Próxima ação</p>
+              <p className="text-sm text-slate-600 mt-3">
+                Cole a anon key pública do projeto nas variáveis do frontend e gere um novo build para ativar chamadas reais do SDK.
+              </p>
+              <button
+                type="button"
+                onClick={handleCopySupabaseEnv}
+                className="btn btn-primary flex items-center gap-2 mt-4"
+              >
+                <Copy size={16} />
+                Copiar bloco .env
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-950 text-slate-100 p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Link2 size={16} />
+              Variáveis esperadas no frontend
+            </div>
+            <pre className="mt-4 overflow-x-auto text-xs leading-6 whitespace-pre-wrap">
+{`VITE_SUPABASE_URL=${supabaseUrl || 'https://bytfmgzozogdacsajllh.supabase.co'}
+VITE_SUPABASE_ANON_KEY=<cole-aqui-a-anon-key-publica>`}
+            </pre>
           </div>
         </div>
       )}
