@@ -1,5 +1,16 @@
 import { supabaseClient } from '../lib/supabase';
 import { post } from './request';
+import { loginWithSupabaseFallback } from './auth.helpers';
+
+const loginWithBackend = async (email, senha) => {
+  const data = await post('/auth/login', { email, senha });
+
+  if (data?.token) {
+    localStorage.setItem('token', data.token);
+  }
+
+  return data;
+};
 
 const authService = {
   /**
@@ -9,23 +20,22 @@ const authService = {
    */
   login: async (email, senha) => {
     if (!supabaseClient) {
-      throw Object.assign(new Error('Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.'), {
-        response: { status: 503, data: { error: 'Supabase não configurado.' } },
-      });
+      return loginWithBackend(email, senha);
     }
 
-    const { error } = await supabaseClient.auth.signInWithPassword({
+    const result = await loginWithSupabaseFallback({
+      signInWithPassword: (credentials) => supabaseClient.auth.signInWithPassword(credentials),
+      loginWithBackend,
       email,
-      password: senha,
+      senha,
     });
 
-    if (error) {
-      // Supabase retorna 400 para credenciais inválidas — mapeia para 401
-      const status = error.status === 400 ? 401 : (error.status || 401);
-      throw Object.assign(new Error(error.message), {
-        response: { status, data: { error: error.message } },
-      });
+    if (result?.provider === 'supabase') {
+      localStorage.removeItem('token');
+      return result;
     }
+
+    return result;
   },
 
   /**

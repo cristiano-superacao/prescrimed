@@ -7,7 +7,62 @@ import 'dotenv/config';
 import axios from 'axios';
 import crypto from 'crypto';
 
-const API_URL = 'http://localhost:8000/api';
+const DEFAULT_API_URL = 'http://localhost:8000/api';
+
+let API_URL = process.env.API_URL || DEFAULT_API_URL;
+let SERVER_BASE_URL = API_URL.replace(/\/api\/?$/, '');
+
+const recomputeServerBaseUrl = () => {
+  SERVER_BASE_URL = API_URL.replace(/\/api\/?$/, '');
+};
+
+const buildAxiosErrorSummary = (error) => {
+  if (!error) return 'erro desconhecido';
+  const parts = [];
+
+  if (error.code) parts.push(`code=${error.code}`);
+  if (error.response?.status) parts.push(`status=${error.response.status}`);
+  if (error.message) parts.push(error.message);
+
+  const url = error.config?.url;
+  if (url) parts.push(`url=${url}`);
+
+  return parts.join(' | ') || 'erro sem detalhes';
+};
+
+async function pickWorkingApiUrl() {
+  const envApiUrl = (process.env.API_URL || '').trim();
+  const candidates = [
+    envApiUrl,
+    DEFAULT_API_URL,
+    'http://localhost:8001/api'
+  ].filter(Boolean);
+
+  // Dedup preservando ordem
+  const seen = new Set();
+  const uniqueCandidates = candidates.filter((url) => {
+    if (seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+
+  for (const candidate of uniqueCandidates) {
+    try {
+      const response = await axios.get(`${candidate}/test`, {
+        timeout: 3000,
+        validateStatus: () => true,
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        return candidate;
+      }
+    } catch {
+      // Ignora e tenta a próxima
+    }
+  }
+
+  return envApiUrl || DEFAULT_API_URL;
+}
 let authTokens = {};
 let testData = {
   usuarios: [],
@@ -41,14 +96,21 @@ async function login(email, senha) {
     console.error(`❌ Erro no login de ${email}:`);
     console.error(`  Status: ${error.response?.status}`);
     console.error(`  Mensagem: ${error.response?.data?.message || error.message}`);
+    console.error(`  Detalhes: ${buildAxiosErrorSummary(error)}`);
     console.error(`  Dados enviados:`, { email, senha });
     return null;
   }
 }
 
-async function apiGet(path, token) {
+async function apiGet(path, token, config = {}) {
+  const baseHeaders = config.headers || undefined;
+  const headers = token
+    ? { ...(baseHeaders || {}), Authorization: `Bearer ${token}` }
+    : baseHeaders;
+
   return axios.get(`${API_URL}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined
+    ...config,
+    headers
   });
 }
 
@@ -85,7 +147,7 @@ async function testarDiagnosticos() {
     const t = await apiGet('/test');
     console.log('✅ /api/test:', t.data?.message || 'ok');
   } catch (e) {
-    console.error('❌ /api/test falhou:', e.response?.data?.error || e.message);
+    console.error('❌ /api/test falhou:', e.response?.data?.error || buildAxiosErrorSummary(e));
   }
 
   for (const path of ['/diagnostic/env-check', '/diagnostic/db-ping', '/diagnostic/db-check']) {
@@ -93,7 +155,7 @@ async function testarDiagnosticos() {
       const r = await apiGet(path);
       console.log(`✅ ${path}:`, r.data?.ok === false ? 'ok=false' : 'ok');
     } catch (e) {
-      console.error(`❌ ${path} falhou:`, e.response?.data?.error || e.message);
+      console.error(`❌ ${path} falhou:`, e.response?.data?.error || buildAxiosErrorSummary(e));
     }
   }
 }
@@ -538,10 +600,21 @@ async function testarModulosExtras() {
         }
       });
       const signature = crypto.createHmac('sha256', webhookSecret).update(webhookPayload).digest('hex');
-      const webhook = await apiPostRaw('/public/webhooks/payment', webhookPayload, {
-        'X-Webhook-Signature': signature
-      });
-      console.log('✅ Webhook de pagamento processado:', webhook.data?.acknowledged ? 'ok' : 'ok');
+      try {
+        const webhook = await apiPostRaw('/public/webhooks/payment', webhookPayload, {
+          'X-Webhook-Signature': signature
+        });
+        console.log('✅ Webhook de pagamento processado:', webhook.data?.acknowledged ? 'ok' : 'ok');
+      } catch (error) {
+        const details = error?.response?.data?.details;
+        console.error('❌ Webhook de pagamento falhou:', error?.response?.data?.error || error.message);
+        if (details) {
+          console.error('   details:', details);
+        } else {
+          console.error('   Detalhes:', buildAxiosErrorSummary(error));
+        }
+        throw error;
+      }
     } else if (webhookStrict) {
       console.log('⚠️  Webhook assinado não testado: PAYMENT_WEBHOOK_SECRET não configurado no ambiente local.');
     }
@@ -573,6 +646,71 @@ async function testarModulosExtras() {
   }
 }
 
+async function testarCronogramaECensoMP() {
+  console.log('\n🗓️ === CRONOGRAMA + CENSO M.P. (SMOKE) ===');
+
+  // Cronograma: agendamentos filtrados por janela de datas + status
+  try {
+    const now = new Date();
+    const dataInicio = new Date(now);
+    dataInicio.setDate(dataInicio.getDate() - 1);
+
+    const dataFim = new Date(now);
+    dataFim.setDate(dataFim.getDate() + 31);
+
+    const list = await apiGet('/agendamentos', authTokens.admin, {
+      params: {
+        page: 1,
+        pageSize: 50,
+        dataInicio: dataInicio.toISOString(),
+        dataFim: dataFim.toISOString(),
+      }
+    });
+    const items = Array.isArray(list.data?.items) ? list.data.items : (Array.isArray(list.data) ? list.data : []);
+    const createdIds = testData.agendamentos.map((a) => a?.id).filter(Boolean);
+    const hits = createdIds.length
+      ? items.filter((a) => createdIds.includes(a?.id)).length
+      : 0;
+    console.log(`✅ Cronograma: agendamentos (janela datas) = ${items.length} | encontrados dos criados = ${hits}`);
+
+    const listAgendado = await apiGet('/agendamentos', authTokens.admin, {
+      params: { page: 1, pageSize: 20, status: 'agendado' }
+    });
+    const itemsAgendado = Array.isArray(listAgendado.data?.items) ? listAgendado.data.items : [];
+    console.log(`✅ Cronograma: filtro status=agendado → ${itemsAgendado.length} itens`);
+  } catch (e) {
+    console.error('❌ Cronograma falhou:', e.response?.data?.error || buildAxiosErrorSummary(e));
+  }
+
+  // Censo M.P.: correlaciona pacientes e prescrições ativas
+  try {
+    const [pacientesRes, prescricoesRes] = await Promise.all([
+      apiGet('/pacientes', authTokens.admin, { params: { page: 1, pageSize: 200 } }),
+      apiGet('/prescricoes', authTokens.admin, { params: { page: 1, pageSize: 200 } }),
+    ]);
+
+    const pacientes = Array.isArray(pacientesRes.data)
+      ? pacientesRes.data
+      : (Array.isArray(pacientesRes.data?.items) ? pacientesRes.data.items : []);
+
+    const prescricoes = Array.isArray(prescricoesRes.data)
+      ? prescricoesRes.data
+      : (Array.isArray(prescricoesRes.data?.items) ? prescricoesRes.data.items : []);
+
+    const ativas = prescricoes.filter((p) => String(p?.status || '').toLowerCase() === 'ativa');
+    const pacientesComAtiva = new Set(ativas.map((p) => p?.pacienteId).filter(Boolean));
+    const createdPrescIds = testData.prescricoes.map((p) => p?.id).filter(Boolean);
+    const createdHits = createdPrescIds.length
+      ? prescricoes.filter((p) => createdPrescIds.includes(p?.id)).length
+      : 0;
+
+    console.log(`✅ Censo M.P.: pacientes=${pacientes.length} | prescrições=${prescricoes.length} | ativas=${ativas.length}`);
+    console.log(`✅ Censo M.P.: pacientes com prescrição ativa=${pacientesComAtiva.size} | prescrições criadas encontradas=${createdHits}`);
+  } catch (e) {
+    console.error('❌ Censo M.P. falhou:', e.response?.data?.error || buildAxiosErrorSummary(e));
+  }
+}
+
 // Relatório final
 async function gerarRelatorio() {
   console.log('\n' + '='.repeat(70));
@@ -600,15 +738,22 @@ async function gerarRelatorio() {
   
   console.log('-'.repeat(70));
   console.log('\n✅ Dados gerados no PostgreSQL e prontos para uso!');
-  console.log('🚀 Servidor rodando em: http://localhost:8000');
+  console.log(`🚀 Servidor rodando em: ${SERVER_BASE_URL}`);
   console.log('🌐 Frontend acessível em: http://localhost:5173');
 }
 
 // Executar todos os testes
 async function executarTestes() {
   try {
+    const selectedApiUrl = await pickWorkingApiUrl();
+    if (selectedApiUrl && selectedApiUrl !== API_URL) {
+      console.log(`ℹ️ API_URL ajustada automaticamente: ${API_URL} -> ${selectedApiUrl}`);
+      API_URL = selectedApiUrl;
+      recomputeServerBaseUrl();
+    }
+
     console.log('🚀 Iniciando testes completos do sistema...\n');
-    console.log('⚠️  CERTIFIQUE-SE DE QUE O SERVIDOR ESTÁ RODANDO EM http://localhost:8000\n');
+    console.log(`⚠️  CERTIFIQUE-SE DE QUE O SERVIDOR ESTÁ RODANDO EM ${SERVER_BASE_URL}\n`);
     
     await sleep(2000);
 
@@ -646,6 +791,10 @@ async function executarTestes() {
 
     // Smoke-test módulos extras
     await testarModulosExtras();
+    await sleep(500);
+
+    // Cronograma + Censo M.P.
+    await testarCronogramaECensoMP();
     await sleep(500);
     
     // Gerar relatório

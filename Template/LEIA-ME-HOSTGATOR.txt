@@ -1,7 +1,7 @@
 =============================================================
   PRESCRIMED - PUBLICACAO HOSTGATOR
   Gerado automaticamente por: npm run build:template
-  Data: 21/04/2026, 23:33:13
+  Data: 22/04/2026, 16:49:57
 =============================================================
 
 CONTEUDO DESTA PASTA
@@ -45,11 +45,33 @@ CONFIGURACAO DA API
 -------------------
   -> Este build assume API no mesmo dominio usando /api.
   -> Para publicar frontend + backend no HostGator, o plano precisa ter Node.js.
+  -> Garanta que o servidor estatico (public_html/.htaccess) nao reescreva /api e /health
+     para index.html. Este Template ja vem com essa excecao.
+  -> MODO A (RECOMENDADO: mesmo dominio, sem proxy Apache):
+       - Configure o Node App Manager para usar o dominio da aplicacao.
+       - Rode no servidor: npm run build:client
+       - O backend ja serve o frontend a partir de client/dist.
+       - Assim, /api e o SPA ficam na mesma origem (mais estavel).
+  -> MODO B (frontend em public_html):
+       - Envie este Template para public_html.
+       - Garanta que /api/* chegue no Node (via configuracao do HostGator, subdominio api., ou proxy se suportado).
   -> Se a API ficar em outro dominio, ajuste client/.env.hostgator:
        VITE_API_URL=https://sua-api/api
        VITE_BACKEND_ROOT=https://sua-api
+      -> No backend, se usar subdominio backend. (ou outro host), defina PUBLIC_BASE_URL=https://sua-api
+        para gerar corretamente a URL publica do webhook: https://sua-api/api/public/webhooks/payment
      e gere novamente:
        npm run build:template
+
+  PAGAMENTOS (WEBHOOK ASSINADO)
+  ------------------------------
+    -> O webhook publico de pagamentos fica em: /api/public/webhooks/payment
+    -> Para o webhook assinado funcionar (HMAC), configure no backend:
+      PAYMENT_WEBHOOK_SECRET=<segredo>
+      PAYMENT_WEBHOOK_STRICT=true
+    -> Sem PAYMENT_WEBHOOK_SECRET, o endpoint retorna 400 com:
+      "Assinatura do webhook inválida (missing-secret)"
+    -> Dica: copie essas variaveis no Node App Manager junto com JWT/DATABASE_URL.
 
 PADRAO VISUAL
 -------------

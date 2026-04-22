@@ -15,12 +15,29 @@ export async function loadPublicRlsMigrationSql() {
   return fs.readFile(RLS_MIGRATION_PATH, 'utf8');
 }
 
+async function hasSupabaseRoles(sequelize) {
+  const [rows] = await sequelize.query(`
+    select rolname
+    from pg_roles
+    where rolname in ('anon', 'authenticated')
+  `);
+
+  const roleNames = new Set((rows || []).map((row) => row.rolname));
+  return roleNames.has('anon') && roleNames.has('authenticated');
+}
+
 export async function applyDatabaseHardening(sequelize, { logger = console } = {}) {
   const dialect = typeof sequelize?.getDialect === 'function' ? sequelize.getDialect() : null;
 
   if (dialect !== 'postgres') {
     logger?.log?.('ℹ️ Hardening de banco ignorado: aplicavel apenas a PostgreSQL.');
     return { skipped: true, reason: 'dialect_not_postgres' };
+  }
+
+  const supabaseRolesPresent = await hasSupabaseRoles(sequelize);
+  if (!supabaseRolesPresent) {
+    logger?.log?.('ℹ️ Hardening Supabase ignorado: roles anon/authenticated nao existem neste PostgreSQL.');
+    return { skipped: true, reason: 'missing_supabase_roles' };
   }
 
   const sql = await loadPublicRlsMigrationSql();

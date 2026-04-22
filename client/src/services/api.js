@@ -1,63 +1,49 @@
 import axios from 'axios';
 import { supabaseClient } from '../lib/supabase';
 import { getSelectedEmpresaId } from '../utils/empresaContext';
+import { resolveApiRootUrl, resolveApiUrl } from './api.config';
 
 const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
 const isProduction = import.meta.env.PROD;
 const explicitApiUrl = import.meta.env.VITE_API_URL?.trim();
 const explicitBackendRoot = import.meta.env.VITE_BACKEND_ROOT?.trim();
 
-const getRootFromApiUrl = (apiUrl) => {
-  if (!apiUrl) return '';
-  return apiUrl.replace(/\/api\/?$/, '');
-};
-
 // Configuração da API baseada no ambiente
 export const getApiUrl = () => {
-  const isRailwayHost = hostname.includes('railway.app');
+  const resolvedApiUrl = resolveApiUrl({
+    hostname,
+    isProduction,
+    explicitApiUrl,
+  });
 
   if (isProduction && explicitApiUrl) {
-    console.log('🌍 Produção com API explícita configurada:', explicitApiUrl);
-    return explicitApiUrl;
+    console.log('🌍 Produção com API explícita configurada:', resolvedApiUrl);
+    return resolvedApiUrl;
   }
-  
-  if (isRailwayHost && isProduction) {
+
+  if (resolvedApiUrl === '/api' && hostname.includes('railway.app') && isProduction) {
     console.log('🚂 Railway detectado - usando /api (mesmo serviço)');
-    return '/api';
+    return resolvedApiUrl;
   }
 
-  if (isProduction) {
+  if (resolvedApiUrl === '/api' && isProduction) {
     console.log('🌐 Produção em domínio próprio - usando /api na mesma origem');
-    return '/api';
+    return resolvedApiUrl;
   }
 
-  const devApiUrl = explicitApiUrl || 'http://localhost:8000/api';
+  const devApiUrl = resolvedApiUrl;
   console.log('💻 Desenvolvimento local - usando', devApiUrl);
   return devApiUrl;
 };
 
 // Obtém a URL raiz do backend (sem o sufixo /api) para endpoints como /health
 export const getApiRootUrl = () => {
-  const isRailwayHost = hostname.includes('railway.app');
-
-  if (isProduction && explicitBackendRoot) {
-    return explicitBackendRoot;
-  }
-
-  if (isProduction && explicitApiUrl) {
-    return getRootFromApiUrl(explicitApiUrl);
-  }
-
-  if (isRailwayHost && isProduction) {
-    return ''; // Mesma origem
-  }
-
-  if (isProduction) {
-    return ''; // Domínio próprio servindo API e frontend na mesma origem
-  }
-
-  const devBackendRoot = explicitBackendRoot || getRootFromApiUrl(explicitApiUrl) || 'http://localhost:8000';
-  return devBackendRoot;
+  return resolveApiRootUrl({
+    hostname,
+    isProduction,
+    explicitApiUrl,
+    explicitBackendRoot,
+  });
 };
 
 console.log('🌐 API URL configurada:', getApiUrl());

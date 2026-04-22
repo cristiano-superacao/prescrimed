@@ -23,11 +23,20 @@ export default function BackendStatusMonitor() {
         data = null;
       }
 
-      // Se /health não retorna JSON (ex.: caiu no frontend estático), trate como offline
+      // Se /health não retorna JSON, pode ter caído no frontend estático (HTML) ou ser texto simples.
+      // HTML => offline; texto simples => considerar online.
       if (response.ok && !data) {
-        setStatus('offline');
-        setDbStatus(null);
-        setShowAlert(true);
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) {
+          setStatus('offline');
+          setDbStatus(null);
+          setShowAlert(true);
+          return;
+        }
+
+        setStatus('online');
+        setDbStatus('connected');
+        setShowAlert(false);
         return;
       }
 
@@ -62,6 +71,23 @@ export default function BackendStatusMonitor() {
     const checkBackendStatus = async () => {
       try {
         const healthUrlRoot = getApiRootUrl();
+
+        const tryFetchHealth = async (url, options = {}) => {
+          try {
+            const response = await fetch(url, {
+              method: 'GET',
+              signal: AbortSignal.timeout(5000),
+              ...options
+            });
+
+            // 404 normalmente indica endpoint incorreto neste ambiente; tente o próximo.
+            if (response.status === 404) return null;
+            return response;
+          } catch (_) {
+            return null;
+          }
+        };
+
         // Comparar ORIGIN (host + porta) para decidir mesma origem
         let isSameOrigin = false;
         try {
@@ -77,10 +103,21 @@ export default function BackendStatusMonitor() {
 
         if (isSameOrigin) {
           // Frontend e backend na MESMA origem (mesmo host+porta)
-          const response = await fetch('/health', {
-            method: 'GET',
-            signal: AbortSignal.timeout(5000)
-          });
+          const candidates = ['/api/health', '/health'];
+
+          let response = null;
+          for (const url of candidates) {
+            response = await tryFetchHealth(url);
+            if (response) break;
+          }
+
+          if (!response) {
+            setStatus('offline');
+            setDbStatus(null);
+            setShowAlert(true);
+            setLastCheck(new Date());
+            return;
+          }
 
           await evaluateHealthResponse(response);
           setLastCheck(new Date());
@@ -91,10 +128,21 @@ export default function BackendStatusMonitor() {
         if (!healthUrlRoot) {
           if (import.meta.env.DEV) {
             const guessedRoot = 'http://localhost:3000';
-            const response = await fetch(`${guessedRoot}/health`, {
-              method: 'GET',
-              signal: AbortSignal.timeout(5000)
-            });
+            const candidates = ['/api/health', `${guessedRoot}/health`, '/health'];
+
+            let response = null;
+            for (const url of candidates) {
+              response = await tryFetchHealth(url, /^https?:\/\//i.test(url) ? { mode: 'cors' } : {});
+              if (response) break;
+            }
+
+            if (!response) {
+              setStatus('offline');
+              setDbStatus(null);
+              setShowAlert(true);
+              setLastCheck(new Date());
+              return;
+            }
 
             await evaluateHealthResponse(response);
             setLastCheck(new Date());
@@ -103,10 +151,21 @@ export default function BackendStatusMonitor() {
 
           // Em produção sem backend root explícito, use a mesma origem
           if (import.meta.env.PROD) {
-            const response = await fetch('/health', {
-              method: 'GET',
-              signal: AbortSignal.timeout(5000)
-            });
+            const candidates = ['/api/health', '/health'];
+
+            let response = null;
+            for (const url of candidates) {
+              response = await tryFetchHealth(url);
+              if (response) break;
+            }
+
+            if (!response) {
+              setStatus('offline');
+              setDbStatus(null);
+              setShowAlert(true);
+              setLastCheck(new Date());
+              return;
+            }
 
             await evaluateHealthResponse(response);
             setLastCheck(new Date());
@@ -132,12 +191,22 @@ export default function BackendStatusMonitor() {
           return;
         }
 
-        const healthUrl = `${healthUrlRoot}/health`;
-        const response = await fetch(healthUrl, {
-          method: 'GET',
-          mode: 'cors',
-          signal: AbortSignal.timeout(5000) // timeout de 5s
-        });
+        const normalizedRoot = healthUrlRoot.replace(/\/+$/, '');
+        const candidates = [`${normalizedRoot}/api/health`, `${normalizedRoot}/health`];
+
+        let response = null;
+        for (const url of candidates) {
+          response = await tryFetchHealth(url, { mode: 'cors' });
+          if (response) break;
+        }
+
+        if (!response) {
+          setStatus('offline');
+          setDbStatus(null);
+          setShowAlert(true);
+          setLastCheck(new Date());
+          return;
+        }
 
         await evaluateHealthResponse(response);
       } catch (error) {
@@ -168,7 +237,11 @@ export default function BackendStatusMonitor() {
     ? 'Não foi possível conectar ao servidor. Verifique se o backend está rodando.'
     : 'O servidor respondeu, mas o banco de dados ainda não está conectado. Aguarde alguns instantes e tente novamente.';
 
-  const testUrl = getApiRootUrl() ? getApiRootUrl() + '/health' : null;
+  const testUrl = (() => {
+    const root = getApiRootUrl();
+    if (!root) return '/api/health';
+    return root.replace(/\/+$/, '') + '/api/health';
+  })();
   const supabaseStatusLabel = supabaseStatus === 'ready'
     ? 'Cliente Supabase configurado'
     : supabaseStatus === 'partial'

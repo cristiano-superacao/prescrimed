@@ -23,6 +23,19 @@ const fetchProfile = async () => {
   }
 };
 
+const restoreLegacySession = async (set) => {
+  const user = await fetchProfile();
+  if (user) {
+    persistUser(user);
+    set({ user, isAuthenticated: true, loading: false });
+    return true;
+  }
+
+  persistUser(null);
+  set({ user: null, isAuthenticated: false, loading: false });
+  return false;
+};
+
 export const useAuthStore = create((set) => ({
   user: null,
   isAuthenticated: false,
@@ -35,7 +48,7 @@ export const useAuthStore = create((set) => ({
    */
   initialize: async () => {
     if (!supabaseClient) {
-      set({ loading: false });
+      await restoreLegacySession(set);
       return;
     }
 
@@ -51,10 +64,20 @@ export const useAuthStore = create((set) => ({
           set({ loading: false });
         }
       } else {
-        set({ loading: false });
+        const legacyToken = localStorage.getItem('token');
+        if (legacyToken) {
+          await restoreLegacySession(set);
+        } else {
+          set({ loading: false });
+        }
       }
     } catch {
-      set({ loading: false });
+      const legacyToken = localStorage.getItem('token');
+      if (legacyToken) {
+        await restoreLegacySession(set);
+      } else {
+        set({ loading: false });
+      }
     }
 
     // Listener de mudanças de sessão (token refresh, logout em outra aba, etc.)
@@ -76,7 +99,7 @@ export const useAuthStore = create((set) => ({
   },
 
   login: async (email, senha) => {
-    // Delega para authService que chama supabase.auth.signInWithPassword
+    // Tenta Supabase Auth primeiro e recua para o JWT legado do backend quando necessário.
     await authService.login(email, senha);
 
     // Busca o perfil completo do backend (com empresaId, role, permissoes)

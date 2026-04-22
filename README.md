@@ -82,6 +82,10 @@ Importante:
 - Se a conta HostGator for apenas hospedagem estática/shared sem Node.js, a pasta `Template/` cobre somente o frontend React e a API precisa continuar em outro ambiente compatível.
 - O endpoint usado nesse build fica configurado em `client/.env.hostgator`.
 
+Webhook de pagamento:
+
+- Para validar/usar webhook assinado em `/api/public/webhooks/payment`, o backend precisa ter `PAYMENT_WEBHOOK_SECRET` configurado (e, em geral, `PAYMENT_WEBHOOK_STRICT=true`).
+
 ## Observações
 
 - A configuração principal do ambiente está em [.env.example](.env.example).

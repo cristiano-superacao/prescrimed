@@ -6,6 +6,13 @@ DirectoryIndex index.html
   RewriteEngine On
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
+  # IMPORTANTE: NUNCA envie rotas de API/health para o SPA.
+  # Em HostGator, é comum o frontend ficar em public_html (Apache)
+  # e a API rodar separadamente (Node App Manager, subdomínio ou proxy).
+  # Se o fallback SPA capturar /api, o browser recebe index.html no lugar do JSON.
+  RewriteCond %{REQUEST_URI} (^|/)(api|health)(/|$) [NC]
+  RewriteRule .* - [L]
+
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]

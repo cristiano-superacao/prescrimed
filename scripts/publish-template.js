@@ -48,6 +48,13 @@ DirectoryIndex index.html
   RewriteEngine On
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
+  # IMPORTANTE: NUNCA envie rotas de API/health para o SPA.
+  # Em HostGator, é comum o frontend ficar em public_html (Apache)
+  # e a API rodar separadamente (Node App Manager, subdomínio ou proxy).
+  # Se o fallback SPA capturar /api, o browser recebe index.html no lugar do JSON.
+  RewriteCond %{REQUEST_URI} (^|/)(api|health)(/|$) [NC]
+  RewriteRule .* - [L]
+
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
@@ -331,11 +338,33 @@ CONFIGURACAO DA API
 -------------------
   -> Este build assume API no mesmo dominio usando /api.
   -> Para publicar frontend + backend no HostGator, o plano precisa ter Node.js.
+  -> Garanta que o servidor estatico (public_html/.htaccess) nao reescreva /api e /health
+     para index.html. Este Template ja vem com essa excecao.
+  -> MODO A (RECOMENDADO: mesmo dominio, sem proxy Apache):
+       - Configure o Node App Manager para usar o dominio da aplicacao.
+       - Rode no servidor: npm run build:client
+       - O backend ja serve o frontend a partir de client/dist.
+       - Assim, /api e o SPA ficam na mesma origem (mais estavel).
+  -> MODO B (frontend em public_html):
+       - Envie este Template para public_html.
+       - Garanta que /api/* chegue no Node (via configuracao do HostGator, subdominio api., ou proxy se suportado).
   -> Se a API ficar em outro dominio, ajuste client/.env.hostgator:
        VITE_API_URL=https://sua-api/api
        VITE_BACKEND_ROOT=https://sua-api
+      -> No backend, se usar subdominio backend. (ou outro host), defina PUBLIC_BASE_URL=https://sua-api
+        para gerar corretamente a URL publica do webhook: https://sua-api/api/public/webhooks/payment
      e gere novamente:
        npm run build:template
+
+  PAGAMENTOS (WEBHOOK ASSINADO)
+  ------------------------------
+    -> O webhook publico de pagamentos fica em: /api/public/webhooks/payment
+    -> Para o webhook assinado funcionar (HMAC), configure no backend:
+      PAYMENT_WEBHOOK_SECRET=<segredo>
+      PAYMENT_WEBHOOK_STRICT=true
+    -> Sem PAYMENT_WEBHOOK_SECRET, o endpoint retorna 400 com:
+      "Assinatura do webhook inválida (missing-secret)"
+    -> Dica: copie essas variaveis no Node App Manager junto com JWT/DATABASE_URL.
 
 PADRAO VISUAL
 -------------
@@ -359,6 +388,15 @@ try {
   ensureDir(templateDir);
   cleanDir(templateDir);
   copyDir(distDir, templateDir);
+
+  // HostGator (Apache/cPanel) nao usa arquivos de plataforma tipo Netlify.
+  // Mantemos o pacote enxuto para evitar confusao e regras de proxy indevidas.
+  for (const platformFile of ['_redirects', '_headers']) {
+    const platformPath = path.join(templateDir, platformFile);
+    if (fs.existsSync(platformPath)) {
+      fs.unlinkSync(platformPath);
+    }
+  }
 
   fs.writeFileSync(path.join(templateDir, '.htaccess'), htaccessContent, 'utf8');
   fs.writeFileSync(path.join(templateDir, '404.html'), page404Content, 'utf8');

@@ -173,16 +173,20 @@ function buildFrontendEnvReview(env) {
 }
 
 function buildDeploymentSummary(env) {
-  const domain = env.PUBLIC_BASE_URL || env.FRONTEND_URL || 'https://seu-dominio';
+  const frontendDomain = env.FRONTEND_URL || env.URL_FRONTEND || 'https://seu-dominio';
+  const apiDomain = env.PUBLIC_BASE_URL || env.API_BASE_URL || env.BACKEND_URL || frontendDomain;
   const frontendEnv = buildFrontendEnv(env);
   const supabaseFrontendReady = Boolean(frontendEnv.VITE_SUPABASE_URL && frontendEnv.VITE_SUPABASE_ANON_KEY);
+
+  const normalizedFrontend = String(frontendDomain || '').replace(/\/$/, '');
+  const normalizedApi = String(apiDomain || '').replace(/\/$/, '');
 
   return [
     'PRESCRIMED - RESUMO DE PREPARO HOSTGATOR',
     `Gerado em: ${new Date().toLocaleString('pt-BR')}`,
     '',
     'ARTEFATOS GERADOS',
-    '- Template/ -> frontend estatico pronto para upload',
+    '- Template/ -> frontend estatico pronto para upload (modo B: public_html)',
     '- hostgator-artifacts/node-app-manager.env.txt -> variaveis para copiar no painel',
     '- hostgator-artifacts/frontend-hostgator.env.txt -> variaveis finais usadas no build hostgator',
     '- hostgator-artifacts/deploy-summary.txt -> este resumo',
@@ -195,9 +199,9 @@ function buildDeploymentSummary(env) {
     '- Application root: pasta raiz do projeto',
     '',
     'URLS PARA TESTE',
-    `- ${domain}`,
-    `- ${domain.replace(/\/$/, '')}/health`,
-    `- ${domain.replace(/\/$/, '')}/api/auth/login`,
+    `- Frontend: ${normalizedFrontend}`,
+    `- API health: ${normalizedApi}/health`,
+    `- API login: ${normalizedApi}/api/auth/login`,
     '',
     'FRONTEND HOSTGATOR',
     `- VITE_API_URL=${frontendEnv.VITE_API_URL}`,
@@ -208,6 +212,11 @@ function buildDeploymentSummary(env) {
     '- Depois de publicar e subir a app Node:',
     '- npm run seed:hostgator',
     '- npm run create:superadmin',
+    '',
+    'TOPOLOGIA (RECOMENDADO)',
+    '- Modo A (mesmo dominio): rode npm run build:client e deixe o Node servir o frontend via client/dist.',
+    '- Modo B (public_html): envie Template/ para public_html e garanta que /api/* chegue no Node.',
+    '- Modo B + subdominio (backend.): publique o frontend no www e a API no subdominio backend.; nesse caso PUBLIC_BASE_URL deve ser o dominio da API.',
     '',
     'OBSERVACOES',
     '- Este preparo valida placeholders perigosos no .env local.',
@@ -359,14 +368,14 @@ async function prepareHostgatorDeploy() {
 
   console.log('✅ Dependências instaladas');
   console.log('✅ Frontend compilado em client/dist');
-  console.log('✅ Template pronto em Template/ para upload no public_html');
+  console.log('✅ Template pronto em Template/ (modo B: upload no public_html)');
   console.log('📌 Próximos passos no HostGator:');
-  console.log('   1. Enviar Template/ para o public_html');
-  console.log('   2. Copiar hostgator-artifacts/node-app-manager.env.txt para o Node App Manager');
-  console.log('   3. Revisar hostgator-artifacts/frontend-hostgator.env.txt e confirmar as variáveis finais do frontend');
-  console.log('   4. Revisar hostgator-artifacts/env-validation.txt e substituir placeholders pendentes');
-  console.log('   5. Iniciar a aplicação com server.js');
-  console.log('   6. Rodar npm run seed:hostgator uma vez');
+  console.log('   1. Copiar hostgator-artifacts/node-app-manager.env.txt para o Node App Manager');
+  console.log('   2. Revisar hostgator-artifacts/env-validation.txt e substituir placeholders pendentes');
+  console.log('   3. Iniciar a aplicação com server.js');
+  console.log('   4. Rodar npm run seed:hostgator uma vez');
+  console.log('   5. MODO A (recomendado - mesmo dominio): rodar npm run build:client');
+  console.log('   6. MODO B (public_html): enviar Template/ para o public_html');
 }
 
 prepareHostgatorDeploy().catch((error) => {

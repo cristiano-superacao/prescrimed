@@ -259,7 +259,7 @@ export async function registerPaymentForPedido({ pedidoId, empresaId, payload = 
 export async function handlePaymentWebhook({ rawBody, headers = {}, parsedBody = null }) {
   const event = parsePaymentWebhook({ rawBody, headers, parsedBody });
   if (!event.signature.verified) {
-    throw new Error('Assinatura do webhook inválida');
+    throw new Error(`Assinatura do webhook inválida (${event.signature.reason || 'unknown'})`);
   }
 
   if (!event.externalId && !event.pedidoId) {

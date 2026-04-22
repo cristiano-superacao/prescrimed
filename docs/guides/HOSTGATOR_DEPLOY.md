@@ -114,6 +114,23 @@ npm run create:superadmin
 
 ## Passo 5 - Publicar o frontend
 
+### Modo A (mesmo dominio - recomendado)
+
+Para ficar com **frontend + API na mesma origem** (mais estavel e simples), use o Node App Manager para servir tudo:
+
+1. Garanta que o Node App Manager esteja configurado com o dominio da aplicacao (Application URL).
+2. No terminal da aplicacao (HostGator), rode:
+
+```sh
+npm run build:client
+```
+
+1. O backend ja serve o frontend estatico a partir de `client/dist` (e mantem `/api/*` no mesmo servidor).
+
+Nesse modo, voce **nao precisa** enviar o `Template/` para o `public_html`.
+
+### Modo B (frontend em public_html)
+
 Se o backend Node servir o frontend, gere o build principal:
 
 ```sh
@@ -127,6 +144,22 @@ npm run build:template
 ```
 
 Envie todo o conteudo da pasta [Template](Template) para o public_html.
+
+Importante (comunicacao frontend  API):
+
+- O `Template/.htaccess` nao reescreve rotas `/api` e `/health` para `index.html`.
+- Isso evita que o browser receba HTML do SPA no lugar do JSON da API.
+
+Recomendado (mais simples no HostGator): API em subdominio
+
+- Publique o frontend em `https://www.seu-dominio` via `public_html`.
+- Suba o backend (Node App Manager) em `https://backend.seu-dominio`.
+- No `.env.hostgator.production.local`, configure:
+  - `FRONTEND_URL=https://www.seu-dominio`
+  - `ALLOWED_ORIGINS=https://seu-dominio,https://www.seu-dominio`
+  - `PUBLIC_BASE_URL=https://backend.seu-dominio` (para montar o webhook publico corretamente)
+  - `VITE_API_URL=https://backend.seu-dominio/api`
+  - `VITE_BACKEND_ROOT=https://backend.seu-dominio`
 
 Se o frontend tambem for usar o SDK do Supabase em producao, confirme antes do upload que `hostgator-artifacts/frontend-hostgator.env.txt` contem `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` preenchidos.
 
@@ -143,6 +176,8 @@ Teste estas rotas:
 - <https://prescrimed.com.br/health>
 - <https://prescrimed.com.br/api/auth/login>
 - <https://prescrimed.com.br/>
+
+Se o frontend estiver em `public_html` e a API estiver em outro host/subdominio, teste com a URL real da API (ex.: `https://backend.seu-dominio.com/api/auth/login`).
 
 Teste o login com:
 

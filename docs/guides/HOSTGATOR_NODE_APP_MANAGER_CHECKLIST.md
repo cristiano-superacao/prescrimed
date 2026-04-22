@@ -39,6 +39,13 @@ No Node App Manager da HostGator, preencha assim:
 - Application URL: domínio principal da aplicação
 - Application startup file: server.js
 
+Observacao importante (frontend estatico vs API):
+
+- Se voce vai enviar o `Template/` para `public_html`, o Apache vai servir o SPA.
+- Nesse caso, as rotas `/api/*` precisam continuar chegando no Node (Node App Manager / proxy / subdominio).
+- O `Template/.htaccess` gerado ja evita reescrever `/api` e `/health` para `index.html`, mas o roteamento do HostGator ainda precisa estar correto.
+- Se a API ficar em outro dominio/subdominio, ajuste `VITE_API_URL` (ex.: `https://api.seu-dominio.com/api`) antes de rodar `npm run build:template`.
+
 Se houver campo de variáveis por chave/valor, cadastre uma por linha.
 
 ## Variáveis obrigatórias
@@ -96,6 +103,14 @@ npm install
 npm run hostgator:prepare
 npm run seed:hostgator
 ```
+
+Modo A (mesmo dominio - recomendado):
+
+```sh
+npm run build:client
+```
+
+Nesse modo, o backend serve o frontend via `client/dist` e o browser usa `/api` na mesma origem.
 
 Use também os artefatos locais gerados:
 

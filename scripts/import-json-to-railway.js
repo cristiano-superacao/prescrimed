@@ -10,6 +10,21 @@ const JSON_COLUMNS_BY_TABLE = {
   prescricoes: ['itens']
 };
 
+const DEFAULT_TABLES_IN_ORDER = [
+  'empresas',
+  'usuarios',
+  'pacientes',
+  'EstoqueItens',
+  'EstoqueMovimentacoes',
+  'FinanceiroTransacoes',
+  'prescricoes',
+  'agendamentos',
+  'cr_leitos',
+  'petshop_pets',
+  'fisio_sessoes',
+  'RegistrosEnfermagem'
+];
+
 async function tableExists(client, table) {
   // tenta com nome exato entre aspas (case-sensitive)
   try {
@@ -108,6 +123,25 @@ async function importTable(client, dir, table) {
   return { table, imported };
 }
 
+async function clearDestinationTables(client, tables) {
+  const existingTables = [];
+
+  for (const table of tables) {
+    if (await tableExists(client, table)) {
+      existingTables.push(table);
+    }
+  }
+
+  if (!existingTables.length) {
+    console.warn('⚠ Nenhuma tabela de destino encontrada para limpeza.');
+    return;
+  }
+
+  const quotedTables = existingTables.map((table) => `"${table}"`).join(', ');
+  console.log(`🧹 Limpando destino antes da importação: ${existingTables.join(', ')}`);
+  await client.query(`TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`);
+}
+
 async function main() {
   const DATABASE_URL = process.env.DATABASE_URL_OVERRIDE || process.env.DATABASE_URL;
   if (!DATABASE_URL) {
@@ -123,20 +157,11 @@ async function main() {
 
   const importDir = path.resolve('data','export');
   const only = process.env.IMPORT_ONLY_TABLE ? process.env.IMPORT_ONLY_TABLE.split(',').map(s => s.trim()).filter(Boolean) : null;
-  const tablesInOrder = only && only.length > 0 ? only : [
-    'empresas',
-    'usuarios',
-    'pacientes',
-    'EstoqueItens',
-    'EstoqueMovimentacoes',
-    'FinanceiroTransacoes',
-    'prescricoes',
-    'agendamentos',
-    'cr_leitos',
-    'petshop_pets',
-    'fisio_sessoes',
-    'RegistrosEnfermagem'
-  ];
+  const tablesInOrder = only && only.length > 0 ? only : DEFAULT_TABLES_IN_ORDER;
+
+  if (process.env.CLEAR_DESTINATION === 'true') {
+    await clearDestinationTables(client, tablesInOrder);
+  }
 
   const summary = [];
   for (const t of tablesInOrder) {

@@ -1,7 +1,7 @@
 // Script para criar usuário ADMIN localmente (não é superadmin)
-import sequelize from './config/database.js';
-import Usuario from './models/Usuario.js';
-import Empresa from './models/Empresa.js';
+import sequelize from '../config/database.js';
+import Usuario from '../models/Usuario.js';
+import Empresa from '../models/Empresa.js';
 import bcrypt from 'bcryptjs';
 
 const createLocalAdmin = async () => {
