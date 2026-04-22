@@ -17,9 +17,9 @@ test('resolveApiRootUrl usa backend root explícito em produção quando a API n
   const root = resolveApiRootUrl({
     hostname: 'prescrimed.com.br',
     isProduction: true,
-    explicitApiUrl: 'https://api.prescrimed.com.br/api',
-    explicitBackendRoot: 'https://api.prescrimed.com.br',
+    explicitApiUrl: 'https://backend.prescrimed.com.br/api',
+    explicitBackendRoot: 'https://backend.prescrimed.com.br',
   });
 
-  assert.equal(root, 'https://api.prescrimed.com.br');
+  assert.equal(root, 'https://backend.prescrimed.com.br');
 });

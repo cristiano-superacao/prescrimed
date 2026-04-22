@@ -44,7 +44,7 @@ Observacao importante (frontend estatico vs API):
 - Se voce vai enviar o `Template/` para `public_html`, o Apache vai servir o SPA.
 - Nesse caso, as rotas `/api/*` precisam continuar chegando no Node (Node App Manager / proxy / subdominio).
 - O `Template/.htaccess` gerado ja evita reescrever `/api` e `/health` para `index.html`, mas o roteamento do HostGator ainda precisa estar correto.
-- Se a API ficar em outro dominio/subdominio, ajuste `VITE_API_URL` (ex.: `https://api.seu-dominio.com/api`) antes de rodar `npm run build:template`.
+- Se a API ficar em outro dominio/subdominio, ajuste `VITE_API_URL` (ex.: `https://backend.seu-dominio.com/api`) antes de rodar `npm run build:template`.
 
 Se houver campo de variáveis por chave/valor, cadastre uma por linha.
 
