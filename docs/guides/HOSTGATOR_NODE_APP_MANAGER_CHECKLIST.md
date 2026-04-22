@@ -25,6 +25,8 @@ Esse comando agora:
 - valida o arquivo .env.hostgator.production.local
 - bloqueia placeholders perigosos antes do deploy
 - gera hostgator-artifacts/node-app-manager.env.txt para copiar no painel
+- gera hostgator-artifacts/frontend-hostgator.env.txt com as variaveis finais do build HostGator
+- sincroniza client/.env.hostgator.local para o Template sair com as URLs definitivas
 - regenera o pacote Template pronto para upload
 
 ## Criar a aplicação Node.js
@@ -98,6 +100,7 @@ npm run seed:hostgator
 Use também os artefatos locais gerados:
 
 - hostgator-artifacts/node-app-manager.env.txt
+- hostgator-artifacts/frontend-hostgator.env.txt
 - hostgator-artifacts/deploy-summary.txt
 
 Se quiser criar ou atualizar o superadmin explicitamente:

@@ -40,6 +40,15 @@ Se usar Supabase, consulte também [docs/guides/SUPABASE_HOSTGATOR_MIGRATION.md]
 
 Use o conteudo de [.env.hostgator.production.local](.env.hostgator.production.local) no painel do Node.js App do HostGator.
 
+O mesmo arquivo agora tambem pode carregar as variaveis do frontend HostGator:
+
+- `VITE_API_URL=/api`
+- `VITE_BACKEND_ROOT=https://prescrimed.com.br`
+- `VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co`
+- `VITE_SUPABASE_ANON_KEY=sua-anon-key-publica`
+
+Quando voce roda `npm run hostgator:prepare`, essas chaves sao convertidas automaticamente em `client/.env.hostgator.local` e passam a entrar no build final do `Template/`.
+
 Campos obrigatorios:
 
 - DATABASE_URL
@@ -76,7 +85,9 @@ npm run hostgator:prepare
 Esse preparo agora valida o arquivo .env.hostgator.production.local e gera:
 
 - hostgator-artifacts/node-app-manager.env.txt
+- hostgator-artifacts/frontend-hostgator.env.txt
 - hostgator-artifacts/deploy-summary.txt
+- client/.env.hostgator.local sincronizado para o build final do frontend
 - Template atualizado para upload
 
 Inicie a aplicacao e verifique o health check:
@@ -116,6 +127,8 @@ npm run build:template
 ```
 
 Envie todo o conteudo da pasta [Template](Template) para o public_html.
+
+Se o frontend tambem for usar o SDK do Supabase em producao, confirme antes do upload que `hostgator-artifacts/frontend-hostgator.env.txt` contem `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` preenchidos.
 
 Se quiser um fluxo unico para backend + frontend, prefira:
 

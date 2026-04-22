@@ -5,6 +5,7 @@ import path from 'path';
 
 const rootDir = process.cwd();
 const localEnvPath = path.join(rootDir, '.env.hostgator.production.local');
+const clientHostgatorLocalEnvPath = path.join(rootDir, 'client', '.env.hostgator.local');
 const clientDistPath = path.join(rootDir, 'client', 'dist');
 const templateDirPath = path.join(rootDir, 'Template');
 const artifactsDirPath = path.join(rootDir, 'hostgator-artifacts');
@@ -25,6 +26,11 @@ const requiredEnvKeys = [
   'HOSTGATOR_ADMIN_NOME',
   'HOSTGATOR_ADMIN_EMAIL',
   'HOSTGATOR_ADMIN_PASSWORD',
+];
+
+const recommendedFrontendEnvKeys = [
+  'VITE_SUPABASE_URL',
+  'VITE_SUPABASE_ANON_KEY',
 ];
 
 function ensureDir(dir) {
@@ -74,6 +80,8 @@ function maskValue(key, value = '') {
 function validateEnv(env) {
   const missing = [];
   const placeholders = [];
+  const recommendedMissing = [];
+  const recommendedPlaceholders = [];
 
   for (const key of requiredEnvKeys) {
     const value = env[key];
@@ -87,7 +95,19 @@ function validateEnv(env) {
     }
   }
 
-  return { missing, placeholders };
+  for (const key of recommendedFrontendEnvKeys) {
+    const value = env[key];
+    if (!value || !String(value).trim()) {
+      recommendedMissing.push(key);
+      continue;
+    }
+
+    if (isPlaceholderValue(value)) {
+      recommendedPlaceholders.push(key);
+    }
+  }
+
+  return { missing, placeholders, recommendedMissing, recommendedPlaceholders };
 }
 
 function buildEnvReview(env) {
@@ -128,8 +148,35 @@ function buildEnvExport(env) {
   return lines.join('\n');
 }
 
+function buildFrontendEnv(env) {
+  const publicBaseUrl = env.PUBLIC_BASE_URL || env.FRONTEND_URL || 'https://prescrimed.com.br';
+  const frontendEnv = {
+    VITE_API_URL: env.VITE_API_URL || '/api',
+    VITE_BACKEND_ROOT: env.VITE_BACKEND_ROOT || publicBaseUrl,
+    VITE_SUPABASE_URL: env.VITE_SUPABASE_URL || '',
+    VITE_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY || '',
+  };
+
+  return frontendEnv;
+}
+
+function buildFrontendEnvExport(env) {
+  return Object.entries(buildFrontendEnv(env))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+}
+
+function buildFrontendEnvReview(env) {
+  return Object.entries(buildFrontendEnv(env))
+    .map(([key, value]) => `${key}=${maskValue(key, value)}`)
+    .join('\n');
+}
+
 function buildDeploymentSummary(env) {
   const domain = env.PUBLIC_BASE_URL || env.FRONTEND_URL || 'https://seu-dominio';
+  const frontendEnv = buildFrontendEnv(env);
+  const supabaseFrontendReady = Boolean(frontendEnv.VITE_SUPABASE_URL && frontendEnv.VITE_SUPABASE_ANON_KEY);
+
   return [
     'PRESCRIMED - RESUMO DE PREPARO HOSTGATOR',
     `Gerado em: ${new Date().toLocaleString('pt-BR')}`,
@@ -137,7 +184,9 @@ function buildDeploymentSummary(env) {
     'ARTEFATOS GERADOS',
     '- Template/ -> frontend estatico pronto para upload',
     '- hostgator-artifacts/node-app-manager.env.txt -> variaveis para copiar no painel',
+    '- hostgator-artifacts/frontend-hostgator.env.txt -> variaveis finais usadas no build hostgator',
     '- hostgator-artifacts/deploy-summary.txt -> este resumo',
+    '- client/.env.hostgator.local -> override local do build hostgator gerado automaticamente',
     '',
     'NODE APP MANAGER',
     '- Node.js: 20.x ou superior',
@@ -150,6 +199,11 @@ function buildDeploymentSummary(env) {
     `- ${domain.replace(/\/$/, '')}/health`,
     `- ${domain.replace(/\/$/, '')}/api/auth/login`,
     '',
+    'FRONTEND HOSTGATOR',
+    `- VITE_API_URL=${frontendEnv.VITE_API_URL}`,
+    `- VITE_BACKEND_ROOT=${frontendEnv.VITE_BACKEND_ROOT}`,
+    `- SDK Supabase no frontend: ${supabaseFrontendReady ? 'pronto' : 'pendente de anon key/url publica'}`,
+    '',
     'BOOTSTRAP',
     '- Depois de publicar e subir a app Node:',
     '- npm run seed:hostgator',
@@ -158,17 +212,18 @@ function buildDeploymentSummary(env) {
     'OBSERVACOES',
     '- Este preparo valida placeholders perigosos no .env local.',
     '- Ajuste DATABASE_URL e os secrets JWT antes da publicacao real.',
+    '- Se VITE_SUPABASE_ANON_KEY estiver vazia, o frontend continua operacional, mas o SDK do Supabase fica apenas parcial.',
   ].join('\n');
 }
 
-function buildEnvIssuesReport(missing, placeholders) {
+function buildEnvIssuesReport(missing, placeholders, recommendedMissing, recommendedPlaceholders) {
   const lines = [
     'PRESCRIMED - REVISAO DE AMBIENTE HOSTGATOR',
     `Gerado em: ${new Date().toLocaleString('pt-BR')}`,
     '',
   ];
 
-  if (!missing.length && !placeholders.length) {
+  if (!missing.length && !placeholders.length && !recommendedMissing.length && !recommendedPlaceholders.length) {
     lines.push('Status: OK');
     lines.push('Nenhuma pendencia encontrada nas variaveis obrigatorias.');
     return lines.join('\n');
@@ -184,6 +239,16 @@ function buildEnvIssuesReport(missing, placeholders) {
   if (placeholders.length) {
     lines.push('');
     lines.push(`Variaveis com placeholder: ${placeholders.join(', ')}`);
+  }
+
+  if (recommendedMissing.length) {
+    lines.push('');
+    lines.push(`Variaveis recomendadas para frontend/Supabase ausentes: ${recommendedMissing.join(', ')}`);
+  }
+
+  if (recommendedPlaceholders.length) {
+    lines.push('');
+    lines.push(`Variaveis recomendadas para frontend/Supabase com placeholder: ${recommendedPlaceholders.join(', ')}`);
   }
 
   lines.push('');
@@ -225,7 +290,8 @@ async function prepareHostgatorDeploy() {
 
     ensureDir(artifactsDirPath);
 
-    const { missing, placeholders } = validateEnv(envConfig);
+    const { missing, placeholders, recommendedMissing, recommendedPlaceholders } = validateEnv(envConfig);
+    const frontendEnvExport = buildFrontendEnvExport(envConfig);
 
     fs.writeFileSync(
       path.join(artifactsDirPath, 'node-app-manager.env.txt'),
@@ -238,15 +304,26 @@ async function prepareHostgatorDeploy() {
       'utf8'
     );
     fs.writeFileSync(
+      path.join(artifactsDirPath, 'frontend-hostgator.env.txt'),
+      frontendEnvExport,
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(artifactsDirPath, 'frontend-hostgator.env.preview.txt'),
+      buildFrontendEnvReview(envConfig),
+      'utf8'
+    );
+    fs.writeFileSync(
       path.join(artifactsDirPath, 'deploy-summary.txt'),
       buildDeploymentSummary(envConfig),
       'utf8'
     );
     fs.writeFileSync(
       path.join(artifactsDirPath, 'env-validation.txt'),
-      buildEnvIssuesReport(missing, placeholders),
+      buildEnvIssuesReport(missing, placeholders, recommendedMissing, recommendedPlaceholders),
       'utf8'
     );
+    fs.writeFileSync(clientHostgatorLocalEnvPath, `${frontendEnvExport}\n`, 'utf8');
 
     if (missing.length) {
       console.warn(`⚠️ Variáveis obrigatórias ausentes: ${missing.join(', ')}`);
@@ -256,8 +333,17 @@ async function prepareHostgatorDeploy() {
       console.warn(`⚠️ Variáveis ainda com placeholder: ${placeholders.join(', ')}`);
     }
 
+    if (recommendedMissing.length) {
+      console.warn(`⚠️ Variáveis recomendadas para o frontend Supabase ausentes: ${recommendedMissing.join(', ')}`);
+    }
+
+    if (recommendedPlaceholders.length) {
+      console.warn(`⚠️ Variáveis recomendadas para o frontend Supabase ainda com placeholder: ${recommendedPlaceholders.join(', ')}`);
+    }
+
     console.log('✅ Revisão do .env registrada em hostgator-artifacts/env-validation.txt.');
     console.log('✅ Artefatos do Node App Manager gerados em hostgator-artifacts/.');
+    console.log('✅ Arquivo client/.env.hostgator.local sincronizado para o build do frontend HostGator.');
   }
 
   await run('npm', ['install']);
@@ -277,9 +363,10 @@ async function prepareHostgatorDeploy() {
   console.log('📌 Próximos passos no HostGator:');
   console.log('   1. Enviar Template/ para o public_html');
   console.log('   2. Copiar hostgator-artifacts/node-app-manager.env.txt para o Node App Manager');
-  console.log('   3. Revisar hostgator-artifacts/env-validation.txt e substituir placeholders pendentes');
-  console.log('   4. Iniciar a aplicação com server.js');
-  console.log('   5. Rodar npm run seed:hostgator uma vez');
+  console.log('   3. Revisar hostgator-artifacts/frontend-hostgator.env.txt e confirmar as variáveis finais do frontend');
+  console.log('   4. Revisar hostgator-artifacts/env-validation.txt e substituir placeholders pendentes');
+  console.log('   5. Iniciar a aplicação com server.js');
+  console.log('   6. Rodar npm run seed:hostgator uma vez');
 }
 
 prepareHostgatorDeploy().catch((error) => {
