@@ -51,6 +51,7 @@ data/export/
 coverage/
 hostgator-artifacts/
 Template.rar
+supabase/.temp/
 
 # Sistema operacional
 .DS_Store
