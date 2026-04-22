@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { sequelize, Usuario, Empresa } from '../models/index.js';
 import { ensureValidCPF, ensureValidCNPJ } from '../utils/brDocuments.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
@@ -318,29 +319,21 @@ router.post('/refresh', async (req, res) => {
   }
 });
 
-// Verificar token
-router.get('/me', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'Token não fornecido' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const usuario = await Usuario.findByPk(decoded.id, {
-      include: [{ model: Empresa, as: 'empresa' }],
-      attributes: { exclude: ['senha'] }
-    });
-
-    if (!usuario) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
-    }
-
-    res.json(usuario);
-  } catch (error) {
-    console.error('Erro ao verificar token:', error);
-    res.status(401).json({ error: 'Token inválido' });
-  }
+// GET /me — retorna o perfil do usuário autenticado (aceita Supabase JWT e JWT customizado)
+router.get('/me', authenticate, (req, res) => {
+  res.json({
+    id: req.user.id,
+    nome: req.user.nome,
+    email: req.user.email,
+    telefone: req.user.empresa?.contato || null,
+    especialidade: req.user.especialidade || null,
+    crm: req.user.crm || null,
+    crmUf: req.user.crmUf || null,
+    permissoes: req.user.permissoes || [],
+    role: req.user.role,
+    empresaId: req.user.empresaId,
+    empresa: req.user.empresa,
+  });
 });
 
 export default router;

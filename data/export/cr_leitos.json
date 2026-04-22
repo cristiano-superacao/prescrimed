@@ -1,1 +1,128 @@
-[]
+[
+  {
+    "id": "50979d30-44d9-4fc9-a8f0-3ff225b7011a",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-01",
+    "status": "manutencao",
+    "observacoes": "Manutenção preventiva.",
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "6e8f1d76-ba45-417b-b3bf-c962e79cada4",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-02",
+    "status": "disponivel",
+    "observacoes": null,
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "031d9fbd-3a34-4835-8abc-9b4794f42c2b",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-03",
+    "status": "disponivel",
+    "observacoes": null,
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "a74adee6-667d-4e80-83ec-35936a3cd39d",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-04",
+    "status": "ocupado",
+    "observacoes": null,
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "b2165361-a6b5-4227-9ef6-b0f563ee2382",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-05",
+    "status": "disponivel",
+    "observacoes": null,
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "7ff86b70-a7fb-4cb9-bed7-036c424f8cff",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-06",
+    "status": "disponivel",
+    "observacoes": null,
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "ea11ac84-8359-4eb2-81b9-1e81ce0fea7f",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-07",
+    "status": "ocupado",
+    "observacoes": null,
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "0e3c134a-6c1a-47d8-b464-8b6e93bb78f1",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-08",
+    "status": "manutencao",
+    "observacoes": "Manutenção preventiva.",
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "904cbcf8-26b1-4d39-90ff-88427ff86011",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-09",
+    "status": "disponivel",
+    "observacoes": null,
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "ab35812a-c827-4016-ad4e-a75ea521a398",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-10",
+    "status": "ocupado",
+    "observacoes": null,
+    "createdAt": "2026-04-07T00:06:25.149Z",
+    "updatedAt": "2026-04-07T00:06:25.149Z"
+  },
+  {
+    "id": "d06ffc8a-9938-4636-9ff2-596d3d4f792f",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-99",
+    "status": "disponivel",
+    "observacoes": null,
+    "createdAt": "2026-04-07T00:07:22.082Z",
+    "updatedAt": "2026-04-07T00:07:22.082Z"
+  },
+  {
+    "id": "affd6a48-2e13-4171-bf4a-31979e162205",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-99",
+    "status": "disponivel",
+    "observacoes": null,
+    "createdAt": "2026-04-07T17:02:45.407Z",
+    "updatedAt": "2026-04-07T17:02:45.407Z"
+  },
+  {
+    "id": "495f7124-c009-440a-83fb-03953936ef9e",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-99",
+    "status": "disponivel",
+    "observacoes": null,
+    "createdAt": "2026-04-07T17:04:06.521Z",
+    "updatedAt": "2026-04-07T17:04:06.521Z"
+  },
+  {
+    "id": "26378096-e623-483b-8e59-f62abeb2901c",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "numero": "L-99",
+    "status": "disponivel",
+    "observacoes": null,
+    "createdAt": "2026-04-07T17:05:40.875Z",
+    "updatedAt": "2026-04-07T17:05:40.875Z"
+  }
+]

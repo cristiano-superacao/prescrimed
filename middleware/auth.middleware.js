@@ -1,50 +1,105 @@
 import jwt from 'jsonwebtoken';
 import { Usuario, Empresa } from '../models/index.js';
 
-// Middleware de autenticação - verifica se o token JWT é válido
+// URL e anon key do Supabase para validação de tokens (sem prefixo VITE_ no backend)
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+
+/**
+ * Valida um Supabase access_token chamando a API de autenticação do Supabase.
+ * Retorna o objeto do usuário Supabase ou null se o token for inválido.
+ */
+const getSupabaseUser = async (token) => {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: SUPABASE_ANON_KEY,
+      },
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Verifica restrições de empresa (inativa / trial vencido).
+ * Retorna um objeto de erro ou null se não houver bloqueio.
+ */
+const checkEmpresaBlock = (usuario) => {
+  if (usuario.role === 'superadmin') return null;
+  const empresa = usuario.empresa;
+  if (!empresa || empresa.ativo === false) {
+    return {
+      status: 403,
+      code: 'empresa_inativa',
+      error: 'Empresa bloqueada ou inativa. Entre em contato com o suporte.',
+    };
+  }
+  if (empresa.emTeste && empresa.testeFim) {
+    const fim = new Date(empresa.testeFim);
+    if (!Number.isNaN(fim.getTime()) && new Date() > fim) {
+      return {
+        status: 403,
+        code: 'trial_expired',
+        error: 'Período de teste vencido. Entre em contato com o administrador para prorrogar ou ativar um plano.',
+        details: { testeFim: empresa.testeFim },
+      };
+    }
+  }
+  return null;
+};
+
+// Middleware de autenticação — aceita Supabase JWT (primário) ou JWT customizado (fallback)
 export const authenticate = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    
+
     if (!token) {
       return res.status(401).json({ error: 'Token não fornecido' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Buscar usuário completo do banco
-    const usuario = await Usuario.findByPk(decoded.id, {
-      include: [{ model: Empresa, as: 'empresa' }],
-      attributes: { exclude: ['senha'] }
-    });
+    let usuario = null;
+
+    // 1. Tenta validar como Supabase access_token
+    const supabaseUser = await getSupabaseUser(token);
+    if (supabaseUser?.email) {
+      usuario = await Usuario.findOne({
+        where: { email: supabaseUser.email },
+        include: [{ model: Empresa, as: 'empresa' }],
+        attributes: { exclude: ['senha'] },
+      });
+    }
+
+    // 2. Fallback: valida como JWT customizado (sessões antigas / tokens legados)
+    if (!usuario) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        usuario = await Usuario.findByPk(decoded.id, {
+          include: [{ model: Empresa, as: 'empresa' }],
+          attributes: { exclude: ['senha'] },
+        });
+      } catch {
+        return res.status(401).json({ error: 'Token inválido ou expirado' });
+      }
+    }
 
     if (!usuario || !usuario.ativo) {
       return res.status(401).json({ error: 'Usuário inválido ou inativo' });
     }
 
-    // Bloqueio por empresa inativa ou teste vencido (não afeta superadmin)
-    if (usuario.role !== 'superadmin') {
-      const empresa = usuario.empresa;
-      if (!empresa || empresa.ativo === false) {
-        return res.status(403).json({
-          error: 'Empresa bloqueada ou inativa. Entre em contato com o suporte.',
-          code: 'empresa_inativa'
-        });
-      }
-
-      if (empresa.emTeste && empresa.testeFim) {
-        const fim = new Date(empresa.testeFim);
-        if (!Number.isNaN(fim.getTime()) && new Date() > fim) {
-          return res.status(403).json({
-            error: 'Período de teste vencido. Entre em contato com o administrador para prorrogar ou ativar um plano.',
-            code: 'trial_expired',
-            details: { testeFim: empresa.testeFim }
-          });
-        }
-      }
+    const empresaBlock = checkEmpresaBlock(usuario);
+    if (empresaBlock) {
+      return res.status(empresaBlock.status).json({
+        error: empresaBlock.error,
+        code: empresaBlock.code,
+        details: empresaBlock.details,
+      });
     }
 
-    // Anexar informações do usuário à requisição
     req.user = {
       id: usuario.id,
       nome: usuario.nome,
@@ -52,7 +107,7 @@ export const authenticate = async (req, res, next) => {
       role: usuario.role,
       permissoes: usuario.permissoes || [],
       empresaId: usuario.empresaId,
-      empresa: usuario.empresa
+      empresa: usuario.empresa,
     };
 
     next();

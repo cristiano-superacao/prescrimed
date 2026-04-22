@@ -24,25 +24,28 @@ import { useAuthStore } from '../store/authStore';
  * Componente que protege rotas verificando autenticação e permissões
  */
 const ProtectedRoute = ({ children, requiredPermission }) => {
-  // Obtém funções e estado do store de autenticação
-  const { isAuthenticated, hasPermission } = useAuthStore();
+  const { isAuthenticated, hasPermission, loading } = useAuthStore();
+
+  // Enquanto a sessão do Supabase está sendo verificada, exibe spinner
+  // (evita flash de redirect para /login em usuários já autenticados)
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   // Primeira verificação: usuário está autenticado?
-  // Se não estiver logado, redireciona para página de login
   if (!isAuthenticated) {
-    // replace: substitui entrada no histórico (não permite voltar com botão "voltar")
     return <Navigate to="/login" replace />;
   }
 
-  // Segunda verificação: se a rota requer permissão específica, usuário tem essa permissão?
-  // Exemplo: rota de usuários requer permissão "usuarios"
+  // Segunda verificação: se a rota requer permissão específica
   if (requiredPermission && !hasPermission(requiredPermission)) {
-    // Se não tem permissão, redireciona para dashboard (página inicial após login)
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Se passou em todas as verificações, renderiza o componente filho
-  // (a página protegida que o usuário está tentando acessar)
   return children;
 };
 

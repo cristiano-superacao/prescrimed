@@ -1,1 +1,211 @@
-[]
+[
+  {
+    "id": "f3d4528a-dae8-4b26-9f61-21bef3bbbbca",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "789708d7-d0f3-4954-b231-17529e893b76",
+    "protocolo": "Alongamento e mobilidade",
+    "dataHora": "2026-04-08T00:06:25.142Z",
+    "duracao": 45,
+    "observacoes": "Sessão padrão. Ajustar conforme evolução.",
+    "createdAt": "2026-04-07T00:06:25.142Z",
+    "updatedAt": "2026-04-07T00:06:25.142Z"
+  },
+  {
+    "id": "1beb54f9-b3c7-498a-9bb0-e7f54883e8d6",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "a3916793-8e0c-4107-8d41-1d8f8a48b94e",
+    "protocolo": "Fortalecimento leve",
+    "dataHora": "2026-04-09T00:06:25.142Z",
+    "duracao": 45,
+    "observacoes": "Sessão padrão. Ajustar conforme evolução.",
+    "createdAt": "2026-04-07T00:06:25.142Z",
+    "updatedAt": "2026-04-07T00:06:25.142Z"
+  },
+  {
+    "id": "dafc79ec-adf1-408d-b7ed-46cef367abdd",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "51fd4ea5-1888-4687-9203-7300cfc77189",
+    "protocolo": "Alongamento e mobilidade",
+    "dataHora": "2026-04-10T00:06:25.142Z",
+    "duracao": 45,
+    "observacoes": "Sessão padrão. Ajustar conforme evolução.",
+    "createdAt": "2026-04-07T00:06:25.142Z",
+    "updatedAt": "2026-04-07T00:06:25.142Z"
+  },
+  {
+    "id": "f9e87b00-184b-4e46-bc7c-c67dee9d45f9",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "e3fe5d37-cbeb-4656-9012-83c1d65ca765",
+    "protocolo": "Fortalecimento leve",
+    "dataHora": "2026-04-11T00:06:25.142Z",
+    "duracao": 45,
+    "observacoes": "Sessão padrão. Ajustar conforme evolução.",
+    "createdAt": "2026-04-07T00:06:25.142Z",
+    "updatedAt": "2026-04-07T00:06:25.142Z"
+  },
+  {
+    "id": "40567825-69fd-4fd3-9a3c-8e9ba0092b00",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "dfda95da-2bb3-4c4b-8609-178415b6a684",
+    "protocolo": "Alongamento e mobilidade",
+    "dataHora": "2026-04-12T00:06:25.142Z",
+    "duracao": 45,
+    "observacoes": "Sessão padrão. Ajustar conforme evolução.",
+    "createdAt": "2026-04-07T00:06:25.142Z",
+    "updatedAt": "2026-04-07T00:06:25.142Z"
+  },
+  {
+    "id": "a9926a62-e22c-4101-9f05-d633443982d2",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "dcc8794a-3888-48f6-a325-fbf20330e863",
+    "protocolo": "Alongamento e mobilidade",
+    "dataHora": "2026-04-08T00:07:19.386Z",
+    "duracao": 60,
+    "observacoes": "Paciente colaborativo, boa evolução",
+    "createdAt": "2026-04-07T00:07:19.411Z",
+    "updatedAt": "2026-04-07T00:07:19.411Z"
+  },
+  {
+    "id": "31502dea-49ae-4f60-a889-d13e75ce7ebc",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "24c3a4a0-498d-4ae6-bf51-bfc96bed58fd",
+    "protocolo": "Alongamento e mobilidade",
+    "dataHora": "2026-04-09T00:07:19.924Z",
+    "duracao": 60,
+    "observacoes": "Paciente colaborativo, boa evolução",
+    "createdAt": "2026-04-07T00:07:19.948Z",
+    "updatedAt": "2026-04-07T00:07:19.948Z"
+  },
+  {
+    "id": "d066ccc8-a87e-4fa1-8a5a-c00c35d4472c",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "8a00f691-98b0-49db-a8be-0913d5034b2d",
+    "protocolo": "Alongamento e mobilidade",
+    "dataHora": "2026-04-10T00:07:20.473Z",
+    "duracao": 60,
+    "observacoes": "Paciente colaborativo, boa evolução",
+    "createdAt": "2026-04-07T00:07:20.496Z",
+    "updatedAt": "2026-04-07T00:07:20.496Z"
+  },
+  {
+    "id": "165b713f-dc8a-4c90-9c2c-cb5bf5facc58",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "dcc8794a-3888-48f6-a325-fbf20330e863",
+    "protocolo": "Alongamento e mobilidade",
+    "dataHora": "2026-04-08T17:05:38.194Z",
+    "duracao": 60,
+    "observacoes": "Paciente colaborativo, boa evolução",
+    "createdAt": "2026-04-07T17:05:38.230Z",
+    "updatedAt": "2026-04-07T17:05:38.230Z"
+  },
+  {
+    "id": "0eec6c84-fa04-4bec-9d8e-4f8581c250ad",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "24c3a4a0-498d-4ae6-bf51-bfc96bed58fd",
+    "protocolo": "Alongamento e mobilidade",
+    "dataHora": "2026-04-09T17:05:38.744Z",
+    "duracao": 60,
+    "observacoes": "Paciente colaborativo, boa evolução",
+    "createdAt": "2026-04-07T17:05:38.757Z",
+    "updatedAt": "2026-04-07T17:05:38.757Z"
+  },
+  {
+    "id": "2979748c-bf9d-4dd1-bf6e-2b8aa736ca6f",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "pacienteId": "8a00f691-98b0-49db-a8be-0913d5034b2d",
+    "protocolo": "Alongamento e mobilidade",
+    "dataHora": "2026-04-10T17:05:39.263Z",
+    "duracao": 60,
+    "observacoes": "Paciente colaborativo, boa evolução",
+    "createdAt": "2026-04-07T17:05:39.290Z",
+    "updatedAt": "2026-04-07T17:05:39.290Z"
+  },
+  {
+    "id": "cfddd1c7-3ddb-4446-ab2c-23a84cb7153f",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "pacienteId": "2ca45cef-778f-4215-afb3-7d1921768d2d",
+    "protocolo": "Protocolo Neurológico - Hemiplégia",
+    "dataHora": "2026-04-18T11:00:00.000Z",
+    "duracao": 60,
+    "observacoes": "Sessão realizada com sucesso. Paciente colaborativo. Boa resposta ao tratamento.",
+    "createdAt": "2026-04-18T14:37:21.635Z",
+    "updatedAt": "2026-04-18T14:37:21.635Z"
+  },
+  {
+    "id": "6f76d30b-2776-4f93-a962-31692dd4c2e7",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "pacienteId": "609edecf-9eef-4e3b-ab61-75066e283bae",
+    "protocolo": "Protocolo Respiratório - DPOC",
+    "dataHora": "2026-04-18T13:00:00.000Z",
+    "duracao": 60,
+    "observacoes": "Sessão realizada com sucesso. Paciente colaborativo. Boa resposta ao tratamento.",
+    "createdAt": "2026-04-18T14:37:21.641Z",
+    "updatedAt": "2026-04-18T14:37:21.641Z"
+  },
+  {
+    "id": "a540afa1-6083-41b8-9602-977f60221395",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "pacienteId": "723a8e0d-b99c-424c-973f-07a833eb7249",
+    "protocolo": "Protocolo Ortopédico - Reabilitação Pós-fratura",
+    "dataHora": "2026-04-17T15:00:00.000Z",
+    "duracao": 60,
+    "observacoes": "Sessão realizada com sucesso. Paciente colaborativo. Boa resposta ao tratamento.",
+    "createdAt": "2026-04-18T14:37:21.647Z",
+    "updatedAt": "2026-04-18T14:37:21.647Z"
+  },
+  {
+    "id": "35c1be72-4b3d-4199-b20d-777384fc81d2",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "pacienteId": "9b46bb3d-c083-4481-bab8-7eb39e251b8b",
+    "protocolo": "Protocolo Reumatológico - Artrite",
+    "dataHora": "2026-04-17T17:00:00.000Z",
+    "duracao": 60,
+    "observacoes": "Sessão realizada com sucesso. Paciente colaborativo. Exercícios de força membros inferiores realizados.",
+    "createdAt": "2026-04-18T14:37:21.654Z",
+    "updatedAt": "2026-04-18T14:37:21.654Z"
+  },
+  {
+    "id": "0cdf2966-9879-406a-9264-d2161f6779da",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "pacienteId": "d73987ad-81b4-490e-94e1-62a8048e16fa",
+    "protocolo": "Protocolo de Equilíbrio e Marcha",
+    "dataHora": "2026-04-16T11:00:00.000Z",
+    "duracao": 60,
+    "observacoes": "Sessão realizada com sucesso. Paciente colaborativo. Boa resposta ao tratamento.",
+    "createdAt": "2026-04-18T14:37:21.657Z",
+    "updatedAt": "2026-04-18T14:37:21.657Z"
+  },
+  {
+    "id": "54756b80-bef8-4cae-bc34-456b2805ca86",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "pacienteId": "58c696ac-37e7-4e02-984f-b18c040b751f",
+    "protocolo": "Alongamento Global e Mobilidade",
+    "dataHora": "2026-04-16T13:00:00.000Z",
+    "duracao": 60,
+    "observacoes": "Sessão realizada com sucesso. Paciente colaborativo. Boa resposta ao tratamento.",
+    "createdAt": "2026-04-18T14:37:21.661Z",
+    "updatedAt": "2026-04-18T14:37:21.661Z"
+  },
+  {
+    "id": "b5fdc587-864a-4961-9e60-3cd30cdcb020",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "pacienteId": "1ee59ea6-6189-4ce2-b5c5-84f74ce0c65d",
+    "protocolo": "Protocolo Neurológico - Hemiplégia",
+    "dataHora": "2026-04-15T15:00:00.000Z",
+    "duracao": 60,
+    "observacoes": "Sessão realizada com sucesso. Paciente colaborativo. Boa resposta ao tratamento.",
+    "createdAt": "2026-04-18T14:37:21.680Z",
+    "updatedAt": "2026-04-18T14:37:21.680Z"
+  },
+  {
+    "id": "1742f068-585d-4218-9c80-91f65c90b79c",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "pacienteId": "bf8dcbd4-cbc6-4fd5-9ac9-2f68ca545693",
+    "protocolo": "Protocolo Respiratório - DPOC",
+    "dataHora": "2026-04-15T17:00:00.000Z",
+    "duracao": 60,
+    "observacoes": "Sessão realizada com sucesso. Paciente colaborativo. Boa resposta ao tratamento.",
+    "createdAt": "2026-04-18T14:37:21.693Z",
+    "updatedAt": "2026-04-18T14:37:21.693Z"
+  }
+]

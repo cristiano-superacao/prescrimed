@@ -1,77 +1,265 @@
 [
   {
-    "id": "a79f9969-70e7-46c6-9481-4b2e3edb700d",
-    "pacienteId": "a969d824-ba80-4d06-8792-c2c1a21c04f8",
-    "nutricionistaId": "bb73efc5-a536-4f36-bb19-24df42ee99e9",
-    "empresaId": "cdda7f02-5f0c-43be-815b-4d1b39414e12",
-    "tipo": "mista",
-    "descricao": "Plano inicial de cuidados e medicação",
-    "observacoes": "Reavaliar em 7 dias",
+    "id": "83aab0f7-0056-46ac-a4e3-e757a700df40",
+    "pacienteId": "789708d7-d0f3-4954-b231-17529e893b76",
+    "nutricionistaId": "f88dba52-cd91-49cb-bb74-128fd7d08a58",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "tipo": "nutricional",
+    "descricao": "Plano alimentar para Paciente 01",
+    "observacoes": "Reavaliar em 7 dias.",
     "itens": [
       {
-        "nome": "Paracetamol 750mg",
-        "tipo": "medicamento",
-        "posologia": "1 comprimido de 8/8h",
-        "duracaoDias": 5
+        "item": "Hidratação",
+        "recomendacao": "2L/dia"
       },
       {
-        "nome": "Dieta branda",
-        "tipo": "dieta",
-        "observacao": "Fracionar em 5x ao dia"
+        "item": "Proteína",
+        "recomendacao": "Ajustar conforme avaliação"
       }
     ],
     "status": "ativa",
-    "createdAt": "2026-01-24T18:52:19.000Z",
-    "updatedAt": "2026-01-24T18:52:19.000Z"
+    "createdAt": "2026-04-07T00:06:25.103Z",
+    "updatedAt": "2026-04-07T00:06:25.103Z"
   },
   {
-    "id": "ae249417-f6b8-4d52-96d1-703c195883f9",
-    "pacienteId": "01ca2de1-d44a-4588-bc63-a095037d8150",
-    "nutricionistaId": "58148f62-76fa-4d89-a268-c2670beee48f",
-    "empresaId": "181c5405-348a-4ec6-8657-371bac432dac",
-    "tipo": "mista",
-    "descricao": "Plano inicial de cuidados e medicação",
-    "observacoes": "Reavaliar em 7 dias",
+    "id": "365cc69c-f565-48fb-9172-cf3bc0eb820f",
+    "pacienteId": "a3916793-8e0c-4107-8d41-1d8f8a48b94e",
+    "nutricionistaId": "f88dba52-cd91-49cb-bb74-128fd7d08a58",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "tipo": "nutricional",
+    "descricao": "Plano alimentar para Paciente 02",
+    "observacoes": "Reavaliar em 7 dias.",
     "itens": [
       {
-        "nome": "Paracetamol 750mg",
-        "tipo": "medicamento",
-        "posologia": "1 comprimido de 8/8h",
-        "duracaoDias": 5
+        "item": "Hidratação",
+        "recomendacao": "2L/dia"
       },
       {
-        "nome": "Dieta branda",
-        "tipo": "dieta",
-        "observacao": "Fracionar em 5x ao dia"
+        "item": "Proteína",
+        "recomendacao": "Ajustar conforme avaliação"
       }
     ],
     "status": "ativa",
-    "createdAt": "2026-01-24T18:52:19.000Z",
-    "updatedAt": "2026-01-24T18:52:19.000Z"
+    "createdAt": "2026-04-07T00:06:25.103Z",
+    "updatedAt": "2026-04-07T00:06:25.103Z"
   },
   {
-    "id": "d9d9bc5f-4e00-4b23-afab-e4c5ac99bf2d",
-    "pacienteId": "1c8f3dba-9c39-45af-9ee7-1a8e9874a5e7",
-    "nutricionistaId": "64c78daa-8e08-4a6b-b89f-db3b45c7a276",
-    "empresaId": "48af86f2-ee44-446c-a34e-4471bab2e03e",
+    "id": "6f6021ad-f885-424a-9874-e8f85aee768e",
+    "pacienteId": "51fd4ea5-1888-4687-9203-7300cfc77189",
+    "nutricionistaId": "f88dba52-cd91-49cb-bb74-128fd7d08a58",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
     "tipo": "mista",
-    "descricao": "Plano inicial de cuidados e medicação",
-    "observacoes": "Reavaliar em 7 dias",
+    "descricao": "Plano alimentar para Paciente 03",
+    "observacoes": "Reavaliar em 7 dias.",
     "itens": [
       {
-        "nome": "Paracetamol 750mg",
-        "tipo": "medicamento",
-        "posologia": "1 comprimido de 8/8h",
-        "duracaoDias": 5
+        "item": "Hidratação",
+        "recomendacao": "2L/dia"
       },
       {
-        "nome": "Dieta branda",
-        "tipo": "dieta",
-        "observacao": "Fracionar em 5x ao dia"
+        "item": "Proteína",
+        "recomendacao": "Ajustar conforme avaliação"
       }
     ],
     "status": "ativa",
-    "createdAt": "2026-01-24T18:52:19.000Z",
-    "updatedAt": "2026-01-24T18:52:19.000Z"
+    "createdAt": "2026-04-07T00:06:25.103Z",
+    "updatedAt": "2026-04-07T00:06:25.103Z"
+  },
+  {
+    "id": "e69842c3-6273-4a40-91c6-820769cf8c6d",
+    "pacienteId": "dcc8794a-3888-48f6-a325-fbf20330e863",
+    "nutricionistaId": "103ea857-8651-497c-adf8-31bc6c1b7cf0",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "tipo": "nutricional",
+    "descricao": "Prescrição nutricional para José Ferreira",
+    "observacoes": "Acompanhamento nutricional semanal",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-07T00:07:10.873Z",
+    "updatedAt": "2026-04-07T00:07:10.873Z"
+  },
+  {
+    "id": "6c41ae8b-3182-47ef-97ab-957db8f42a63",
+    "pacienteId": "24c3a4a0-498d-4ae6-bf51-bfc96bed58fd",
+    "nutricionistaId": "103ea857-8651-497c-adf8-31bc6c1b7cf0",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "tipo": "nutricional",
+    "descricao": "Prescrição nutricional para Maria Aparecida Silva",
+    "observacoes": "Acompanhamento nutricional semanal",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-07T00:07:11.732Z",
+    "updatedAt": "2026-04-07T00:07:11.732Z"
+  },
+  {
+    "id": "b54e6951-5c8f-4175-bd03-cc08e4d68dac",
+    "pacienteId": "8a00f691-98b0-49db-a8be-0913d5034b2d",
+    "nutricionistaId": "103ea857-8651-497c-adf8-31bc6c1b7cf0",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "tipo": "nutricional",
+    "descricao": "Prescrição nutricional para Antonio Carlos Oliveira",
+    "observacoes": "Acompanhamento nutricional semanal",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-07T00:07:12.380Z",
+    "updatedAt": "2026-04-07T00:07:12.380Z"
+  },
+  {
+    "id": "488cd5fa-ece3-449f-bf06-08f5d3ab0440",
+    "pacienteId": "dcc8794a-3888-48f6-a325-fbf20330e863",
+    "nutricionistaId": "103ea857-8651-497c-adf8-31bc6c1b7cf0",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "tipo": "nutricional",
+    "descricao": "Prescrição nutricional para José Ferreira",
+    "observacoes": "Acompanhamento nutricional semanal",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-07T17:05:30.134Z",
+    "updatedAt": "2026-04-07T17:05:30.134Z"
+  },
+  {
+    "id": "fe9c2f2c-7dac-4c1b-8728-82e34f5a65ba",
+    "pacienteId": "24c3a4a0-498d-4ae6-bf51-bfc96bed58fd",
+    "nutricionistaId": "103ea857-8651-497c-adf8-31bc6c1b7cf0",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "tipo": "nutricional",
+    "descricao": "Prescrição nutricional para Maria Aparecida Silva",
+    "observacoes": "Acompanhamento nutricional semanal",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-07T17:05:30.679Z",
+    "updatedAt": "2026-04-07T17:05:30.679Z"
+  },
+  {
+    "id": "22b71310-1c39-45e5-8612-72036721c25c",
+    "pacienteId": "8a00f691-98b0-49db-a8be-0913d5034b2d",
+    "nutricionistaId": "103ea857-8651-497c-adf8-31bc6c1b7cf0",
+    "empresaId": "f47865cf-dbd3-480d-ab1f-8da2b7ab72e5",
+    "tipo": "nutricional",
+    "descricao": "Prescrição nutricional para Antonio Carlos Oliveira",
+    "observacoes": "Acompanhamento nutricional semanal",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-07T17:05:31.220Z",
+    "updatedAt": "2026-04-07T17:05:31.220Z"
+  },
+  {
+    "id": "f32450d5-e929-4a05-b850-cf8099fac9c8",
+    "pacienteId": "2ca45cef-778f-4215-afb3-7d1921768d2d",
+    "nutricionistaId": "8d937f8b-bbc2-4f70-ae1e-c5a527ddc0a4",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "tipo": "medicamentosa",
+    "descricao": "Losartana 50mg - 1x ao dia (manhã)\nHidroclorotiazida 25mg - 1x ao dia (manhã)",
+    "observacoes": "Monitorar efeitos adversos. Retorno em 30 dias.",
+    "itens": [
+      {
+        "nome": "Losartana 50mg",
+        "posologia": "1x ao dia"
+      }
+    ],
+    "status": "ativa",
+    "createdAt": "2026-04-18T14:37:21.438Z",
+    "updatedAt": "2026-04-18T14:37:21.438Z"
+  },
+  {
+    "id": "5e262e4a-d4cb-4d7b-983c-658b767de595",
+    "pacienteId": "609edecf-9eef-4e3b-ab61-75066e283bae",
+    "nutricionistaId": "8d937f8b-bbc2-4f70-ae1e-c5a527ddc0a4",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "tipo": "medicamentosa",
+    "descricao": "Metformina 850mg - 2x ao dia com refeições\nAAS 100mg - 1x ao dia após almoço",
+    "observacoes": "Monitorar efeitos adversos. Retorno em 30 dias.",
+    "itens": [
+      {
+        "nome": "Metformina 850mg",
+        "posologia": "2x ao dia"
+      }
+    ],
+    "status": "ativa",
+    "createdAt": "2026-04-18T14:37:21.444Z",
+    "updatedAt": "2026-04-18T14:37:21.444Z"
+  },
+  {
+    "id": "2f3a7429-38f3-42c5-84e5-f1a0818f6ed8",
+    "pacienteId": "723a8e0d-b99c-424c-973f-07a833eb7249",
+    "nutricionistaId": "8d937f8b-bbc2-4f70-ae1e-c5a527ddc0a4",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "tipo": "medicamentosa",
+    "descricao": "Omeprazol 20mg - 1x ao dia em jejum\nBromazepam 3mg - 1x à noite se necessário",
+    "observacoes": "Monitorar efeitos adversos. Retorno em 30 dias.",
+    "itens": [
+      {
+        "nome": "Omeprazol 20mg",
+        "posologia": "1x ao dia"
+      }
+    ],
+    "status": "ativa",
+    "createdAt": "2026-04-18T14:37:21.449Z",
+    "updatedAt": "2026-04-18T14:37:21.449Z"
+  },
+  {
+    "id": "f002fef3-1145-483b-9217-6cb11e87555a",
+    "pacienteId": "9b46bb3d-c083-4481-bab8-7eb39e251b8b",
+    "nutricionistaId": "8d937f8b-bbc2-4f70-ae1e-c5a527ddc0a4",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "tipo": "medicamentosa",
+    "descricao": "Complexo B Injetável - 2x por semana (IM)\nDipirona 500mg - SOS até 3x ao dia",
+    "observacoes": "Monitorar efeitos adversos. Retorno em 30 dias.",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-18T14:37:21.455Z",
+    "updatedAt": "2026-04-18T14:37:21.455Z"
+  },
+  {
+    "id": "49fdb0a7-ad55-414a-9741-358b3080e51a",
+    "pacienteId": "d73987ad-81b4-490e-94e1-62a8048e16fa",
+    "nutricionistaId": "8d937f8b-bbc2-4f70-ae1e-c5a527ddc0a4",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "tipo": "medicamentosa",
+    "descricao": "AAS 100mg - 1x ao dia após almoço\nAtenolol 50mg - 1x ao dia manhã",
+    "observacoes": "Monitorar efeitos adversos. Retorno em 30 dias.",
+    "itens": [],
+    "status": "finalizada",
+    "createdAt": "2026-04-18T14:37:21.459Z",
+    "updatedAt": "2026-04-18T14:37:21.459Z"
+  },
+  {
+    "id": "e06f6ed3-4399-4340-807d-72fb93dc159c",
+    "pacienteId": "2ca45cef-778f-4215-afb3-7d1921768d2d",
+    "nutricionistaId": "8d937f8b-bbc2-4f70-ae1e-c5a527ddc0a4",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "tipo": "medicamentosa",
+    "descricao": "Teste Prescri��o",
+    "observacoes": "Teste",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-18T15:03:57.581Z",
+    "updatedAt": "2026-04-18T15:03:57.581Z"
+  },
+  {
+    "id": "3a3b420b-2d80-4593-9b2b-20d381151372",
+    "pacienteId": "2ca45cef-778f-4215-afb3-7d1921768d2d",
+    "nutricionistaId": "8d937f8b-bbc2-4f70-ae1e-c5a527ddc0a4",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "tipo": "medicamentosa",
+    "descricao": "Losartana 50mg",
+    "observacoes": "Teste",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-18T15:04:13.527Z",
+    "updatedAt": "2026-04-18T15:04:13.527Z"
+  },
+  {
+    "id": "c3ddaccc-ab92-42f4-bb95-9fe65bea0929",
+    "pacienteId": "2ca45cef-778f-4215-afb3-7d1921768d2d",
+    "nutricionistaId": "8d937f8b-bbc2-4f70-ae1e-c5a527ddc0a4",
+    "empresaId": "49814b2d-dea8-49d4-9b0b-0178b06020bb",
+    "tipo": "medicamentosa",
+    "descricao": "Losartana",
+    "observacoes": "x",
+    "itens": [],
+    "status": "ativa",
+    "createdAt": "2026-04-18T15:04:35.224Z",
+    "updatedAt": "2026-04-18T15:04:35.224Z"
   }
 ]
