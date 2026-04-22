@@ -373,6 +373,14 @@ CHECKLIST RAPIDO POS-UPLOAD
   [ ] layout permanece responsivo no celular
   [ ] limpar-cache.html abre corretamente
 
+TESTE LOCAL (ANTES DO UPLOAD)
+------------------------------
+  -> Nao abra index.html com file:// no Chrome/Edge.
+     Browsers bloqueiam JS/CSS por politica de seguranca (CORS) e a tela fica em branco.
+  -> Para validar localmente, sirva esta pasta via HTTP.
+     Exemplo (na raiz do projeto):
+       npm run preview:template
+
 CONFIGURACAO DA API
 -------------------
   -> Configuracao usada neste build:

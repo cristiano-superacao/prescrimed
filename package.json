@@ -41,6 +41,7 @@
     "hostgator:prepare": "node scripts/prepare-hostgator-deploy.js",
     "hostgator:secrets": "node scripts/generate-hostgator-secrets.js",
     "build:template": "cd client && npm install && npm run build:hostgator && cd .. && node scripts/publish-template.js",
+    "preview:template": "node scripts/serve-template.js",
     "build:pages": "cd client && npm install && npm run build:github",
     "pages:publish": "node scripts/publish-pages.js",
     "build:full": "npm install --production=false && cd client && npm install && npm run build && cd ..",
