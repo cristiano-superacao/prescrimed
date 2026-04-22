@@ -7,21 +7,52 @@ const distDir = path.join(root, 'client', 'dist');
 const templateDir = path.join(root, 'Template');
 const generatedAt = new Date().toLocaleString('pt-BR');
 
+function readEnvFile(envFilePath) {
+  if (!envFilePath || !fs.existsSync(envFilePath)) return {};
+  const raw = fs.readFileSync(envFilePath, 'utf8');
+  const lines = raw.split(/\r?\n/);
+  const env = {};
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIndex = trimmed.indexOf('=');
+    if (eqIndex <= 0) continue;
+    const key = trimmed.slice(0, eqIndex).trim();
+    let value = trimmed.slice(eqIndex + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    env[key] = value;
+  }
+
+  return env;
+}
+
+function findHostgatorClientEnv() {
+  const candidates = [
+    path.join(root, 'client', '.env.hostgator.local'),
+    path.join(root, 'client', '.env.hostgator'),
+    path.join(root, 'client', '.env.production.local'),
+  ];
+
+  for (const filePath of candidates) {
+    if (fs.existsSync(filePath)) return filePath;
+  }
+  return null;
+}
+
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
 function cleanDir(dir) {
   if (!fs.existsSync(dir)) return;
+  // No Windows, remover a pasta raiz pode falhar (locks/antivírus). É mais estável
+  // remover apenas o conteúdo e manter o diretório.
   for (const entry of fs.readdirSync(dir)) {
-    const currentPath = path.join(dir, entry);
-    const stat = fs.statSync(currentPath);
-    if (stat.isDirectory()) {
-      cleanDir(currentPath);
-      fs.rmdirSync(currentPath);
-    } else {
-      fs.unlinkSync(currentPath);
-    }
+    const entryPath = path.join(dir, entry);
+    fs.rmSync(entryPath, { recursive: true, force: true });
   }
 }
 
@@ -291,6 +322,14 @@ const page404Content = `<!DOCTYPE html>
 </body>
 </html>`;
 
+const hostgatorEnvPath = findHostgatorClientEnv();
+const hostgatorEnv = readEnvFile(hostgatorEnvPath);
+const buildApiUrl = (hostgatorEnv.VITE_API_URL || '').trim();
+const buildBackendRoot = (hostgatorEnv.VITE_BACKEND_ROOT || '').trim();
+const isSameOriginApi = buildApiUrl === '/api' || buildApiUrl === '';
+const apiModeLabel = isSameOriginApi ? 'mesma origem (/api)' : 'API em outro domínio';
+const apiExampleDomain = buildBackendRoot || 'https://backend.seu-dominio.com.br';
+
 const instructionsContent = `=============================================================
   PRESCRIMED - PUBLICACAO HOSTGATOR
   Gerado automaticamente por: npm run build:template
@@ -323,7 +362,7 @@ PUBLICAR NA RAIZ OU SUBPASTA
   -> Este pacote usa assets relativos e fallback SPA relativo.
   -> Pode ser publicado diretamente em public_html.
   -> Tambem pode ser publicado em subpastas como public_html/prescrimed.
-  -> Se a API estiver no mesmo dominio, mantenha VITE_API_URL=/api no build.
+  -> Este build foi gerado para: ${apiModeLabel}.
 
 CHECKLIST RAPIDO POS-UPLOAD
 ---------------------------
@@ -336,7 +375,11 @@ CHECKLIST RAPIDO POS-UPLOAD
 
 CONFIGURACAO DA API
 -------------------
-  -> Este build assume API no mesmo dominio usando /api.
+  -> Configuracao usada neste build:
+       VITE_API_URL=${buildApiUrl || '(nao definido)'}
+       VITE_BACKEND_ROOT=${buildBackendRoot || '(nao definido)'}
+
+  -> Este build foi gerado para: ${apiModeLabel}.
   -> Para publicar frontend + backend no HostGator, o plano precisa ter Node.js.
   -> Garanta que o servidor estatico (public_html/.htaccess) nao reescreva /api e /health
      para index.html. Este Template ja vem com essa excecao.
@@ -347,12 +390,13 @@ CONFIGURACAO DA API
        - Assim, /api e o SPA ficam na mesma origem (mais estavel).
   -> MODO B (frontend em public_html):
        - Envie este Template para public_html.
-       - Garanta que /api/* chegue no Node (via configuracao do HostGator, subdominio api., ou proxy se suportado).
-  -> Se a API ficar em outro dominio, ajuste client/.env.hostgator:
-       VITE_API_URL=https://sua-api/api
-       VITE_BACKEND_ROOT=https://sua-api
-      -> No backend, se usar subdominio backend. (ou outro host), defina PUBLIC_BASE_URL=https://sua-api
-        para gerar corretamente a URL publica do webhook: https://sua-api/api/public/webhooks/payment
+       - Garanta que as chamadas do frontend cheguem na API correta.
+
+  -> Se for usar API em outro dominio/subdominio (recomendado para HostGator), gere o build com:
+       VITE_API_URL=${apiExampleDomain}/api
+       VITE_BACKEND_ROOT=${apiExampleDomain}
+  -> No backend, se usar subdominio backend. (ou outro host), defina PUBLIC_BASE_URL=${apiExampleDomain}
+        para gerar corretamente a URL publica do webhook: ${apiExampleDomain}/api/public/webhooks/payment
      e gere novamente:
        npm run build:template
 

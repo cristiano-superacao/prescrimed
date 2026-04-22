@@ -1,7 +1,7 @@
 =============================================================
   PRESCRIMED - PUBLICACAO HOSTGATOR
   Gerado automaticamente por: npm run build:template
-  Data: 22/04/2026, 16:49:57
+  Data: 22/04/2026, 17:28:46
 =============================================================
 
 CONTEUDO DESTA PASTA
@@ -30,7 +30,7 @@ PUBLICAR NA RAIZ OU SUBPASTA
   -> Este pacote usa assets relativos e fallback SPA relativo.
   -> Pode ser publicado diretamente em public_html.
   -> Tambem pode ser publicado em subpastas como public_html/prescrimed.
-  -> Se a API estiver no mesmo dominio, mantenha VITE_API_URL=/api no build.
+  -> Este build foi gerado para: API em outro domínio.
 
 CHECKLIST RAPIDO POS-UPLOAD
 ---------------------------
@@ -43,7 +43,11 @@ CHECKLIST RAPIDO POS-UPLOAD
 
 CONFIGURACAO DA API
 -------------------
-  -> Este build assume API no mesmo dominio usando /api.
+  -> Configuracao usada neste build:
+       VITE_API_URL=https://backend.prescrimed.com.br/api
+       VITE_BACKEND_ROOT=https://backend.prescrimed.com.br
+
+  -> Este build foi gerado para: API em outro domínio.
   -> Para publicar frontend + backend no HostGator, o plano precisa ter Node.js.
   -> Garanta que o servidor estatico (public_html/.htaccess) nao reescreva /api e /health
      para index.html. Este Template ja vem com essa excecao.
@@ -54,12 +58,13 @@ CONFIGURACAO DA API
        - Assim, /api e o SPA ficam na mesma origem (mais estavel).
   -> MODO B (frontend em public_html):
        - Envie este Template para public_html.
-       - Garanta que /api/* chegue no Node (via configuracao do HostGator, subdominio api., ou proxy se suportado).
-  -> Se a API ficar em outro dominio, ajuste client/.env.hostgator:
-       VITE_API_URL=https://sua-api/api
-       VITE_BACKEND_ROOT=https://sua-api
-      -> No backend, se usar subdominio backend. (ou outro host), defina PUBLIC_BASE_URL=https://sua-api
-        para gerar corretamente a URL publica do webhook: https://sua-api/api/public/webhooks/payment
+       - Garanta que as chamadas do frontend cheguem na API correta.
+
+  -> Se for usar API em outro dominio/subdominio (recomendado para HostGator), gere o build com:
+       VITE_API_URL=https://backend.prescrimed.com.br/api
+       VITE_BACKEND_ROOT=https://backend.prescrimed.com.br
+  -> No backend, se usar subdominio backend. (ou outro host), defina PUBLIC_BASE_URL=https://backend.prescrimed.com.br
+        para gerar corretamente a URL publica do webhook: https://backend.prescrimed.com.br/api/public/webhooks/payment
      e gere novamente:
        npm run build:template
 
