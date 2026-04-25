@@ -1,65 +1,24 @@
-Options -Indexes
-DirectoryIndex index.html
-
-# Fallback SPA relativo para public_html ou subpastas
+# Rewrite all requests to index.html for SPA
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  RewriteBase /
 
-  # IMPORTANTE: NUNCA envie rotas de API/health para o SPA.
-  # Em HostGator, é comum o frontend ficar em public_html (Apache)
-  # e a API rodar separadamente (Node App Manager, subdomínio ou proxy).
-  # Se o fallback SPA capturar /api, o browser recebe index.html no lugar do JSON.
-  RewriteCond %{REQUEST_URI} (^|/)(api|health)(/|$) [NC]
-  RewriteRule .* - [L]
-
+  # Don't rewrite existing files or directories
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
+  # Rewrite everything else to index.html
   RewriteRule ^ index.html [L]
 </IfModule>
 
-# Cabecalhos recomendados para entrega estatica
+# Set long cache for assets
 <IfModule mod_headers.c>
-  Header always set X-Content-Type-Options "nosniff"
-  Header always set Referrer-Policy "strict-origin-when-cross-origin"
-  Header always set X-Frame-Options "SAMEORIGIN"
-  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
-  Header always set X-XSS-Protection "1; mode=block"
-  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
-  Header always set Cross-Origin-Resource-Policy "same-site"
-
-  <FilesMatch ".(html|htm)$">
-    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
-  </FilesMatch>
-
-  <FilesMatch ".(css|js|mjs|svg|ico|png|jpg|jpeg|gif|webp|woff|woff2|ttf)$">
+  <FilesMatch "\.(js|css|woff2|woff|png|jpg|jpeg|svg|gif)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
-</IfModule>
 
-# Cache longo para assets versionados
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType text/html "access plus 0 seconds"
-  ExpiresByType text/css "access plus 1 year"
-  ExpiresByType application/javascript "access plus 1 year"
-  ExpiresByType application/x-javascript "access plus 1 year"
-  ExpiresByType image/svg+xml "access plus 1 year"
-  ExpiresByType image/x-icon "access plus 1 year"
-  ExpiresByType image/png "access plus 1 year"
-  ExpiresByType image/jpeg "access plus 1 year"
-  ExpiresByType image/webp "access plus 1 year"
-  ExpiresByType font/woff2 "access plus 1 year"
-  ExpiresByType font/woff "access plus 1 year"
-  ExpiresByType font/ttf "access plus 1 year"
-</IfModule>
-
-# Compressao gzip
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/css
-  AddOutputFilterByType DEFLATE application/javascript application/json
-  AddOutputFilterByType DEFLATE image/svg+xml
-  AddOutputFilterByType DEFLATE font/woff2 font/woff font/ttf
+  <FilesMatch "index.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
 </IfModule>
