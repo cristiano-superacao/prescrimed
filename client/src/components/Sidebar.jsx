@@ -40,8 +40,8 @@ export default function Sidebar({ onClose }) {
   ];
 
   return (
-    <aside className="h-full w-72 bg-primary-900 text-white flex flex-col border-r border-white/5 shadow-2xl">
-      <div className="h-20 px-6 border-b border-white/10 flex items-center justify-between">
+    <aside className="h-full w-64 lg:w-72 bg-primary-900 text-white flex flex-col border-r border-white/5 shadow-2xl">
+      <div className="h-20 px-4 md:px-6 border-b border-white/10 flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-primary-200">Prescrimed</p>
           <h1 className="text-2xl font-bold tracking-tight">Painel</h1>
@@ -54,7 +54,7 @@ export default function Sidebar({ onClose }) {
         </button>
       </div>
 
-      <div className="px-6 py-5 border-b border-white/10">
+      <div className="px-4 md:px-6 py-4 md:py-5 border-b border-white/10">
         <p className="text-sm text-primary-100">Bem-vindo</p>
         <p className="text-lg font-semibold">{user?.nome}</p>
         <p

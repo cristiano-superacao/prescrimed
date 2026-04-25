@@ -48,7 +48,8 @@ export default defineConfig(({ command, mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom', 'exceljs'],
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            exceljs: ['exceljs'],
             ui: ['lucide-react', 'react-hot-toast'],
           },
         },

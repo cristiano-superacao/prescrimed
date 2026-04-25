@@ -35,8 +35,8 @@ export function MobileCard({ children }) {
 
 export function TableWrapper({ children }) {
   return (
-    <div className="hidden md:block overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+    <div className="overflow-x-auto -mx-2 md:mx-0 px-2 md:px-0">
+      <table className="min-w-full table-auto divide-y divide-gray-200 dark:divide-gray-800">
         {children}
       </table>
     </div>

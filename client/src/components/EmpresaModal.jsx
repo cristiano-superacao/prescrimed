@@ -220,18 +220,18 @@ export default function EmpresaModal({ empresa, onClose, onSave }) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-slate-200">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200">
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary flex-1"
+              className="btn btn-secondary w-full sm:flex-1"
               disabled={loading}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="btn btn-primary flex-1"
+              className="btn btn-primary w-full sm:flex-1"
               disabled={loading}
             >
               {loading ? 'Salvando...' : 'Salvar'}

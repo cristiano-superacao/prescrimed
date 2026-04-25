@@ -162,18 +162,18 @@ export default function TransacaoModal({ transacao, onClose }) {
             ></textarea>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
+              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-xl transition flex items-center gap-2 disabled:opacity-50"
+              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-xl transition flex items-center gap-2 disabled:opacity-50 justify-center"
             >
               <Save size={18} />
               {loading ? 'Salvando...' : 'Salvar'}

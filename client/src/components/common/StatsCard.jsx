@@ -13,15 +13,17 @@ export default function StatsCard({ icon: Icon, label, value, description, color
   const theme = colorClasses[color] || colorClasses.primary;
 
   return (
-    <div className={`card p-6 border-l-4 ${theme.border}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 ${theme.bg} rounded-xl`}>
-          <Icon className={theme.text} size={24} />
+    <div className={`card p-4 sm:p-6 border-l-4 ${theme.border}`}>
+      <div className="flex items-center justify-between mb-3 gap-4">
+        <div className={`w-12 h-12 flex items-center justify-center ${theme.bg} rounded-xl flex-shrink-0`}>
+          <Icon className={`${theme.text}`} size={20} />
         </div>
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{label}</span>
+        <div className="flex-1 min-w-0">
+          <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider truncate">{label}</span>
+          <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">{value}</h3>
+          {description && <p className="text-sm text-slate-500 mt-1 truncate">{description}</p>}
+        </div>
       </div>
-      <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-      {description && <p className="text-sm text-slate-500 mt-1">{description}</p>}
     </div>
   );
 }
