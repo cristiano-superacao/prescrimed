@@ -8,7 +8,7 @@
  *   node scripts/seed-complete-data.js
  */
 import 'dotenv/config';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import {
   sequelize,
   Empresa,

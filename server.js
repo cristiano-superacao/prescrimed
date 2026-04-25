@@ -386,15 +386,7 @@ connectDB();
 // CORS liberal APENAS para endpoints de health (para funcionar no GitHub Pages)
 const healthCors = cors({ origin: true, methods: ['GET', 'OPTIONS'] });
 
-/**
- * Rota de Health Check
- * Endpoint simples para verificar se servidor está online
- * Usado por sistemas de monitoramento (HostGator, Render, AWS, etc)
- */
-app.options('/health', healthCors);
-app.get('/health', healthCors, (req, res) => {
-  console.log('🔎 [HEALTH] Requisição recebida em /health');
-  
+function sendHealth(res) {
   // Garante CORS universal para o health (útil para UIs em domínios diferentes)
   // Mesmo usando o middleware cors({ origin: true }), alguns proxies podem
   // omitir o header. Forçamos aqui para evitar bloqueios de verificação.
@@ -403,33 +395,33 @@ app.get('/health', healthCors, (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Empresa-Id');
 
   // Responde imediatamente para evitar timeout do monitoramento externo
-  res.status(200).json({ 
-    status: 'ok',                              // Status do servidor
-    uptime: process.uptime(),                  // Tempo ativo em segundos
-    database: app.locals.dbReady ? 'connected' : 'connecting', // Status do banco
-    timestamp: new Date().toISOString(),       // Timestamp atual
-    env: process.env.NODE_ENV
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    database: app.locals.dbReady ? 'connected' : 'connecting',
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
   });
+}
+
+/**
+ * Rota de Health Check
+ * Endpoint simples para verificar se servidor está online
+ * Usado por sistemas de monitoramento (HostGator, Render, AWS, etc)
+ */
+app.options('/health', healthCors);
+app.get('/health', healthCors, (req, res) => {
+  console.log('🔎 [HEALTH] Requisição recebida em /health');
+
+  sendHealth(res);
 });
 
 // Alternativa: health sob namespace da API, útil para plataformas que esperam /api/health
 app.options('/api/health', healthCors);
 app.get('/api/health', healthCors, (req, res) => {
   console.log('🔎 [HEALTH] Requisição recebida em /api/health');
-  
-  // Garante CORS universal para o health da API
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Empresa-Id');
 
-  // Responde imediatamente para evitar timeout
-  res.status(200).json({ 
-    status: 'ok',
-    uptime: process.uptime(),
-    database: app.locals.dbReady ? 'connected' : 'connecting',
-    timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV
-  });
+  sendHealth(res);
 });
 
 /**
