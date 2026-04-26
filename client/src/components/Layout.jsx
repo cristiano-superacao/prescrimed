@@ -78,7 +78,7 @@ export default function Layout() {
           {/* p-4 lg:p-8: padding 1rem em mobile, 2rem em desktop */}
           
           {/* Container centralizado com largura máxima e espaçamento entre elementos */}
-          <div className="max-w-6xl mx-auto space-y-6">
+          <div className="container-responsive space-y-6">
             {/* max-w-6xl: largura máxima de 72rem (1152px) */}
             {/* mx-auto: centraliza horizontalmente */}
             {/* space-y-6: espaçamento vertical de 1.5rem entre filhos */}
