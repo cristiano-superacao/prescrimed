@@ -222,7 +222,10 @@ function App() {
       </Router>
       
       {/* Componente de notificações toast - exibe alertas em toda a aplicação */}
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        containerStyle={{ top: 16, right: 16, left: 'auto', maxWidth: 420 }}
+      />
     </>
   );
 }

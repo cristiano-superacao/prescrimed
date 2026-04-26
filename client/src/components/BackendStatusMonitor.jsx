@@ -252,9 +252,9 @@ export default function BackendStatusMonitor() {
   const barSubClass = isOffline ? 'bg-red-700' : 'bg-amber-600';
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 animate-slide-down">
-      <div className={`${barClass} text-white px-4 py-3 shadow-lg`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div className="fixed top-4 left-4 right-4 lg:left-auto lg:right-4 z-50 animate-slide-down pointer-events-auto">
+      <div className={`${barClass} text-white px-4 py-3 shadow-lg rounded-md`}>
+        <div className="max-w-full lg:max-w-md mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             {isOffline ? (
               <WifiOff className="w-5 h-5 animate-pulse" />
@@ -299,8 +299,8 @@ export default function BackendStatusMonitor() {
         </div>
       </div>
       
-      <div className={`${barSubClass} px-4 py-2`}>
-        <div className="max-w-7xl mx-auto">
+      <div className={`${barSubClass} px-4 py-2 rounded-b-md`}>
+        <div className="max-w-full lg:max-w-md mx-auto">
           <p className="text-sm text-white/90">
             <strong>Como resolver:</strong>{' '}
             {isOffline ? (
