@@ -50,6 +50,7 @@ data/export/
 .playwright-mcp/
 coverage/
 hostgator-artifacts/
+Template/assets/
 Template.rar
 supabase/.temp/
 

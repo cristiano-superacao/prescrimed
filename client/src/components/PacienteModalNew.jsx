@@ -181,7 +181,7 @@ export default function PacienteModal({ paciente, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl my-8 animate-in fade-in zoom-in duration-200">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-full md:max-w-4xl my-8 animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-gray-800 dark:to-gray-700 sticky top-0 z-10 rounded-t-2xl">
           <div>

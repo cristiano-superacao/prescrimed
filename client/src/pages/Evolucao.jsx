@@ -792,7 +792,7 @@ export default function Evolucao() {
       {/* Modal de Novo/Editar Registro */}
       {modalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-full md:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
             {/* Header */}
             <div className="px-6 py-5 border-b border-slate-200 dark:border-gray-700 flex justify-between items-start bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-gray-700 dark:to-gray-700/50 shrink-0">
               <div>
