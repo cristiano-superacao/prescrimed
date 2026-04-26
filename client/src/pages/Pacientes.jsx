@@ -255,7 +255,13 @@ export default function Pacientes() {
       throw new Error('Formato .xls não é suportado. Use .xlsx ou .csv.');
     }
 
-    const { default: ExcelJS } = await import('exceljs');
+    let ExcelJS;
+    if (typeof window !== 'undefined' && window.ExcelJS) {
+      ExcelJS = window.ExcelJS;
+    } else {
+      const mod = await import('exceljs');
+      ExcelJS = mod.default || mod;
+    }
     const workbook = new ExcelJS.Workbook();
     const arrayBuffer = await file.arrayBuffer();
     await workbook.xlsx.load(arrayBuffer);
