@@ -49,10 +49,15 @@ export default defineConfig(({ command, mode }) => {
         output: {
           manualChunks: {
             vendor: ['react', 'react-dom', 'react-router-dom'],
-            exceljs: ['exceljs'],
             ui: ['lucide-react', 'react-hot-toast'],
           },
+          // Externalize exceljs to rely on CDN in production builds to reduce bundle size
+          globals: {
+            exceljs: 'ExcelJS'
+          }
         },
+        // Mark exceljs as external so it's not bundled into the large chunk
+        external: ['exceljs']
       },
       chunkSizeWarningLimit: 1000,
       cssCodeSplit: true,
