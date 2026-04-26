@@ -38,6 +38,66 @@
   <link rel="stylesheet" crossorigin href="./assets/index-DD6c89BS.css">
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root"></div>
 </body>
+
+<!-- Install / Download modal (shows on first visit) -->
+<div id="install-modal" aria-hidden="true" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="bg-black/60 fixed inset-0"></div>
+  <div class="relative z-50 w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="p-6 md:p-8">
+      <h3 class="text-2xl font-bold text-slate-900 mb-2">Baixar ou instalar o Prescrimed</h3>
+      <p class="text-slate-600 mb-4">Deseja fazer download do código-fonte ou seguir um guia de instalação pronto para deploy em Hostgator? Escolha uma opção abaixo.</p>
+
+      <div class="flex flex-col md:flex-row gap-3">
+        <a id="download-zip" href="https://github.com/cristiano-superacao/prescrimed/archive/refs/heads/main.zip" class="flex-1 text-center bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-semibold">Baixar ZIP (Código-fonte)</a>
+
+        <a id="install-guide" href="https://github.com/cristiano-superacao/prescrimed/blob/main/scripts/DEPLOY_HOSTGATOR.md" target="_blank" rel="noopener" class="flex-1 text-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 py-3 rounded-lg font-semibold">Ver instruções de instalação</a>
+      </div>
+
+      <div class="mt-4 text-sm text-slate-500">Você pode fechar este aviso e reabrir a opção a qualquer momento clicando no botão <strong>Instalar / Baixar</strong> no canto inferior direito.</div>
+    </div>
+    <button id="install-close" aria-label="Fechar" class="absolute top-3 right-3 text-slate-500 hover:text-slate-700">✕</button>
+  </div>
+</div>
+
+<!-- Persistent floating action button to re-open install modal -->
+<button id="install-fab" class="fixed bottom-4 right-4 z-40 bg-primary-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-primary-700 focus:outline-none">
+  Instalar / Baixar
+</button>
+
+<script>
+  (function(){
+    try {
+      const KEY = 'prescrimed_install_prompt_shown_v1';
+      const modal = document.getElementById('install-modal');
+      const fab = document.getElementById('install-fab');
+      const close = document.getElementById('install-close');
+
+      function showModal(){
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden','false');
+      }
+      function hideModal(){
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden','true');
+      }
+
+      // Show on first visit only
+      if (!localStorage.getItem(KEY)){
+        // delay a bit so React can mount if present
+        setTimeout(()=> showModal(), 600);
+        localStorage.setItem(KEY, '1');
+      }
+
+      fab.addEventListener('click', function(){ showModal(); });
+      close.addEventListener('click', function(){ hideModal(); });
+
+      // allow ESC to close
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape') hideModal(); });
+    } catch (err){ console.error(err); }
+  })();
+</script>
+
+</html>
 </html>
