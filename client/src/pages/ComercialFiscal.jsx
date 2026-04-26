@@ -407,7 +407,7 @@ export default function ComercialFiscal() {
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">QRCode</p>
               <div className="mt-4 w-full max-w-[220px] aspect-square rounded-3xl border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center p-4 overflow-hidden">
                 {canRenderQrImage ? (
-                  <img src={qrCodeValue} alt="QRCode do pagamento" className="w-full h-full object-contain" />
+                  <img src={qrCodeValue} alt="QRCode do pagamento" className="max-w-full h-auto object-contain" />
                 ) : (
                   <div className="space-y-3 text-slate-500">
                     <QrCode size={40} className="mx-auto" />

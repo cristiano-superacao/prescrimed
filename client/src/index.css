@@ -9,6 +9,13 @@
   body {
     @apply bg-gray-50 text-gray-900 font-sans antialiased;
   }
+
+  /* Ensure media elements are responsive by default */
+  img, picture, video, svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 }
 
 @layer components {

@@ -70,7 +70,7 @@ export function Tr({ children }) {
 
 export function Td({ children, className = '' }) {
   return (
-    <td className={`px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200 ${className}`}>
+    <td className={`px-4 py-3 text-sm text-gray-700 dark:text-gray-200 ${className} whitespace-normal md:whitespace-nowrap`}> 
       {children}
     </td>
   );
